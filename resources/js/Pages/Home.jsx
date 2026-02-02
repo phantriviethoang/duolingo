@@ -1,3 +1,5 @@
+// import Layout from "../Layouts/Layout";
+
 export default function Home() {
     return (
         <>
@@ -6,3 +8,7 @@ export default function Home() {
         </>
     );
 }
+
+// Home.layout = (page) => <Layout children={page} />;
+
+// export default Home;

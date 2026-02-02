@@ -1,6 +1,16 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@plugin "daisyui";
+@plugin "daisyui" {
+    themes: all;
+    /* themes: light --default; */
+    /* themes:
+        light --default,
+        dark --prefersdark,
+        lofi; */
+}
+
+@import "./components/btn.css" layer(components);
+@import "./components/form.css" layer(components);
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -8,8 +18,19 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+
+    --color-background: oklch(0.12 0 0);
+    --color-foreground: oklch(0.95 0 0);
+    --color-card: oklch(0.16 0 0);
+    --color-primary: oklch(0.65 0.15 160);
+    --color-primary-foreground: oklch(0.12 0 0);
+    --color-border: oklch(0.24 0 0);
+    --color-input: oklch(0.24 0 0);
+    --color-muted-foreground: oklch(0.6 0 0);
 }
 
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
@@ -26,7 +47,8 @@
     input[type="password"],
     input[type="search"],
     input[type="tel"],
-    input[type="url"], textarea {
+    input[type="url"],
+    textarea {
         @apply block w-full rounded-md border-0 p-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm bg-white;
     }
     label {
