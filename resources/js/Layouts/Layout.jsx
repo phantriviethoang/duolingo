@@ -15,7 +15,7 @@ export default function Layout({ children }) {
                     </Link>
                     <div className="space-x-2 flex items-center">
                         <Link className="nav-link" href="/tests">
-                            Tests
+                            Đề thi online
                         </Link>
                         <Link className="nav-link" href="/flashcards">
                             Flashcards
@@ -28,7 +28,7 @@ export default function Layout({ children }) {
                 </nav>
             </header>
 
-            <main>{children}</main>
+            <main className="max-x-7xl mx-auto px-6">{children}</main>
         </Fragment>
     );
 }
