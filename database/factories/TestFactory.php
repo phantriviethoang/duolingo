@@ -33,7 +33,6 @@ class TestFactory extends Factory
 
         return [
             'title' => $testType . ' ' . $testNumber,
-            'email' => fake()->unique()->safeEmail(),
             'description' => $this->generateDescription($testType),
             'duration' => $this->calculateDuration($totalQuestions),
             'audio_path' => fake()->optional(0.3)->filePath(),

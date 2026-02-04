@@ -12,7 +12,7 @@ class StoreTestRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->role === 'admin';
     }
 
     /**
@@ -24,11 +24,8 @@ class StoreTestRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('tests', 'email')],
             'description' => ['nullable', 'string'],
             'duration' => ['required', 'integer', 'min:1'],
-            'audio_path' => ['nullable', 'string', 'max:255'],
-            'image_path' => ['nullable', 'string', 'max:255'],
             'questions' => ['required', 'array', 'min:1'],
             'questions.*.question' => ['required', 'string'],
             'questions.*.options' => ['required', 'array', 'min:2'],
@@ -36,6 +33,20 @@ class StoreTestRequest extends FormRequest
             'questions.*.options.*.is_correct' => ['required', 'boolean'],
             'questions.*.explanation' => ['nullable', 'string'],
             'is_active' => ['boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'Tiêu đề đề thi là bắt buộc.',
+            'duration.required' => 'Thời gian làm bài là bắt buộc.',
+            'duration.min' => 'Thời gian làm bài phải ít nhất 1 phút.',
+            'questions.required' => 'Đề thi phải có ít nhất 1 câu hỏi.',
+            'questions.*.question.required' => 'Nội dung câu hỏi không được để trống.',
+            'questions.*.options.required' => 'Mỗi câu hỏi phải có đáp án.',
+            'questions.*.options.min' => 'Mỗi câu hỏi phải có ít nhất 2 đáp án.',
+            'questions.*.options.*.text.required' => 'Nội dung đáp án không được để trống.',
         ];
     }
 }
