@@ -20,6 +20,9 @@ export default function Layout({ children }) {
                         <Link className="nav-link" href="/flashcards">
                             Flashcards
                         </Link>
+                        <Link className="nav-link" href="/results">
+                            Lịch sử
+                        </Link>
 
                         <Link href="/login">
                             <button className="btn">Đăng nhập</button>

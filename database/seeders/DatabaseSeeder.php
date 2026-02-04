@@ -20,6 +20,14 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'role' => 'student',
+        ]);
+
+        $this->call([
+            TestSeeder::class,
+            CategorySeeder::class,
+            FlashcardSeeder::class,
+            TestResultSeeder::class,
         ]);
     }
 }

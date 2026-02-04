@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('tests', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->integer('duration')->comment('Thời gian làm bài (phút)');
+            $table->integer('total_questions')->default(0);
+            $table->json('questions')->nullable()->comment('Danh sách câu hỏi');
+            $table->integer('attempts')->default(0)->comment('Số lượt làm bài');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
