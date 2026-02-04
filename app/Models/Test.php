@@ -12,7 +12,6 @@ class Test extends Model
 
     protected $fillable = [
         'title',
-        'email',
         'description',
         'duration',
         'audio_path',

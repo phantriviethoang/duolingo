@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tests', function (Blueprint $table) {
-            $table->string('email')->unique()->after('title');
             $table->string('audio_path')->nullable()->after('duration');
             $table->string('image_path')->nullable()->after('audio_path');
         });
@@ -24,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tests', function (Blueprint $table) {
-            $table->dropColumn(['email', 'audio_path', 'image_path']);
+            $table->dropColumn(['audio_path', 'image_path']);
         });
     }
 };

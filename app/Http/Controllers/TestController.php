@@ -23,7 +23,6 @@ class TestController extends Controller
                     return [
                         'id' => $test->id,
                         'title' => $test->title ?? 'Untitled',
-                        'email' => $test->email ?? '',
                         'description' => $test->description ?? '',
                         'duration' => $test->duration ?? 40,
                         'total_questions' => $test->total_questions ?? 0,
@@ -65,7 +64,7 @@ class TestController extends Controller
         $data = $request->validated();
         $questionsData = $data['questions'] ?? [];
         $data['total_questions'] = count($questionsData);
-        
+
         // Remove questions from data before creating Test
         unset($data['questions']);
 
@@ -76,11 +75,11 @@ class TestController extends Controller
             // Chuẩn bị options
             $options = [];
             $correctOptionId = 0;
-            
+
             // Checking if options are simple strings or objects
             // The frontend likely sends objects {id, text, is_correct} or similar
             // Based on Take.jsx, options have id, text.
-            
+
             if (isset($qData['options']) && is_array($qData['options'])) {
                 foreach ($qData['options'] as $optIndex => $option) {
                     $optId = $optIndex; // Re-index for safety/consistency with Factory
@@ -89,7 +88,7 @@ class TestController extends Controller
                         'text' => is_array($option) ? ($option['text'] ?? '') : $option,
                         'is_correct' => is_array($option) ? ($option['is_correct'] ?? false) : false,
                     ];
-                    
+
                     if (is_array($option) && isset($option['is_correct']) && $option['is_correct']) {
                         $correctOptionId = $optId;
                     }
@@ -119,7 +118,7 @@ class TestController extends Controller
             'test' => [
                 'id' => $test->id,
                 'title' => $test->title,
-                'email' => $test->email,
+                // 'email' => $test->email,
                 'description' => $test->description,
                 'duration' => $test->duration,
                 'audio_path' => $test->audio_path,
@@ -140,7 +139,7 @@ class TestController extends Controller
             'test' => [
                 'id' => $test->id,
                 'title' => $test->title,
-                'email' => $test->email,
+                // 'email' => $test->email,
                 'description' => $test->description,
                 'duration' => $test->duration,
                 'audio_path' => $test->audio_path,
@@ -159,7 +158,7 @@ class TestController extends Controller
         $data = $request->validated();
         $questionsData = $data['questions'] ?? [];
         $data['total_questions'] = count($questionsData);
-        
+
         unset($data['questions']);
 
         $test->update($data);
@@ -171,7 +170,7 @@ class TestController extends Controller
         foreach ($questionsData as $qData) {
             $options = [];
             $correctOptionId = 0;
-            
+
             if (isset($qData['options']) && is_array($qData['options'])) {
                 foreach ($qData['options'] as $optIndex => $option) {
                     $optId = $optIndex;
@@ -180,7 +179,7 @@ class TestController extends Controller
                         'text' => is_array($option) ? ($option['text'] ?? '') : $option,
                         'is_correct' => is_array($option) ? ($option['is_correct'] ?? false) : false,
                     ];
-                    
+
                     if (is_array($option) && isset($option['is_correct']) && $option['is_correct']) {
                         $correctOptionId = $optId;
                     }
