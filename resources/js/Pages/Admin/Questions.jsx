@@ -16,6 +16,36 @@ export default function AdminQuestions() {
                 </div>
 
                 <div className="rounded-3xl border border-gray-300 bg-white p-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Thêm câu hỏi</h2>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-semibold text-gray-700">Đề thi</label>
+                            <select className="rounded-2xl border border-gray-300 px-4 py-2">
+                                {questions.map((item) => (
+                                    <option key={item.id}>{item.test}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-semibold text-gray-700">Độ khó</label>
+                            <select className="rounded-2xl border border-gray-300 px-4 py-2">
+                                <option>Dễ</option>
+                                <option>Trung bình</option>
+                                <option>Khó</option>
+                            </select>
+                        </div>
+                        <div className="md:col-span-2 flex flex-col gap-2">
+                            <label className="text-sm font-semibold text-gray-700">Nội dung câu hỏi</label>
+                            <textarea className="rounded-2xl border border-gray-300 px-4 py-2" rows={3} placeholder="Nhập câu hỏi"></textarea>
+                        </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                        <button className="rounded-full bg-[#2d8bfb] px-6 py-2 text-sm font-semibold text-white">Lưu câu hỏi</button>
+                        <button className="rounded-full border border-gray-400 px-6 py-2 text-sm font-semibold text-gray-700">Làm mới</button>
+                    </div>
+                </div>
+
+                <div className="rounded-3xl border border-gray-300 bg-white p-6">
                     <div className="overflow-hidden rounded-2xl border border-gray-300">
                         <table className="min-w-full text-left text-sm text-gray-700">
                             <thead className="bg-[#f3f4f6]">

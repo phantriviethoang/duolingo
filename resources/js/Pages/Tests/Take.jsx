@@ -6,11 +6,6 @@ export default function Take({ test }) {
     const { auth } = usePage().props;
     const user = auth?.user;
 
-    // LocalStorage keys
-    const ANSWERS_KEY = `test_${test?.id}_answers`;
-    const TIME_KEY = `test_${test?.id}_time`;
-    const SUBMITTED_KEY = `test_${test?.id}_submitted`;
-
     const intervalRef = useRef(null);
 
     // Ensure test.questions is always an array
@@ -18,19 +13,11 @@ export default function Take({ test }) {
 
     const [currentQuestion, setCurrentQuestion] = useState(0);
 
-    const [selectedAnswers, setSelectedAnswers] = useState(() => {
-        const saved = localStorage.getItem(ANSWERS_KEY);
-        return saved ? JSON.parse(saved) : {};
-    });
+    const [selectedAnswers, setSelectedAnswers] = useState({});
 
-    const [timeLeft, setTimeLeft] = useState(() => {
-        const saved = localStorage.getItem(TIME_KEY);
-        return saved ? parseInt(saved, 10) : (test?.duration || 40) * 60;
-    });
+    const [timeLeft, setTimeLeft] = useState((test?.duration || 40) * 60);
 
-    const [isSubmitted, setIsSubmitted] = useState(() => {
-        return localStorage.getItem(SUBMITTED_KEY) === 'true';
-    });
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     // Guard clauses
     if (!test) {
@@ -80,12 +67,6 @@ export default function Take({ test }) {
     }
 
     // Utility functions
-    const clearStorage = () => {
-        localStorage.removeItem(ANSWERS_KEY);
-        localStorage.removeItem(TIME_KEY);
-        localStorage.removeItem(SUBMITTED_KEY);
-    };
-
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -94,12 +75,10 @@ export default function Take({ test }) {
 
     const handleAnswerSelect = (questionId, answerId) => {
         if (isSubmitted) return;
-        const newAnswers = {
-            ...selectedAnswers,
+        setSelectedAnswers((prev) => ({
+            ...prev,
             [questionId]: answerId,
-        };
-        setSelectedAnswers(newAnswers);
-        localStorage.setItem(ANSWERS_KEY, JSON.stringify(newAnswers));
+        }));
     };
 
     const handleNext = () => {
@@ -132,7 +111,6 @@ export default function Take({ test }) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsSubmitted(true);
-                    clearStorage();
                 },
                 onError: (errors) => {
                     console.error('Submit error:', errors);
@@ -154,28 +132,10 @@ export default function Take({ test }) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsSubmitted(true);
-                    clearStorage();
                 },
             }
         );
     };
-
-    // Warn on page reload
-    useEffect(() => {
-        const handleBeforeUnload = (e) => {
-            if (!isSubmitted) {
-                e.preventDefault();
-                e.returnValue = "Bạn đang làm bài thi. Nếu tải lại trang, thời gian làm bài vẫn sẽ tiếp tục trôi!";
-                return e.returnValue;
-            }
-        };
-
-        window.addEventListener("beforeunload", handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-        };
-    }, [isSubmitted]);
 
     // Timer logic
     useEffect(() => {
@@ -184,7 +144,6 @@ export default function Take({ test }) {
         intervalRef.current = setInterval(() => {
             setTimeLeft((prev) => {
                 const newValue = prev - 1;
-                localStorage.setItem(TIME_KEY, newValue.toString());
 
                 if (newValue <= 0) {
                     if (intervalRef.current) clearInterval(intervalRef.current);
