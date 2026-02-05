@@ -1,82 +1,112 @@
-import { Head, useForm } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
+import { Eye, EyeOff } from "lucide-react";
+import { useMemo, useState } from "react";
+import { route } from "ziggy-js";
 
-export default function Login() {
-  const { data, setData, post, processing, errors } = useForm({
-    email: "",
-    password: "",
-  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    post("/login");
-  };
 
-  return (
-    <>
-      <Head title="Đăng nhập" />
-      <div className="min-h-[70vh] flex items-center justify-center px-4">
-        <div className="card w-full max-w-md bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h1 className="text-center text-2xl font-bold mb-6 uppercase">
-              Đăng nhập
-            </h1>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="form-control">
-                <label className="">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="email"
-                  value={data.email}
-                  onChange={(e) =>
-                    setData("email", e.target.value)
-                  }
-                  className={`input w-full input-bordered ${errors.email ? "input-error" : ""}`}
-                  required
-                />
-                {errors.email && (
-                  <label className="label">
-                    <span className="label-text-alt text-error">
-                      {errors.email}
-                    </span>
-                  </label>
-                )}
-              </div>
+export default function Login({ canResetPassword = true }) {
+    const { data, setData, post, processing, errors } = useForm({
+        email: "",
+        password: "",
+    });
+    const [showPassword, setShowPassword] = useState(false);
 
-              <div className="form-control">
-                <label className="">
-                  <span className="label-text">Mật khẩu</span>
-                </label>
-                <input
-                  type="password"
-                  value={data.password}
-                  onChange={(e) =>
-                    setData("password", e.target.value)
-                  }
-                  className={`input w-full input-bordered ${errors.password ? "input-error" : ""}`}
-                  required
-                />
-                {errors.password && (
-                  <label className="label">
-                    <span className="label-text-alt text-error">
-                      {errors.password}
-                    </span>
-                  </label>
-                )}
-              </div>
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post("/login");
+    };
 
-              <button
-                type="submit"
-                disabled={processing}
-                className="btn btn-primary w-full"
-              >
-                Đăng nhập
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+    const registerHref = useMemo(() => {
+        try {
+            return route("register");
+        } catch (e) {
+            return "/register";
+        }
+    }, []);
+
+    const forgotHref = useMemo(() => {
+        if (!canResetPassword) return null;
+        try {
+            return route("password.request");
+        } catch (e) {
+            return "#";
+        }
+    }, [canResetPassword]);
+
+    return (
+        <>
+            <Head title="Đăng nhập" />
+            <div className="min-h-screen bg-[#bcdfff] flex items-center justify-center px-4 py-12">
+                <div className="w-full max-w-xl rounded-[28px] border border-[#8ea7d2] bg-white p-10 text-center shadow-[0_20px_60px_rgba(87,128,185,0.25)]">
+                    <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-2xl bg-[#fbd5a2] text-3xl font-bold text-[#f97316]">
+                        LINGO
+                    </div>
+                    <h1 className="text-3xl font-semibold text-slate-900">Đăng nhập</h1>
+
+                    <form onSubmit={handleSubmit} className="mt-8 space-y-6 text-left">
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">Tài khoản</label>
+                            <input
+                                type="email"
+                                value={data.email}
+                                onChange={(e) => setData("email", e.target.value)}
+                                className="mt-2 w-full border-b border-slate-400 bg-transparent py-2 text-lg text-slate-800 outline-none focus:border-slate-900"
+                                placeholder="Nhập email của bạn"
+                                required
+                            />
+                            {errors.email && (
+                                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">Mật khẩu</label>
+                            <div className="mt-2 flex items-center border-b border-slate-400">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={data.password}
+                                    onChange={(e) => setData("password", e.target.value)}
+                                    className="w-full bg-transparent py-2 text-lg text-slate-800 outline-none"
+                                    placeholder="Nhập mật khẩu"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    className="p-1 text-slate-500"
+                                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                            )}
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="w-full rounded-full bg-[#1f7dd8] py-3 text-lg font-semibold text-white transition hover:bg-[#1761ac] disabled:opacity-60"
+                        >
+                            {processing ? "Đang xử lý..." : "Đăng nhập"}
+                        </button>
+                    </form>
+
+                    <div className="mt-6 flex items-center justify-between text-sm text-slate-700">
+                        <Link href={registerHref} className="hover:text-[#1f7dd8]">
+                            Đăng ký tài khoản
+                        </Link>
+                        {canResetPassword && (
+                            <Link href={forgotHref || "#"} className="hover:text-[#1f7dd8]">
+                                Quên mật khẩu?
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
+    );
 }

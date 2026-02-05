@@ -10,6 +10,24 @@ Route::get('/', function () {
     return inertia('Home');
 });
 
+Route::get('/register', function () {
+    return inertia('Auth/Register');
+});
+
+Route::get('/about', function () {
+    return inertia('About');
+});
+
+Route::get('/contact', function () {
+    return inertia('Contact');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', function () {
+        return inertia('Profile');
+    })->name('profile');
+});
+
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -23,8 +41,28 @@ Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
 Route::get('/tests/{test}/take', [TestController::class, 'take'])->name('tests.take');
 Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->name('results.store');
 
-// Admin routes - CRUD đề thi (đặt TRƯỚC route show để tránh conflict)
+// Admin routes - UI dashboard & CRUD (đặt TRƯỚC route show để tránh conflict)
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin', function () {
+        return inertia('Admin/Dashboard');
+    })->name('admin.dashboard');
+
+    Route::get('/admin/tests', function () {
+        return inertia('Admin/Tests');
+    })->name('admin.tests');
+
+    Route::get('/admin/questions', function () {
+        return inertia('Admin/Questions');
+    })->name('admin.questions');
+
+    Route::get('/admin/flashcards', function () {
+        return inertia('Admin/Flashcards');
+    })->name('admin.flashcards');
+
+    Route::get('/admin/users', function () {
+        return inertia('Admin/Users');
+    })->name('admin.users');
+
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
     Route::get('/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit');

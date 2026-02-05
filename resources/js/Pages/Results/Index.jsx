@@ -46,10 +46,10 @@ export default function Index({ results }) {
                                         <div className="text-right">
                                             <div
                                                 className={`text-3xl font-bold mb-1 ${result.score >= 70
-                                                        ? 'text-success'
-                                                        : result.score >= 50
-                                                            ? 'text-warning'
-                                                            : 'text-error'
+                                                    ? 'text-success'
+                                                    : result.score >= 50
+                                                        ? 'text-warning'
+                                                        : 'text-error'
                                                     }`}
                                             >
                                                 {result.score}%

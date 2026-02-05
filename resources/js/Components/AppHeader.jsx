@@ -1,0 +1,74 @@
+import { Link, usePage } from "@inertiajs/react";
+
+const baseLinks = [
+    { label: "Đề thi online", href: "/tests" },
+    { label: "Flashcards", href: "/flashcards" },
+    { label: "Giới thiệu", href: "/about" },
+    { label: "Liên hệ", href: "/contact" },
+];
+
+export default function AppHeader() {
+    const { auth, ziggy } = usePage().props;
+    const user = auth?.user;
+    const current = ziggy?.location ?? "";
+    const navLinks = user?.role === "admin" ? [...baseLinks, { label: "Admin", href: "/admin" }] : baseLinks;
+
+    return (
+        <header className="bg-white border-b border-gray-200">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+                <Link href="/" className="flex items-center gap-3">
+                    <img src="/images/logo.png" alt="LingGo" className="h-12 w-12" />
+                    <span className="text-xl font-semibold text-gray-900">LingGo</span>
+                </Link>
+
+                <nav className="flex items-center gap-6 text-sm font-semibold text-gray-800">
+                    {navLinks.map((item) => {
+                        const isActive = current.includes(item.href);
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`relative pb-1 ${isActive ? "text-black" : "text-gray-700 hover:text-black"
+                                    }`}
+                            >
+                                {item.label}
+                                {isActive && (
+                                    <span className="absolute inset-x-0 -bottom-1 block h-0.5 bg-black" />
+                                )}
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                <div className="flex items-center gap-3 text-sm font-semibold text-gray-800">
+                    {user ? (
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gray-900" />
+                            <div className="text-right">
+                                <p className="text-xs text-gray-500">Xin chào</p>
+                                <p>{user.name}</p>
+                            </div>
+                            <Link
+                                href="/logout"
+                                method="post"
+                                as="button"
+                                className="rounded-full border border-gray-800 px-4 py-2 text-sm"
+                            >
+                                Đăng xuất
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Link href="/login" className="rounded-full border border-gray-800 px-4 py-2">
+                                Đăng nhập
+                            </Link>
+                            <Link href="/register" className="rounded-full bg-gray-900 px-4 py-2 text-white">
+                                Đăng ký
+                            </Link>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </header>
+    );
+}
