@@ -37,12 +37,10 @@ Route::get('/flashcards', [FlashcardController::class, 'index'])->name('flashcar
 Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
 Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
 
-// Public routes - danh sách và xem đề thi
 Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
 Route::get('/tests/{test}/take', [TestController::class, 'take'])->name('tests.take');
 Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->name('results.store');
 
-// Admin routes - UI dashboard & CRUD (đặt TRƯỚC route show để tránh conflict)
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin', DashboardController::class)->name('admin.dashboard');
 
@@ -66,5 +64,4 @@ Route::middleware(['auth', 'admin'])->group(function () {
     })->name('admin.users');
 });
 
-// Route show phải đặt CUỐI để không conflict với /tests/create
 Route::get('/tests/{test}', [TestController::class, 'show'])->name('tests.show');
