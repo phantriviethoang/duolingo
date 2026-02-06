@@ -15,19 +15,19 @@ Route::get('/register', function () {
     return inertia('Auth/Register');
 });
 
-Route::get('/about', function () {
-    return inertia('About');
-});
+// Route::get('/about', function () {
+//     return inertia('About');
+// });
 
-Route::get('/contact', function () {
-    return inertia('Contact');
-});
+// Route::get('/contact', function () {
+//     return inertia('Contact');
+// });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', function () {
-        return inertia('Profile');
-    })->name('profile');
-});
+// Route::middleware('auth')->group(function () {
+//     Route::get('/profile', function () {
+//         return inertia('Profile');
+//     })->name('profile');
+// });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
