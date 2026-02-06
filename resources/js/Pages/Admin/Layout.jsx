@@ -54,9 +54,9 @@ export default function AdminLayout({ children, current }) {
           <div className="px-8 py-10">{children}</div>
         </main>
       </div>
-      <footer className="border-t border-gray-200 py-4 text-center text-sm text-gray-500">
+      {/* <footer className="border-t border-gray-200 py-4 text-center text-sm text-gray-500">
         Footer
-      </footer>
+      </footer> */}
     </div>
   );
 }

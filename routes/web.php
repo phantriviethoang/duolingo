@@ -46,9 +46,12 @@ Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->na
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin', DashboardController::class)->name('admin.dashboard');
 
-    Route::get('/admin/tests', [TestManageController::class, 'index'])->name('admin.tests');
-    Route::post('/admin/tests', [TestManageController::class, 'store'])->name('admin.tests.store');
-    Route::delete('/admin/tests/{test}', [TestManageController::class, 'destroy'])->name('admin.tests.destroy');
+    Route::get('/admin/tests', [TestController::class, 'adminIndex'])->name('admin.tests');
+    Route::get('/admin/tests/create', [TestController::class, 'create'])->name('tests.create');
+    Route::post('/admin/tests', [TestController::class, 'store'])->name('tests.store');
+    Route::get('/admin/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit');
+    Route::put('/admin/tests/{test}', [TestController::class, 'update'])->name('tests.update');
+    Route::delete('/admin/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
 
     Route::get('/admin/questions', function () {
         return inertia('Admin/Questions');
@@ -61,12 +64,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/users', function () {
         return inertia('Admin/Users');
     })->name('admin.users');
-
-    Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
-    Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
-    Route::get('/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit');
-    Route::put('/tests/{test}', [TestController::class, 'update'])->name('tests.update');
-    Route::delete('/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
 });
 
 // Route show phải đặt CUỐI để không conflict với /tests/create

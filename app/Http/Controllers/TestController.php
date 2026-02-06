@@ -11,6 +11,31 @@ use Inertia\Inertia;
 class TestController extends Controller
 {
     /**
+     * Display admin listing of tests
+     */
+    public function adminIndex()
+    {
+        $tests = Test::orderByDesc('created_at')
+            ->get(['id', 'title', 'description', 'duration', 'total_questions', 'created_at'])
+            ->map(function (Test $test) {
+                return [
+                    'id' => $test->id,
+                    'title' => $test->title,
+                    'description' => $test->description,
+                    'duration' => $test->duration,
+                    'total_questions' => $test->total_questions,
+                    'created_at' => optional($test->created_at)->format('d/m/Y'),
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return Inertia::render('Admin/Tests', [
+            'tests' => $tests,
+        ]);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()

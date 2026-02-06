@@ -109,7 +109,7 @@ export default function Create() {
                 </label>
                 <input
                   type="text"
-                  className={`input input-bordered ${errors.title ? "input-error" : ""
+                  className={`input input-bordered w-full ${errors.title ? "input-error" : ""
                     }`}
                   value={data.title}
                   onChange={(e) =>
@@ -131,7 +131,7 @@ export default function Create() {
                   <span className="label-text">Mô tả (lý thuyết)</span>
                 </label>
                 <textarea
-                  className="textarea textarea-bordered text-base-content bg-base-100"
+                  className="textarea w-full textarea-bordered text-base-content bg-base-100"
                   value={data.description}
                   onChange={(e) =>
                     setData("description", e.target.value)
@@ -150,7 +150,7 @@ export default function Create() {
                 </label>
                 <input
                   type="number"
-                  className={`input input-bordered ${errors.duration ? "input-error" : ""
+                  className={`input input-bordered text-black w-full ${errors.duration ? "input-error" : ""
                     }`}
                   value={data.duration}
                   onChange={(e) =>
@@ -193,7 +193,7 @@ export default function Create() {
                 <button
                   type="button"
                   onClick={addQuestion}
-                  className="btn btn-sm btn-primary gap-2"
+                  className="btn btn-sm btn-neutral gap-2"
                 >
                   <Plus size={16} />
                   Thêm câu hỏi
@@ -242,7 +242,7 @@ export default function Create() {
                         </span>
                       </label>
                       <textarea
-                        className={`textarea textarea-bordered text-base-content bg-base-100 ${errors[
+                        className={`textarea w-full textarea-bordered text-base-content bg-base-100 ${errors[
                           `questions.${qIndex}.question`
                         ]
                           ? "textarea-error"
@@ -299,7 +299,7 @@ export default function Create() {
                             />
                             <input
                               type="text"
-                              className={`input input-bordered text-base-content bg-base-100 flex-1 ${option.is_correct
+                              className={`input input-bordered w-full text-base-content bg-base-100 flex-1 ${option.is_correct
                                 ? "input-primary"
                                 : ""
                                 }`}
@@ -337,7 +337,7 @@ export default function Create() {
                         </span>
                       </label>
                       <textarea
-                        className="textarea textarea-bordered text-base-content bg-base-100"
+                        className="textarea w-full textarea-bordered text-base-content bg-base-100"
                         value={question.explanation || ""}
                         onChange={(e) =>
                           updateQuestion(

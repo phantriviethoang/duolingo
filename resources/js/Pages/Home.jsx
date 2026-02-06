@@ -53,9 +53,9 @@ export default function Home({ featuredCourses = [], stats = {} }) {
                 </div>
             </section>
 
-            <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-500">
+            {/* <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-500">
                 Footer
-            </footer>
+            </footer> */}
         </div>
     );
 }

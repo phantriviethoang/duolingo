@@ -96,7 +96,7 @@ export default function Edit({ test }) {
                 </label>
                 <input
                   type="text"
-                  className={`input input-bordered ${errors.title ? "input-error" : ""
+                  className={`input input-bordered w-full ${errors.title ? "input-error" : ""
                     }`}
                   value={data.title}
                   onChange={(e) =>
@@ -117,7 +117,7 @@ export default function Edit({ test }) {
                   <span className="label-text">Mô tả (lý thuyết)</span>
                 </label>
                 <textarea
-                  className="textarea textarea-bordered text-base-content bg-base-100"
+                  className="textarea textarea-bordered w-full text-base-content bg-base-100"
                   value={data.description}
                   onChange={(e) =>
                     setData("description", e.target.value)
@@ -135,7 +135,7 @@ export default function Edit({ test }) {
                 </label>
                 <input
                   type="number"
-                  className={`input input-bordered ${errors.duration ? "input-error" : ""
+                  className={`input input-bordered w-full ${errors.duration ? "input-error" : ""
                     }`}
                   value={data.duration}
                   onChange={(e) =>
@@ -224,7 +224,7 @@ export default function Edit({ test }) {
                         </span>
                       </label>
                       <textarea
-                        className="textarea textarea-bordered text-base-content bg-base-100"
+                        className="textarea textarea-bordered w-full text-base-content bg-base-100"
                         value={question.question}
                         onChange={(e) =>
                           updateQuestion(
@@ -275,7 +275,7 @@ export default function Edit({ test }) {
                             />
                             <input
                               type="text"
-                              className={`input input-bordered text-base-content bg-base-100 flex-1 ${option.is_correct
+                              className={`input input-bordered w-full text-base-content bg-base-100 flex-1 ${option.is_correct
                                 ? "input-primary"
                                 : ""
                                 }`}
@@ -313,7 +313,7 @@ export default function Edit({ test }) {
                         </span>
                       </label>
                       <textarea
-                        className="textarea textarea-bordered text-base-content bg-base-100"
+                        className="textarea textarea-bordered w-full text-base-content bg-base-100"
                         value={
                           question.explanation || ""
                         }
