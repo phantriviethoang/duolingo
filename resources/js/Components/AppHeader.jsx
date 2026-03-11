@@ -2,7 +2,6 @@ import { Link, usePage } from "@inertiajs/react";
 
 const baseLinks = [
     { label: "Đề thi online", href: "/tests" },
-    { label: "Flashcards", href: "/flashcards" },
     { label: "Giới thiệu", href: "/about" },
     { label: "Liên hệ", href: "/contact" },
 ];

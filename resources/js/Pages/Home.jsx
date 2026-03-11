@@ -29,9 +29,6 @@ export default function Home({ featuredCourses = [], stats = {} }) {
                         <Link href="/tests" className="rounded-full bg-black px-8 py-3 text-sm font-semibold text-white">
                             Đề thi online
                         </Link>
-                        <Link href="/flashcards" className="rounded-full border border-black px-8 py-3 text-sm font-semibold text-black">
-                            Học flashcards
-                        </Link>
                     </div>
                 </div>
             </section>
@@ -39,7 +36,7 @@ export default function Home({ featuredCourses = [], stats = {} }) {
             <section className="py-16">
                 <div className="mx-auto max-w-5xl px-6 text-center">
                     <h2 className="text-2xl font-semibold text-gray-900">Khóa học Online nổi bật</h2>
-                    <p className="mt-2 text-sm text-gray-600">Hiện có {stats.tests ?? "--"} đề thi và {stats.flashcards ?? "--"} flashcard để bạn luyện tập.</p>
+                    <p className="mt-2 text-sm text-gray-600">Hiện có {stats.tests ?? "--"} đề thi để bạn luyện tập.</p>
                     <div className="mt-10 grid gap-6 md:grid-cols-3">
                         {fallbackCourses.map((course) => (
                             <div

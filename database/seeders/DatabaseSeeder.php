@@ -31,8 +31,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             TestSeeder::class,
-            CategorySeeder::class,
-            FlashcardSeeder::class,
             TestResultSeeder::class,
         ]);
     }

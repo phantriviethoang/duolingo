@@ -5,7 +5,6 @@ const navItems = [
   { label: "Dashboard", href: "/admin" },
   { label: "Quản lý đề thi", href: "/admin/tests" },
   { label: "Quản lý câu hỏi", href: "/admin/questions" },
-  { label: "Quản lý flashcards", href: "/admin/flashcards" },
   { label: "Quản lý người dùng", href: "/admin/users" },
 ];
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Flashcard;
 use App\Models\Test;
 use Inertia\Inertia;
 
@@ -26,7 +25,6 @@ class HomeController extends Controller
 
         $stats = [
             'tests' => Test::count(),
-            'flashcards' => Flashcard::count(),
         ];
 
         return Inertia::render('Home', [

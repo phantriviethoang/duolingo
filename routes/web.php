@@ -1,12 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\FlashcardController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestResultController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\TestManageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -33,7 +31,6 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::get('/flashcards', [FlashcardController::class, 'index'])->name('flashcards.index');
 Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
 Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
 
@@ -54,10 +51,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/questions', function () {
         return inertia('Admin/Questions');
     })->name('admin.questions');
-
-    Route::get('/admin/flashcards', function () {
-        return inertia('Admin/Flashcards');
-    })->name('admin.flashcards');
 
     Route::get('/admin/users', function () {
         return inertia('Admin/Users');

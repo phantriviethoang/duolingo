@@ -1,6 +1,5 @@
 import { Head, Link, usePage } from "@inertiajs/react";
 import { 
-    BookOpen, 
     FileText, 
     Trophy, 
     Clock, 
@@ -16,7 +15,6 @@ import {
 
 export default function Dashboard({ 
     recentTests, 
-    recentFlashcards, 
     stats, 
     upcomingTests,
     achievements 
@@ -45,11 +43,11 @@ export default function Dashboard({
                                     Làm đề thi
                                 </Link>
                                 <Link 
-                                    href="/flashcards" 
+                                    href="/results" 
                                     className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                                 >
-                                    <BookOpen className="w-4 h-4" />
-                                    Học flashcards
+                                    <Trophy className="w-4 h-4" />
+                                    Xem kết quả
                                 </Link>
                             </div>
                         </div>
@@ -79,17 +77,6 @@ export default function Dashboard({
                             </div>
                             <div className="text-2xl font-bold text-gray-800">{stats.averageScore}%</div>
                             <div className="text-sm text-gray-600">điểm trung bình</div>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="bg-purple-100 p-3 rounded-lg">
-                                    <BookOpen className="w-6 h-6 text-purple-600" />
-                                </div>
-                                <span className="text-sm text-gray-500">Hôm nay</span>
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">{stats.todayFlashcards}</div>
-                            <div className="text-sm text-gray-600">flashcards đã học</div>
                         </div>
 
                         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
@@ -182,13 +169,6 @@ export default function Dashboard({
                                         Làm đề thi mới
                                     </Link>
                                     <Link 
-                                        href="/flashcards" 
-                                        className="w-full flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-purple-700 font-medium"
-                                    >
-                                        <BookOpen className="w-5 h-5" />
-                                        Học flashcards
-                                    </Link>
-                                    <Link 
                                         href="/results" 
                                         className="w-full flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-green-700 font-medium"
                                     >
@@ -209,15 +189,6 @@ export default function Dashboard({
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-2">
                                             <div className="bg-blue-600 h-full rounded-full" style={{ width: '71%' }}></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex justify-between text-sm mb-2">
-                                            <span className="text-gray-600">Flashcards hôm nay</span>
-                                            <span className="font-medium text-gray-800">25/50</span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                            <div className="bg-purple-600 h-full rounded-full" style={{ width: '50%' }}></div>
                                         </div>
                                     </div>
                                 </div>
