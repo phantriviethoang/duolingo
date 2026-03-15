@@ -135,7 +135,7 @@ export default function Edit({ test }) {
                 </label>
                 <input
                   type="number"
-                  className={`input input-bordered w-full ${errors.duration ? "input-error" : ""
+                  className={`text-black input input-bordered w-full ${errors.duration ? "input-error" : ""
                     }`}
                   value={data.duration}
                   onChange={(e) =>

@@ -7,37 +7,35 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
+//
 Route::get('/', HomeController::class)->name('home');
-
-Route::get('/register', function () {
-    return inertia('Auth/Register');
+Route::get('/about', function () {
+    return inertia('About');
+});
+Route::get('/contact', function () {
+    return inertia('Contact');
 });
 
-// Route::get('/about', function () {
-//     return inertia('About');
-// });
+// auth
+Route::get('/register', function () {
+    return inertia('Auth/Register');
+})->middleware('guest');
 
-// Route::get('/contact', function () {
-//     return inertia('Contact');
-// });
-
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', function () {
-//         return inertia('Profile');
-//     })->name('profile');
-// });
-
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
-Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
+// dethi
+Route::middleware(['auth'])->group(function () {
+    Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
+    Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
 
-Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
-Route::get('/tests/{test}/take', [TestController::class, 'take'])->name('tests.take');
-Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->name('results.store');
+    Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
+    Route::get('/tests/{test}/take', [TestController::class, 'take'])->name('tests.take');
+    Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->name('results.store');
+});
 
+// dashboard
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin', DashboardController::class)->name('admin.dashboard');
 

@@ -1,4 +1,5 @@
 import { Link, usePage } from "@inertiajs/react";
+import Logo from "@/Components/Logo";
 
 const baseLinks = [
     { label: "Đề thi online", href: "/tests" },
@@ -13,10 +14,10 @@ export default function AppHeader() {
     const navLinks = user?.role === "admin" ? [...baseLinks, { label: "Admin", href: "/admin" }] : baseLinks;
 
     return (
-        <header className="bg-white border-b border-gray-200">
+        <header className="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 <Link href="/" className="flex items-center gap-3">
-                    <img src="/images/logo.png" alt="LingGo" className="h-12 w-12" />
+                    <Logo className="h-12 w-12" />
                     <span className="text-xl font-semibold text-gray-900">LingGo</span>
                 </Link>
 

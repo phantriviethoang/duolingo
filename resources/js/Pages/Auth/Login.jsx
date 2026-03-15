@@ -2,6 +2,7 @@ import { Head, Link, useForm } from "@inertiajs/react";
 import { Eye, EyeOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { route } from "ziggy-js";
+import Logo from "@/Components/Logo";
 
 
 
@@ -38,10 +39,10 @@ export default function Login({ canResetPassword = true }) {
     return (
         <>
             <Head title="Đăng nhập" />
-            <div className="min-h-screen bg-[#bcdfff] flex items-center justify-center px-4 py-12">
-                <div className="w-full max-w-xl rounded-[28px] border border-[#8ea7d2] bg-white p-10 text-center shadow-[0_20px_60px_rgba(87,128,185,0.25)]">
-                    <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-2xl bg-[#fbd5a2] text-3xl font-bold text-[#f97316]">
-                        LINGO
+            <div className="bg-[#bcdfff] flex items-center justify-center px-4 py-12">
+                <div className="w-full max-w-xl rounded-[28px] border border-[#8ea7d2] bg-white p-10 text-center shadow-[0_20px_60px_rgba(87,128,185,0.25)] ">
+                    <div className="mx-auto mb-6 flex justify-center">
+                        <Logo className="h-16 w-16" />
                     </div>
                     <h1 className="text-3xl font-semibold text-slate-900">Đăng nhập</h1>
 

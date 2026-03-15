@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from "@inertiajs/react";
-import { Eye, EyeOff, Mail, Lock, User, Brain } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { useState } from "react";
+import Logo from "@/Components/Logo";
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -27,8 +28,8 @@ export default function Register() {
                 <div className="max-w-md w-full">
                     {/* Logo Section */}
                     <div className="text-center mb-8">
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                            <Brain className="w-10 h-10 text-white" />
+                        <div className="mx-auto mb-4 flex justify-center">
+                            <Logo className="h-20 w-20" />
                         </div>
                         <h1 className="text-3xl font-bold text-gray-800 mb-2">LingGo</h1>
                         <p className="text-gray-600">Học ngôn ngữ thông minh, hiệu quả</p>

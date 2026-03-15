@@ -1,11 +1,11 @@
 import { Head, Link, usePage } from "@inertiajs/react";
-import { 
-    FileText, 
-    Trophy, 
-    Clock, 
-    Target, 
-    TrendingUp, 
-    Users, 
+import {
+    FileText,
+    Trophy,
+    Clock,
+    Target,
+    TrendingUp,
+    Users,
     Calendar,
     Brain,
     BarChart3,
@@ -13,11 +13,11 @@ import {
     Play
 } from "lucide-react";
 
-export default function Dashboard({ 
-    recentTests, 
-    stats, 
+export default function Dashboard({
+    recentTests,
+    stats,
     upcomingTests,
-    achievements 
+    achievements
 }) {
     const { auth } = usePage().props;
     const user = auth?.user;
@@ -35,15 +35,15 @@ export default function Dashboard({
                                 <p className="text-blue-100">Tiếp tục hành trình học ngôn ngữ của bạn</p>
                             </div>
                             <div className="hidden md:flex items-center space-x-4">
-                                <Link 
-                                    href="/tests" 
+                                <Link
+                                    href="/tests"
                                     className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                                 >
                                     <FileText className="w-4 h-4" />
                                     Làm đề thi
                                 </Link>
-                                <Link 
-                                    href="/results" 
+                                <Link
+                                    href="/results"
                                     className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                                 >
                                     <Trophy className="w-4 h-4" />
@@ -98,8 +98,8 @@ export default function Dashboard({
                                 <div className="p-6 border-b border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-lg font-semibold text-gray-800">Bài thi gần đây</h2>
-                                        <Link 
-                                            href="/results" 
+                                        <Link
+                                            href="/results"
                                             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                         >
                                             Xem tất cả
@@ -111,8 +111,8 @@ export default function Dashboard({
                                         <div className="text-center py-8">
                                             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                                             <p className="text-gray-500">Chưa có bài thi nào</p>
-                                            <Link 
-                                                href="/tests" 
+                                            <Link
+                                                href="/tests"
                                                 className="inline-flex items-center gap-2 mt-4 text-blue-600 hover:text-blue-800 font-medium"
                                             >
                                                 <Play className="w-4 h-4" />
@@ -137,10 +137,9 @@ export default function Dashboard({
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className={`text-lg font-bold ${
-                                                            test.score >= 80 ? 'text-green-600' :
-                                                            test.score >= 60 ? 'text-yellow-600' : 'text-red-600'
-                                                        }`}>
+                                                        <div className={`text-lg font-bold ${test.score >= 80 ? 'text-green-600' :
+                                                                test.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                                                            }`}>
                                                             {test.score}%
                                                         </div>
                                                         <div className="text-sm text-gray-500">
@@ -161,15 +160,15 @@ export default function Dashboard({
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Thao tác nhanh</h2>
                                 <div className="space-y-3">
-                                    <Link 
-                                        href="/tests" 
+                                    <Link
+                                        href="/tests"
                                         className="w-full flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 font-medium"
                                     >
                                         <FileText className="w-5 h-5" />
                                         Làm đề thi mới
                                     </Link>
-                                    <Link 
-                                        href="/results" 
+                                    <Link
+                                        href="/results"
                                         className="w-full flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-green-700 font-medium"
                                     >
                                         <Trophy className="w-5 h-5" />
