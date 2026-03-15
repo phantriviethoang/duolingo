@@ -99,7 +99,7 @@ class TestController extends Controller
         foreach ($questionsData as $index => $qData) {
             // Chuẩn bị options
             $options = [];
-            $correctOptionId = 0;
+            $correctOptionId = "A"; // Default to "A"
 
             // Checking if options are simple strings or objects
             // The frontend likely sends objects {id, text, is_correct} or similar
@@ -107,15 +107,15 @@ class TestController extends Controller
 
             if (isset($qData['options']) && is_array($qData['options'])) {
                 foreach ($qData['options'] as $optIndex => $option) {
-                    $optId = $optIndex; // Re-index for safety/consistency with Factory
+                    // Get option ID from option object or use letter (A, B, C, D)
+                    $optId = is_array($option) && isset($option['id']) ? $option['id'] : chr(65 + $optIndex);
                     $options[] = [
-                        'id' => $optId,
+                        'id' => (string) $optId,
                         'text' => is_array($option) ? ($option['text'] ?? '') : $option,
-                        'is_correct' => is_array($option) ? ($option['is_correct'] ?? false) : false,
                     ];
 
                     if (is_array($option) && isset($option['is_correct']) && $option['is_correct']) {
-                        $correctOptionId = $optId;
+                        $correctOptionId = (string) $optId;
                     }
                 }
             }
@@ -123,14 +123,14 @@ class TestController extends Controller
             $test->questions()->create([
                 'question' => $qData['question'],
                 'options' => $options,
-                'correct_option_id' => $correctOptionId,
+                'correct_option_id' => (string) $correctOptionId,
                 'explanation' => $qData['explanation'] ?? null,
                 'translation' => $qData['translation'] ?? null,
                 'detailed_explanation' => $qData['detailed_explanation'] ?? null,
             ]);
         }
 
-        return redirect()->route('tests.index')
+        return redirect()->route('admin.tests')
             ->with('success', 'Đề thi đã được tạo thành công!');
     }
 
@@ -194,19 +194,19 @@ class TestController extends Controller
 
         foreach ($questionsData as $qData) {
             $options = [];
-            $correctOptionId = 0;
+            $correctOptionId = "A"; // Default to "A"
 
             if (isset($qData['options']) && is_array($qData['options'])) {
                 foreach ($qData['options'] as $optIndex => $option) {
-                    $optId = $optIndex;
+                    // Get option ID from option object or use letter (A, B, C, D)
+                    $optId = is_array($option) && isset($option['id']) ? $option['id'] : chr(65 + $optIndex);
                     $options[] = [
-                        'id' => $optId,
+                        'id' => (string) $optId,
                         'text' => is_array($option) ? ($option['text'] ?? '') : $option,
-                        'is_correct' => is_array($option) ? ($option['is_correct'] ?? false) : false,
                     ];
 
                     if (is_array($option) && isset($option['is_correct']) && $option['is_correct']) {
-                        $correctOptionId = $optId;
+                        $correctOptionId = (string) $optId;
                     }
                 }
             }
@@ -214,14 +214,14 @@ class TestController extends Controller
             $test->questions()->create([
                 'question' => $qData['question'],
                 'options' => $options,
-                'correct_option_id' => $correctOptionId,
+                'correct_option_id' => (string) $correctOptionId,
                 'explanation' => $qData['explanation'] ?? null,
                 'translation' => $qData['translation'] ?? null,
                 'detailed_explanation' => $qData['detailed_explanation'] ?? null,
             ]);
         }
 
-        return redirect()->route('tests.index')
+        return redirect()->route('admin.tests')
             ->with('success', 'Đề thi đã được cập nhật thành công!');
     }
 
@@ -232,7 +232,7 @@ class TestController extends Controller
     {
         $test->delete();
 
-        return redirect()->route('tests.index')
+        return redirect()->route('admin.tests')
             ->with('success', 'Đề thi đã được xóa thành công!');
     }
 
@@ -242,13 +242,13 @@ class TestController extends Controller
     public function take(Test $test)
     {
         // Kiểm tra test có tồn tại không
-        if (!$test) {
+        if (! $test) {
             return redirect()->route('tests.index')
                 ->with('error', 'Đề thi không tồn tại.');
         }
 
         // Kiểm tra test có active không
-        if (!$test->is_active) {
+        if (! $test->is_active) {
             return redirect()->route('tests.index')
                 ->with('error', 'Đề thi này không khả dụng.');
         }

@@ -71,11 +71,6 @@ class TestQuestionController extends Controller
             'explanation' => ['nullable', 'string'],
         ]);
 
-        // Determine question number for this test
-        $maxQuestionNumber = TestQuestion::where('test_id', $validated['test_id'])
-            ->max('question_number') ?? 0;
-
-        $validated['question_number'] = $maxQuestionNumber + 1;
         // Ensure correct_option_id is stored as a string for consistency
         $validated['correct_option_id'] = (string) $validated['correct_option_id'];
 

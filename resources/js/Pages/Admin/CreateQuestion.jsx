@@ -99,20 +99,22 @@ export default function CreateQuestion() {
                                 </label>
                                 {data.options.map((option, index) => (
                                     <div key={option.id} className="flex gap-2 items-center">
-                                        <input
-                                            type="radio"
-                                            name="correct"
-                                            value={option.id}
-                                            checked={data.correct_option_id === option.id}
-                                            onChange={(e) => setData("correct_option_id", e.target.value)}
-                                            className="radio radio-primary"
-                                        />
-                                        <span className="font-bold w-8">{option.id}</span>
+                                        <label htmlFor={`option-${option.id}`}>
+                                            <input
+                                                id={`option-${option.id}`}
+                                                type="radio"
+                                                name="correct"
+                                                value={option.id}
+                                                checked={data.correct_option_id === option.id}
+                                                onChange={(e) => setData("correct_option_id", e.target.value)}
+                                                className="radio radio-primary"
+                                            />
+                                        </label>
                                         <textarea
                                             value={option.text}
                                             onChange={(e) => handleOptionChange(index, e.target.value)}
-                                            className="textarea textarea-bordered w-full text-base-content bg-base-100 flex-1"
-                                            rows={2}
+                                            className="textarea-bordered w-full text-base-content bg-base-100 flex-1"
+                                            rows={1}
                                             placeholder={`Nhập lựa chọn ${option.id}`}
                                         />
                                     </div>

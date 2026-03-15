@@ -4,18 +4,30 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 
 export default function EditQuestion() {
     const { question, tests = [] } = usePage().props;
-    const { data, setData, put, processing, errors } = useForm({
-        test_id: question.test_id,
-        question: question.question,
-        options: question.options || [
+
+    // Ensure options have correct structure
+    const normalizedOptions = question.options?.map(opt => ({
+        id: String(opt.id),
+        text: opt.text || ""
+    })) || [
             { id: "A", text: "" },
             { id: "B", text: "" },
             { id: "C", text: "" },
             { id: "D", text: "" },
-        ],
-        correct_option_id: question.correct_option_id || "A",
+        ];
+
+    const { data, setData, put, processing, errors } = useForm({
+        test_id: question.test_id,
+        question: question.question,
+        options: normalizedOptions,
+        correct_option_id: String(question.correct_option_id || "A"),
         explanation: question.explanation || "",
     });
+
+    console.log('question data:', question);
+    console.log('form data:', data);
+    console.log('correct_option_id type:', typeof data.correct_option_id, 'value:', data.correct_option_id);
+    console.log('options:', data.options);
 
     const handleOptionChange = (index, value) => {
         const newOptions = [...data.options];
@@ -99,14 +111,17 @@ export default function EditQuestion() {
                                 </label>
                                 {data.options.map((option, index) => (
                                     <div key={option.id} className="flex gap-2 items-center">
-                                        <input
-                                            type="radio"
-                                            name="correct"
-                                            value={option.id}
-                                            checked={data.correct_option_id === option.id}
-                                            onChange={(e) => setData("correct_option_id", e.target.value)}
-                                            className="radio radio-primary"
-                                        />
+                                        <label htmlFor={`option-${option.id}`}>
+                                            <input
+                                                id={`option-${option.id}`}
+                                                type="radio"
+                                                name="correct"
+                                                value={option.id}
+                                                checked={data.correct_option_id === option.id}
+                                                onChange={(e) => setData("correct_option_id", e.target.value)}
+                                                className="radio radio-primary"
+                                            />
+                                        </label>
                                         <textarea
                                             value={option.text}
                                             onChange={(e) => handleOptionChange(index, e.target.value)}

@@ -75,7 +75,7 @@ export default function Create() {
 
     const submit = (e) => {
         e.preventDefault();
-        post("/tests", {
+        post("/admin/tests", {
             preserveScroll: true,
         });
     };
