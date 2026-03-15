@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\TestQuestion;
+use App\Models\TestResult;
+use App\Models\UserProgress;
+use App\Models\QuestionStatistic;
 
 class Test extends Model
 {
@@ -14,12 +18,13 @@ class Test extends Model
         'title',
         'description',
         'duration',
-        'audio_path',
-        'image_path',
+        'section',
+        'part_number',
         'total_questions',
-        // 'questions' removed
-        'attempts',
+        'level',
         'is_active',
+        'pass_score',
+        'attempts',
     ];
 
     protected $casts = [
@@ -27,15 +32,30 @@ class Test extends Model
         'attempts' => 'integer',
         'duration' => 'integer',
         'total_questions' => 'integer',
+        'part_number' => 'integer',
+        'pass_score' => 'float',
     ];
 
     public function questions()
     {
-        return $this->hasMany(TestQuestion::class);
+        return $this->hasMany(TestQuestion::class)->orderBy('question_number');
     }
 
     public function results()
     {
         return $this->hasMany(TestResult::class);
+    }
+
+    public function userProgress()
+    {
+        return $this->hasMany(UserProgress::class);
+    }
+
+    public function statistics()
+    {
+        return $this->hasManyThrough(
+            QuestionStatistic::class,
+            TestQuestion::class
+        );
     }
 }

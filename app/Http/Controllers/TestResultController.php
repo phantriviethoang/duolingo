@@ -13,6 +13,7 @@ class TestResultController extends Controller
     public function index()
     {
         $results = TestResult::query()
+            ->where('user_id', auth()->id())
             ->with('test')
             ->orderByDesc('completed_at')
             ->get()
@@ -39,17 +40,17 @@ class TestResultController extends Controller
         ]);
 
         $answers = $data['answers'] ?? [];
-        
+
         // Load questions from DB
         $questions = $test->questions()->get();
 
         $correct = 0;
         foreach ($questions as $question) {
             $userAnswer = $answers[$question->id] ?? null;
-            
+
             // Note: $question->id is now the DB ID of TestQuestion
             // Frontend sends answers keyed by that ID.
-            
+
             if ($userAnswer !== null && $userAnswer == $question->correct_option_id) {
                 $correct++;
             }
@@ -75,7 +76,7 @@ class TestResultController extends Controller
     {
         $result->load('test');
         $test = $result->test;
-        
+
         // Load questions from relation
         $questions = $test?->questions()->get() ?? collect([]);
         $answers = is_array($result->user_answer) ? $result->user_answer : [];
@@ -84,17 +85,16 @@ class TestResultController extends Controller
         // Transform questions for display and calc correct count for verification (optional)
         $mappedQuestions = $questions->map(function ($q) use ($answers) {
             // Note: We need to inject is_correct into options for frontend display
-            // OR frontend needs to check correct_option_id
-            // Let's modify options to include is_correct for frontend compatibility
-            $options = $q->options;
+            // Handle options that may be array or JSON string
+            $options = is_array($q->options) ? $q->options : (is_string($q->options) ? json_decode($q->options, true) : []);
             $newOptions = [];
             if (is_array($options)) {
                 foreach ($options as $opt) {
-                     $opt['is_correct'] = ($opt['id'] == $q->correct_option_id);
-                     $newOptions[] = $opt;
+                    $opt['is_correct'] = ($opt['id'] == $q->correct_option_id);
+                    $newOptions[] = $opt;
                 }
             }
-            
+
             return [
                 'id' => $q->id,
                 'question' => $q->question,
@@ -108,11 +108,11 @@ class TestResultController extends Controller
 
         // Recalculate correct for display summary (if needed, but result already has correct count usually? logic below relied on loop)
         foreach ($mappedQuestions as $q) {
-             $userAnswer = $answers[$q['id']] ?? null;
-             // Ensure type safety
-             if ($userAnswer !== null && $userAnswer == $q['correct_option_id']) {
-                 $correct++;
-             }
+            $userAnswer = $answers[$q['id']] ?? null;
+            // Ensure type safety
+            if ($userAnswer !== null && $userAnswer == $q['correct_option_id']) {
+                $correct++;
+            }
         }
 
         $total = $questions->count();

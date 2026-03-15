@@ -14,7 +14,10 @@ class TestResult extends Model
         'user_id',
         'test_id',
         'score',
+        'total_questions',
+        'correct_answers',
         'user_answer',
+        'time_spent',
         'completed_at',
     ];
 
@@ -22,6 +25,9 @@ class TestResult extends Model
         'user_answer' => 'array',
         'completed_at' => 'datetime',
         'score' => 'float',
+        'total_questions' => 'integer',
+        'correct_answers' => 'integer',
+        'time_spent' => 'integer',
     ];
 
     public function user()
@@ -32,5 +38,17 @@ class TestResult extends Model
     public function test()
     {
         return $this->belongsTo(Test::class);
+    }
+
+    public function getPercentageAttribute()
+    {
+        if ($this->total_questions == 0)
+            return 0;
+        return ($this->correct_answers / $this->total_questions) * 100;
+    }
+
+    public function isPassedAttribute()
+    {
+        return $this->score >= $this->test->pass_score;
     }
 }

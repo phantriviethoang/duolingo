@@ -269,7 +269,7 @@ class TestController extends Controller
             return [
                 'id' => $q->id,
                 'question' => $q->question,
-                'options' => $q->options,
+                'options' => is_array($q->options) ? $q->options : (is_string($q->options) ? json_decode($q->options, true) : []),
                 // Do not send correct_option_id, explanation, etc. to frontend during take
             ];
         });

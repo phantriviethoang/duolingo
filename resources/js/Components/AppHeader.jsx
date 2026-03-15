@@ -42,20 +42,41 @@ export default function AppHeader() {
 
                 <div className="flex items-center gap-3 text-sm font-semibold text-gray-800">
                     {user ? (
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-gray-900" />
-                            <div className="text-right">
-                                <p className="text-xs text-gray-500">Xin chào</p>
-                                <p>{user.name}</p>
-                            </div>
-                            <Link
-                                href="/logout"
-                                method="post"
-                                as="button"
-                                className="rounded-full border border-gray-800 px-4 py-2 text-sm"
+                        <div className="dropdown dropdown-end">
+                            <label
+                                tabIndex={0}
+                                className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
                             >
-                                Đăng xuất
-                            </Link>
+                                <div className="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center text-white font-bold text-sm">
+                                    {user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-xs text-gray-500">Xin chào</p>
+                                    <p className="text-sm">{user.name}</p>
+                                </div>
+                            </label>
+                            <ul
+                                tabIndex={0}
+                                className="dropdown-content z-50 menu p-2 shadow bg-white rounded-box w-52 border border-gray-200"
+                            >
+                                <li>
+                                    <Link href="/results" className="text-gray-800">
+                                        Kết quả bài thi
+                                    </Link>
+                                </li>
+                                <li>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/logout"
+                                        method="post"
+                                        as="button"
+                                        className="text-gray-800"
+                                    >
+                                        Đăng xuất
+                                    </Link>
+                                </li>
+                            </ul>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
