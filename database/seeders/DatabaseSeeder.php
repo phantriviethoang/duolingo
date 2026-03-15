@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             TestSeeder::class,
+            ListeningTestSeeder::class,
             TestResultSeeder::class,
         ]);
     }

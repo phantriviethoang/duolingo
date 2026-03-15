@@ -32,7 +32,6 @@ class TestQuestion extends Model
 
     protected $casts = [
         'options' => 'array',
-        'correct_option_id' => 'integer',
         'question_number' => 'integer',
     ];
 

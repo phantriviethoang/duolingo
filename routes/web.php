@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\TestQuestionController;
 use App\Http\Controllers\TestResultController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -46,9 +47,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('/admin/tests/{test}', [TestController::class, 'update'])->name('tests.update');
     Route::delete('/admin/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
 
-    Route::get('/admin/questions', function () {
-        return inertia('Admin/Questions');
-    })->name('admin.questions');
+    Route::get('/admin/questions', [TestQuestionController::class, 'adminIndex'])->name('admin.questions');
+    Route::get('/admin/questions/create', [TestQuestionController::class, 'create'])->name('questions.create');
+    Route::post('/admin/questions', [TestQuestionController::class, 'store'])->name('questions.store');
+    Route::get('/admin/questions/{testQuestion}/edit', [TestQuestionController::class, 'edit'])->name('questions.edit');
+    Route::put('/admin/questions/{testQuestion}', [TestQuestionController::class, 'update'])->name('questions.update');
+    Route::delete('/admin/questions/{testQuestion}', [TestQuestionController::class, 'destroy'])->name('questions.destroy');
 
     Route::get('/admin/users', function () {
         return inertia('Admin/Users');

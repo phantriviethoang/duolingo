@@ -62,7 +62,7 @@ export default function Edit({ test }) {
 
     const submit = (e) => {
         e.preventDefault();
-        put(`/tests/${test.id}`, {
+        put(`/admin/tests/${test.id}`, {
             preserveScroll: true,
         });
     };
@@ -256,7 +256,7 @@ export default function Edit({ test }) {
                                             {question.options.map(
                                                 (option, oIndex) => (
                                                     <div
-                                                        key={oIndex}
+                                                        key={option.id}
                                                         className="flex gap-2 items-center"
                                                     >
                                                         <input
