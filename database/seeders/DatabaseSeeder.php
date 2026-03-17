@@ -26,12 +26,11 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'role' => 'student',
+            'role' => 'user',
         ]);
 
         $this->call([
             TestSeeder::class,
-            ListeningTestSeeder::class,
             TestResultSeeder::class,
         ]);
     }

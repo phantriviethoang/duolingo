@@ -5,39 +5,41 @@ import Logo from "@/Components/Logo";
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
+        name: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
     });
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const submit = (e) => {
-        // e.preventDefault();
-        // post(route('register'), {
-        //     onFinish: () => reset('password', 'password_confirmation'),
-        // });
+        e.preventDefault();
+        post(route('register'), {
+            onFinish: () => reset('password', 'password_confirmation'),
+        });
     };
 
     return (
         <>
             <Head title="Đăng ký" />
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+            <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
                 <div className="max-w-md w-full">
-                    {/* Logo Section */}
                     <div className="text-center mb-8">
                         <div className="mx-auto mb-4 flex justify-center">
                             <Logo className="h-20 w-20" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">LingGo</h1>
-                        <p className="text-gray-600">Học ngôn ngữ thông minh, hiệu quả</p>
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                            LingGo
+                        </h1>
                     </div>
 
                     {/* Register Form */}
                     <div className="bg-white rounded-2xl shadow-xl p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Đăng ký</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                            Đăng ký
+                        </h2>
 
                         <form onSubmit={submit} className="space-y-6">
                             {/* Name Field */}
@@ -52,14 +54,18 @@ export default function Register() {
                                     <input
                                         type="text"
                                         value={data.name}
-                                        onChange={(e) => setData('name', e.target.value)}
+                                        onChange={(e) =>
+                                            setData("name", e.target.value)
+                                        }
                                         className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                         placeholder="Nhập họ và tên của bạn"
                                         required
                                     />
                                 </div>
                                 {errors.name && (
-                                    <p className="mt-2 text-sm text-red-600">{errors.name}</p>
+                                    <p className="mt-2 text-sm text-red-600">
+                                        {errors.name}
+                                    </p>
                                 )}
                             </div>
 
@@ -75,14 +81,18 @@ export default function Register() {
                                     <input
                                         type="email"
                                         value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
+                                        onChange={(e) =>
+                                            setData("email", e.target.value)
+                                        }
                                         className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                         placeholder="Nhập email của bạn"
                                         required
                                     />
                                 </div>
                                 {errors.email && (
-                                    <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                                    <p className="mt-2 text-sm text-red-600">
+                                        {errors.email}
+                                    </p>
                                 )}
                             </div>
 
@@ -96,16 +106,22 @@ export default function Register() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type={showPassword ? 'text' : 'password'}
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
                                         value={data.password}
-                                        onChange={(e) => setData('password', e.target.value)}
+                                        onChange={(e) =>
+                                            setData("password", e.target.value)
+                                        }
                                         className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                         placeholder="Nhập mật khẩu"
                                         required
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
+                                        onClick={() =>
+                                            setShowPassword(!showPassword)
+                                        }
                                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                     >
                                         {showPassword ? (
@@ -116,7 +132,9 @@ export default function Register() {
                                     </button>
                                 </div>
                                 {errors.password && (
-                                    <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+                                    <p className="mt-2 text-sm text-red-600">
+                                        {errors.password}
+                                    </p>
                                 )}
                             </div>
 
@@ -130,16 +148,29 @@ export default function Register() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        type={
+                                            showConfirmPassword
+                                                ? "text"
+                                                : "password"
+                                        }
                                         value={data.password_confirmation}
-                                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                "password_confirmation",
+                                                e.target.value,
+                                            )
+                                        }
                                         className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                         placeholder="Nhập lại mật khẩu"
                                         required
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        onClick={() =>
+                                            setShowConfirmPassword(
+                                                !showConfirmPassword,
+                                            )
+                                        }
                                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                     >
                                         {showConfirmPassword ? (
@@ -150,23 +181,28 @@ export default function Register() {
                                     </button>
                                 </div>
                                 {errors.password_confirmation && (
-                                    <p className="mt-2 text-sm text-red-600">{errors.password_confirmation}</p>
+                                    <p className="mt-2 text-sm text-red-600">
+                                        {errors.password_confirmation}
+                                    </p>
                                 )}
                             </div>
 
                             {/* Submit Button */}
                             <button
                                 type="submit"
+                                // href={route("register")}
                                 disabled={processing}
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {processing ? (
                                     <div className="flex items-center justify-center">
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="ml-2">Đang đăng ký...</span>
+                                        <span className="ml-2">
+                                            Đang đăng ký...
+                                        </span>
                                     </div>
                                 ) : (
-                                    'Đăng ký'
+                                    "Đăng ký"
                                 )}
                             </button>
                         </form>
@@ -174,9 +210,9 @@ export default function Register() {
                         {/* Login Link */}
                         <div className="mt-8 text-center border-t pt-6">
                             <p className="text-sm text-gray-600">
-                                Đã có tài khoản?{' '}
+                                Đã có tài khoản?{" "}
                                 <Link
-                                    // href={route('login')}
+                                    href={route("login")}
                                     className="font-medium text-blue-600 hover:text-blue-800"
                                 >
                                     Đăng nhập ngay

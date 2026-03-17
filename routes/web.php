@@ -21,6 +21,7 @@ Route::get('/contact', function () {
 Route::get('/register', function () {
     return inertia('Auth/Register');
 })->middleware('guest');
+Route::post('/register', [AuthController::class, 'register'])->name('register');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
