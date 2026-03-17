@@ -1,11 +1,8 @@
 import { Head, Link, useForm } from "@inertiajs/react";
-import { Eye, EyeOff } from "lucide-react";
+// import { Eye, EyeOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { route } from "ziggy-js";
 import Logo from "@/Components/Logo";
-
-
-
 
 export default function Login({ canResetPassword = true }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -39,51 +36,60 @@ export default function Login({ canResetPassword = true }) {
     return (
         <>
             <Head title="Đăng nhập" />
-            <div className="bg-[#bcdfff] flex items-center justify-center px-4 py-12">
-                <div className="w-full max-w-xl rounded-[28px] border border-[#8ea7d2] bg-white p-10 text-center shadow-[0_20px_60px_rgba(87,128,185,0.25)] ">
+            <div className="flex items-center justify-center px-4 py-12">
+                <div className="w-full max-w-xl shadow-xl rounded-xl border-none bg-white p-10 text-center ">
                     <div className="mx-auto mb-6 flex justify-center">
                         <Logo className="h-16 w-16" />
                     </div>
-                    <h1 className="text-3xl font-semibold text-slate-900">Đăng nhập</h1>
+                    <h1 className="text-3xl font-semibold text-slate-900">
+                        Đăng nhập
+                    </h1>
 
-                    <form onSubmit={handleSubmit} className="mt-8 space-y-6 text-left">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="mt-8 space-y-6 text-left"
+                    >
                         <div>
-                            <label className="text-sm font-medium text-slate-700">Tài khoản</label>
+                            <label className="text-sm font-medium text-slate-700">
+                                Tài khoản
+                            </label>
                             <input
                                 type="email"
                                 value={data.email}
-                                onChange={(e) => setData("email", e.target.value)}
-                                className="mt-2 w-full border-b border-slate-400 bg-transparent py-2 text-lg text-slate-800 outline-none focus:border-slate-900"
+                                onChange={(e) =>
+                                    setData("email", e.target.value)
+                                }
+                                className="mt-2 w-full border-slate-400 bg-transparent py-2 text-lg text-slate-800 outline-none focus:border-slate-900"
                                 placeholder="Nhập email của bạn"
                                 required
                             />
                             {errors.email && (
-                                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                                <p className="mt-1 text-sm text-red-500">
+                                    {errors.email}
+                                </p>
                             )}
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-slate-700">Mật khẩu</label>
-                            <div className="mt-2 flex items-center border-b border-slate-400">
+                            <label className="text-sm font-medium text-slate-700">
+                                Mật khẩu
+                            </label>
+                            <div className="mt-2 flex items-center border-slate-400">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={data.password}
-                                    onChange={(e) => setData("password", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("password", e.target.value)
+                                    }
                                     className="w-full bg-transparent py-2 text-lg text-slate-800 outline-none"
                                     placeholder="Nhập mật khẩu"
                                     required
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    className="p-1 text-slate-500"
-                                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                                >
-                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                                <p className="mt-1 text-sm text-red-500">
+                                    {errors.password}
+                                </p>
                             )}
                         </div>
 
@@ -97,11 +103,17 @@ export default function Login({ canResetPassword = true }) {
                     </form>
 
                     <div className="mt-6 flex items-center justify-between text-sm text-slate-700">
-                        <Link href={registerHref} className="hover:text-[#1f7dd8]">
+                        <Link
+                            href={registerHref}
+                            className="hover:text-[#1f7dd8]"
+                        >
                             Đăng ký tài khoản
                         </Link>
                         {canResetPassword && (
-                            <Link href={forgotHref || "#"} className="hover:text-[#1f7dd8]">
+                            <Link
+                                href={forgotHref || "#"}
+                                className="hover:text-[#1f7dd8]"
+                            >
                                 Quên mật khẩu?
                             </Link>
                         )}

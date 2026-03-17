@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestQuestionController;
 use App\Http\Controllers\TestResultController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 //
@@ -29,10 +29,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 
 // dethi
 Route::middleware(['auth'])->group(function () {
+    // hien thi ket qua bai lam
     Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
+
+    // chi tiet
     Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
 
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
+    Route::get('/tests/{test}', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{test}/take', [TestController::class, 'take'])->name('tests.take');
     Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->name('results.store');
 });
@@ -59,5 +63,3 @@ Route::middleware(['auth', 'admin'])->group(function () {
         return inertia('Admin/Users');
     })->name('admin.users');
 });
-
-Route::get('/tests/{test}', [TestController::class, 'show'])->name('tests.show');

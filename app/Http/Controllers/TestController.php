@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTestRequest;
 use App\Http\Requests\UpdateTestRequest;
 use App\Models\Test;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TestController extends Controller
@@ -64,11 +63,11 @@ class TestController extends Controller
             ]);
         } catch (\Exception $e) {
             // Nếu có lỗi, vẫn trả về trang với mảng rỗng
-            \Log::error('TestController@index error: ' . $e->getMessage());
+            \Log::error('TestController@index error: '.$e->getMessage());
 
             return Inertia::render('Tests/Index', [
                 'tests' => [],
-                'error' => 'Có lỗi xảy ra khi tải dữ liệu: ' . $e->getMessage(),
+                'error' => 'Có lỗi xảy ra khi tải dữ liệu: '.$e->getMessage(),
             ]);
         }
     }
@@ -87,51 +86,39 @@ class TestController extends Controller
     public function store(StoreTestRequest $request)
     {
         $data = $request->validated();
-        $questionsData = $data['questions'] ?? [];
-        $data['total_questions'] = count($questionsData);
 
-        // Remove questions from data before creating Test
+        $questions = $data['questions'] ?? [];
         unset($data['questions']);
+
+        $data['total_questions'] = count($questions);
 
         $test = Test::create($data);
 
-        // Creates questions
-        foreach ($questionsData as $index => $qData) {
-            // Chuẩn bị options
-            $options = [];
-            $correctOptionId = "A"; // Default to "A"
+        foreach ($questions as $q) {
+            // options
+            $options = collect($q['options'] ?? [])->map(function ($opt, $i) {
+                return [
+                    'id' => $opt['id'] ?? chr(65 + $i),
+                    'text' => $opt['text'] ?? '',
+                ];
+            })->toArray();
 
-            // Checking if options are simple strings or objects
-            // The frontend likely sends objects {id, text, is_correct} or similar
-            // Based on Take.jsx, options have id, text.
-
-            if (isset($qData['options']) && is_array($qData['options'])) {
-                foreach ($qData['options'] as $optIndex => $option) {
-                    // Get option ID from option object or use letter (A, B, C, D)
-                    $optId = is_array($option) && isset($option['id']) ? $option['id'] : chr(65 + $optIndex);
-                    $options[] = [
-                        'id' => (string) $optId,
-                        'text' => is_array($option) ? ($option['text'] ?? '') : $option,
-                    ];
-
-                    if (is_array($option) && isset($option['is_correct']) && $option['is_correct']) {
-                        $correctOptionId = (string) $optId;
-                    }
-                }
-            }
+            // lấy đáp án đúng
+            $correct = collect($q['options'] ?? [])
+                ->firstWhere('is_correct', true);
 
             $test->questions()->create([
-                'question' => $qData['question'],
+                'question' => $q['question'],
                 'options' => $options,
-                'correct_option_id' => (string) $correctOptionId,
-                'explanation' => $qData['explanation'] ?? null,
-                'translation' => $qData['translation'] ?? null,
-                'detailed_explanation' => $qData['detailed_explanation'] ?? null,
+                'correct_option_id' => $correct['id'] ?? 'A',
+                'explanation' => $q['explanation'] ?? null,
+                'translation' => $q['translation'] ?? null,
+                'detailed_explanation' => $q['detailed_explanation'] ?? null,
             ]);
         }
 
         return redirect()->route('admin.tests')
-            ->with('success', 'Đề thi đã được tạo thành công!');
+            ->with('success', 'Đề thi đã được tạo!');
     }
 
     /**
@@ -143,7 +130,6 @@ class TestController extends Controller
             'test' => [
                 'id' => $test->id,
                 'title' => $test->title,
-                // 'email' => $test->email,
                 'description' => $test->description,
                 'duration' => $test->duration,
                 'audio_path' => $test->audio_path,
@@ -164,7 +150,6 @@ class TestController extends Controller
             'test' => [
                 'id' => $test->id,
                 'title' => $test->title,
-                // 'email' => $test->email,
                 'description' => $test->description,
                 'duration' => $test->duration,
                 'audio_path' => $test->audio_path,
@@ -181,48 +166,41 @@ class TestController extends Controller
     public function update(UpdateTestRequest $request, Test $test)
     {
         $data = $request->validated();
-        $questionsData = $data['questions'] ?? [];
-        $data['total_questions'] = count($questionsData);
 
+        $questions = $data['questions'] ?? [];
         unset($data['questions']);
 
+        $data['total_questions'] = count($questions);
+
+        // update
         $test->update($data);
 
-        // Delete existing questions and recreate (Strategies: sync, or delete-all-create-new)
-        // For simplicity and to ensure order/ids match the editor view:
         $test->questions()->delete();
 
-        foreach ($questionsData as $qData) {
-            $options = [];
-            $correctOptionId = "A"; // Default to "A"
+        foreach ($questions as $q) {
 
-            if (isset($qData['options']) && is_array($qData['options'])) {
-                foreach ($qData['options'] as $optIndex => $option) {
-                    // Get option ID from option object or use letter (A, B, C, D)
-                    $optId = is_array($option) && isset($option['id']) ? $option['id'] : chr(65 + $optIndex);
-                    $options[] = [
-                        'id' => (string) $optId,
-                        'text' => is_array($option) ? ($option['text'] ?? '') : $option,
-                    ];
+            $options = collect($q['options'] ?? [])->map(function ($opt, $i) {
+                return [
+                    'id' => $opt['id'] ?? chr(65 + $i),
+                    'text' => $opt['text'] ?? '',
+                ];
+            })->toArray();
 
-                    if (is_array($option) && isset($option['is_correct']) && $option['is_correct']) {
-                        $correctOptionId = (string) $optId;
-                    }
-                }
-            }
+            $correct = collect($q['options'] ?? [])
+                ->firstWhere('is_correct', true);
 
             $test->questions()->create([
-                'question' => $qData['question'],
+                'question' => $q['question'],
                 'options' => $options,
-                'correct_option_id' => (string) $correctOptionId,
-                'explanation' => $qData['explanation'] ?? null,
-                'translation' => $qData['translation'] ?? null,
-                'detailed_explanation' => $qData['detailed_explanation'] ?? null,
+                'correct_option_id' => $correct['id'] ?? 'A',
+                'explanation' => $q['explanation'] ?? null,
+                'translation' => $q['translation'] ?? null,
+                'detailed_explanation' => $q['detailed_explanation'] ?? null,
             ]);
         }
 
         return redirect()->route('admin.tests')
-            ->with('success', 'Đề thi đã được cập nhật thành công!');
+            ->with('success', 'Đề thi đã được cập nhật!');
     }
 
     /**

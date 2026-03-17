@@ -7,15 +7,18 @@ export default function Index({ results }) {
             <Head title="Lịch sử làm bài" />
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2">Lịch sử làm bài</h1>
-                    <p className="text-base-content/70">
+                    <h1 className="text-2xl font-bold mb-2">Lịch sử làm bài</h1>
+                    <p className="text-base-content/70 text-md">
                         Xem lại kết quả và chữa bài các đề đã làm
                     </p>
                 </div>
 
                 {results.length === 0 ? (
                     <div className="text-center py-12">
-                        <Trophy size={80} className="mx-auto text-base-content/30 mb-4" />
+                        <Trophy
+                            size={80}
+                            className="mx-auto text-base-content/30 mb-4"
+                        />
                         <p className="text-lg text-base-content/70 mb-4">
                             Bạn chưa làm bài thi nào
                         </p>
@@ -39,32 +42,35 @@ export default function Index({ results }) {
                                             <div className="flex items-center gap-4 text-sm text-base-content/70">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar size={16} />
-                                                    <span>{result.completed_at}</span>
+                                                    <span>
+                                                        {result.completed_at}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="text-right">
                                             <div
-                                                className={`text-3xl font-bold mb-1 ${result.score >= 70
-                                                    ? 'text-success'
-                                                    : result.score >= 50
-                                                        ? 'text-warning'
-                                                        : 'text-error'
-                                                    }`}
+                                                className={`text-2xl font-bold mb-1 ${
+                                                    result.score >= 70
+                                                        ? "text-success"
+                                                        : result.score >= 50
+                                                          ? "text-warning"
+                                                          : "text-error"
+                                                }`}
                                             >
                                                 {result.score}%
                                             </div>
-                                            <div className="badge badge-outline">
+                                            <div className="badge badge-outline h-8">
                                                 {result.score >= 70
-                                                    ? 'Đạt'
-                                                    : 'Chưa đạt'}
+                                                    ? "Đạt"
+                                                    : "Chưa đạt"}
                                             </div>
                                         </div>
                                     </div>
                                     <div className="card-actions justify-end mt-4">
                                         <Link
                                             href={`/results/${result.id}`}
-                                            className="btn btn-sm btn-primary"
+                                            className="btn btn-sm btn-primary rounded-lg"
                                         >
                                             Xem chi tiết & chữa bài
                                         </Link>

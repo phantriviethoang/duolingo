@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TestQuestion;
 use App\Models\Test;
+use App\Models\TestQuestion;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -71,7 +71,6 @@ class TestQuestionController extends Controller
             'explanation' => ['nullable', 'string'],
         ]);
 
-        // Ensure correct_option_id is stored as a string for consistency
         $validated['correct_option_id'] = (string) $validated['correct_option_id'];
 
         TestQuestion::create($validated);
@@ -120,7 +119,6 @@ class TestQuestionController extends Controller
             'explanation' => ['nullable', 'string'],
         ]);
 
-        // Ensure correct_option_id is stored as a string for consistency
         $validated['correct_option_id'] = (string) $validated['correct_option_id'];
 
         $testQuestion->update($validated);

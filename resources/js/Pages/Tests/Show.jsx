@@ -7,7 +7,7 @@ export default function Show({ test }) {
 
     const handleDelete = () => {
         if (confirm("Bạn có chắc chắn muốn xóa đề thi này?")) {
-            router.delete(`/tests/${test.id}`);
+            router.delete(`/admin/tests/${test.id}`);
         }
     };
 
@@ -26,7 +26,7 @@ export default function Show({ test }) {
                     {isAdmin && (
                         <div className="flex gap-2">
                             <Link
-                                href={`/tests/${test.id}/edit`}
+                                href={`/admin/tests/${test.id}/edit`}
                                 className="btn btn-ghost btn-sm gap-2"
                             >
                                 <Edit size={16} />
@@ -45,7 +45,7 @@ export default function Show({ test }) {
 
                 <div className="card bg-base-100 shadow-xl">
                     <div className="card-body">
-                        <h1 className="card-title text-3xl mb-4">
+                        <h1 className="card-title text-2xl mb-3">
                             {test.title}
                         </h1>
 
@@ -58,13 +58,13 @@ export default function Show({ test }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-primary/10 rounded-lg">
-                                    <Clock size={24} className="text-primary" />
+                                    <Clock size={20} className="text-primary" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-base-content/70">
                                         Thời gian làm bài
                                     </p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-md font-semibold">
                                         {test.duration} phút
                                     </p>
                                 </div>
@@ -72,13 +72,13 @@ export default function Show({ test }) {
 
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-secondary/10 rounded-lg">
-                                    <Users size={24} className="text-secondary" />
+                                    <Users size={20} className="text-secondary" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-base-content/70">
                                         Số câu hỏi
                                     </p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-md font-semibold">
                                         {test.total_questions} câu
                                     </p>
                                 </div>
@@ -86,13 +86,13 @@ export default function Show({ test }) {
 
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-accent/10 rounded-lg">
-                                    <Users size={24} className="text-accent" />
+                                    <Users size={20} className="text-accent" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-base-content/70">
                                         Số lượt làm bài
                                     </p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-md font-semibold">
                                         {test.attempts.toLocaleString()} lượt
                                     </p>
                                 </div>
@@ -101,7 +101,7 @@ export default function Show({ test }) {
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-info/10 rounded-lg">
                                     <Calendar
-                                        size={24}
+                                        size={20}
                                         className="text-info"
                                     />
                                 </div>
@@ -109,16 +109,16 @@ export default function Show({ test }) {
                                     <p className="text-sm text-base-content/70">
                                         Ngày tạo
                                     </p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-md font-semibold">
                                         {test.created_at}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="divider"></div>
+                        {/* <div className="divider"></div> */}
 
-                        <div className="bg-base-200 rounded-lg p-6 mb-6">
+                        <div className="bg-base-200 mt-3 rounded-lg p-6 mb-6">
                             <h3 className="font-semibold text-lg mb-3">
                                 Hướng dẫn làm bài
                             </h3>
@@ -156,9 +156,9 @@ export default function Show({ test }) {
                         <div className="card-actions justify-center">
                             <Link
                                 href={`/tests/${test.id}/take`}
-                                className="btn btn-primary btn-lg gap-2"
+                                className="btn btn-primary rounded-2xl gap-2"
                             >
-                                <Play size={20} />
+                                <Play size={18} />
                                 Bắt đầu làm bài
                             </Link>
                         </div>

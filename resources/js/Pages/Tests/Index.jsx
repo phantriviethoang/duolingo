@@ -8,9 +8,6 @@ export default function Index({ tests = [], flash, error }) {
             <div className="bg-white">
                 <section className="bg-[#cfe8ff] py-12">
                     <div className="container mx-auto px-4 text-center text-gray-900">
-                        <span className="inline-flex items-center justify-center rounded-full border border-gray-900 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-gray-700">
-                            Bắt đầu
-                        </span>
                         <h1 className="mt-4 text-3xl font-bold">Đề thi online LingGo</h1>
                         <p className="mt-4 text-lg font-semibold">
                             Chọn đề thi phù hợp và bắt đầu luyện tập ngay hôm nay.
@@ -25,17 +22,16 @@ export default function Index({ tests = [], flash, error }) {
                     <div className="mb-10 grid gap-4 rounded-3xl border border-gray-200 bg-white/80 p-6 text-gray-800 md:grid-cols-3">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Thời lượng</p>
-                            <p className="mt-2 text-lg font-semibold">{tests[0]?.duration ?? '--'} phút / bài</p>
                             <p className="mt-1 text-sm text-gray-500">Thời gian tiêu chuẩn theo đề thi thật.</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Cấp độ</p>
-                            <p className="mt-2 text-lg font-semibold">IELTS · TOEIC · Grammar</p>
+                            <p className="mt-2 text-md font-semibold">TOEIC · Grammar</p>
                             <p className="mt-1 text-sm text-gray-500">Đa dạng mức độ từ cơ bản đến nâng cao.</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Hướng dẫn</p>
-                            <p className="mt-2 text-lg font-semibold">Đọc mô tả đề thi trước khi bắt đầu.</p>
+                            <p className="mt-2 text-md font-semibold">Đọc mô tả đề thi trước khi bắt đầu.</p>
                             <p className="mt-1 text-sm text-gray-500">Nhấn “Bắt đầu thi” để vào phòng thi.</p>
                         </div>
                     </div>
@@ -92,7 +88,7 @@ export default function Index({ tests = [], flash, error }) {
                                     </div>
 
                                     <Link
-                                        href={`/tests/${test.id}/take`}
+                                        href={`/tests/${test.id}`}
                                         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white"
                                     >
                                         <Play size={16} />
