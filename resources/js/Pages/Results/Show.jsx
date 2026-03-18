@@ -2,6 +2,7 @@ import { Head, Link } from "@inertiajs/react";
 import { CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function Show({ test, result, questions }) {
+
     return (
         <>
             <Head title={`Kết quả - ${test.title}`} />
@@ -41,7 +42,8 @@ export default function Show({ test, result, questions }) {
                                 {result.total} câu hỏi
                             </p>
                             <p className="text-sm text-base-content/60 mt-2">
-                                Hoàn thành lúc: {result.completed_at}
+                                Hoàn thành lúc:{" "}
+                                {new Date().toLocaleDateString('en-GB')}
                             </p>
                         </div>
                     </div>
@@ -72,19 +74,17 @@ export default function Show({ test, result, questions }) {
                                 return (
                                     <div
                                         key={question.id}
-                                        className={`p-4 rounded-lg border-2 ${
-                                            isCorrect
+                                        className={`p-4 rounded-lg border-2 ${isCorrect
                                                 ? "border-green-200 bg-success/10"
                                                 : "border-red-200 bg-error/10"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex items-start gap-2 mb-2">
                                             <span
-                                                className={`text-white rounded-md badge ${
-                                                    isCorrect
+                                                className={`text-white rounded-md badge ${isCorrect
                                                         ? "badge-success"
                                                         : "badge-error"
-                                                }`}
+                                                    }`}
                                             >
                                                 Câu {index + 1}
                                             </span>
@@ -132,13 +132,12 @@ export default function Show({ test, result, questions }) {
                                                     return (
                                                         <div
                                                             key={option.id}
-                                                            className={`p-2 rounded ${
-                                                                isCorrectAnswer
+                                                            className={`p-2 rounded ${isCorrectAnswer
                                                                     ? "bg-success/15 border border-success/50"
                                                                     : isUserAnswer
-                                                                      ? "bg-error/15 border border-error/50"
-                                                                      : "bg-base-200"
-                                                            }`}
+                                                                        ? "bg-error/15 border border-error/50"
+                                                                        : "bg-base-200"
+                                                                }`}
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 {isCorrectAnswer && (
@@ -163,7 +162,7 @@ export default function Show({ test, result, questions }) {
                                                                 >
                                                                     {String.fromCharCode(
                                                                         65 +
-                                                                            optIndex,
+                                                                        optIndex,
                                                                     )}
                                                                     .{" "}
                                                                     {
