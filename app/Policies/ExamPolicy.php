@@ -53,7 +53,7 @@ class ExamPolicy
     public function submitSection(User $user, Exam $exam): bool
     {
         // Kiểm tra user có user_progress cho exam này không
-        $userProgress = $user->progress()
+        $userProgress = $user->userProgress()
             ->where('exam_id', $exam->id)
             ->first();
 
@@ -76,7 +76,7 @@ class ExamPolicy
      */
     public function resume(User $user, Exam $exam): bool
     {
-        $userProgress = $user->progress()
+        $userProgress = $user->userProgress()
             ->where('exam_id', $exam->id)
             ->first();
 

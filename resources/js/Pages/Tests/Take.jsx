@@ -21,6 +21,47 @@ export default function Take({ test }) {
 
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
+    // Lưu/Restore đáp án từ localStorage
+    const storageKey = `test_${test?.id}_${test?.retake_wrong ? 'retake' : 'normal'}_answers`;
+
+    // Load đáp án từ localStorage khi component mount
+    useEffect(() => {
+        if (!test?.id) return;
+        try {
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                setSelectedAnswers(JSON.parse(saved));
+            }
+        } catch (error) {
+            console.error('Error loading saved answers:', error);
+        }
+    }, [test?.id]);
+
+    // Lưu đáp án vào localStorage khi có thay đổi
+    useEffect(() => {
+        if (!test?.id || isSubmitted || Object.keys(selectedAnswers).length === 0) return;
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(selectedAnswers));
+        } catch (error) {
+            console.error('Error saving answers:', error);
+        }
+    }, [selectedAnswers, test?.id, isSubmitted]);
+
+    // Cảnh báo khi back, F5, hoặc đóng tab nếu đã chọn đáp án
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (isSubmitted || Object.keys(selectedAnswers).length === 0) {
+                return;
+            }
+            e.preventDefault();
+            e.returnValue = 'Bạn đang làm bài thi. Nếu rời đi, tiến độ của bạn sẽ được lưu và có thể khôi phục lại. Bạn có chắc chắn muốn rời khỏi?';
+            return e.returnValue;
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isSubmitted, selectedAnswers]);
+
     // Guard clauses
     if (!test) {
         return (
@@ -112,10 +153,20 @@ export default function Take({ test }) {
 
         router.post(
             `/tests/${test.id}/results`,
-            { answers: selectedAnswers },
+            { 
+                answers: selectedAnswers,
+                retake_wrong: test.retake_wrong,
+                previous_result_id: test.previous_result_id
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
+                    // Xóa đáp án khỏi localStorage sau khi nộp bài thành công
+                    try {
+                        localStorage.removeItem(storageKey);
+                    } catch (error) {
+                        console.error('Error clearing saved answers:', error);
+                    }
                     setIsSubmitted(true);
                 },
                 onError: (errors) => {
@@ -133,7 +184,11 @@ export default function Take({ test }) {
 
         router.post(
             `/tests/${test.id}/results`,
-            { answers: selectedAnswers },
+            { 
+                answers: selectedAnswers,
+                retake_wrong: test.retake_wrong,
+                previous_result_id: test.previous_result_id
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {

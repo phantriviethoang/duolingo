@@ -64,7 +64,7 @@ class ExamController extends Controller
         // Lấy dữ liệu tiến độ user cho mỗi exam
         $user = auth()->user();
         $exams = $exams->through(function ($exam) use ($user) {
-            $userProgress = $user->progress()
+            $userProgress = $user->userProgress()
                 ->where('exam_id', $exam->id)
                 ->first();
 
@@ -102,7 +102,7 @@ class ExamController extends Controller
         $exam->load('levelRelation', 'sections.questions');
 
         $userProgress = auth()->user()
-            ->progress()
+            ->userProgress()
             ->where('exam_id', $exam->id)
             ->first();
 
@@ -140,7 +140,7 @@ class ExamController extends Controller
 
         // Lấy hoặc tạo user progress mới
         $userProgress = auth()->user()
-            ->progress()
+            ->userProgress()
             ->where('exam_id', $exam->id)
             ->firstOrCreate([
                 'exam_id' => $exam->id,
@@ -162,7 +162,6 @@ class ExamController extends Controller
 
         // Lấy các câu hỏi của section đó
         $questions = $section->questions()
-            ->with('exam')
             ->get()
             ->map(fn ($q) => [
                 'id' => $q->id,

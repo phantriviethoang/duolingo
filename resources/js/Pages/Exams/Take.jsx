@@ -13,7 +13,14 @@ export default function Take({ exam, section, questions, total_sections }) {
         answers: {},
     });
 
-    const [timeLeft, setTimeLeft] = useState(exam.duration * 60); // Convert to seconds
+    const [timeLeft, setTimeLeft] = useState(() => {
+        // Tính thời gian thực tế dựa trên chế độ high-quality
+        let baseDuration = exam.duration * 60; // Convert to seconds
+        if (exam.is_high_quality) {
+            baseDuration = Math.ceil(baseDuration * 0.8); // 20% ít thời gian hơn
+        }
+        return baseDuration;
+    });
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const [submitResult, setSubmitResult] = useState(null);
 
@@ -56,6 +63,11 @@ export default function Take({ exam, section, questions, total_sections }) {
         return () => clearInterval(timer);
     }, []);
 
+    // Check if all questions are answered - PHẢI KỌC TRƯỚC khi dùng trong useEffect
+    const answeredCount = Object.values(data.answers).filter(v => v !== null).length;
+    const allAnswered = answeredCount === questions.length;
+
+    // Format time hh:mm:ss
     const formatTime = (seconds) => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -66,9 +78,21 @@ export default function Take({ exam, section, questions, total_sections }) {
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Check if all questions are answered
-    const answeredCount = Object.values(data.answers).filter(v => v !== null).length;
-    const allAnswered = answeredCount === questions.length;
+    // Cảnh báo khi back, F5, hoặc đóng tab nếu đã chọn đáp án
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            // Nếu không có câu nào được chọn hoặc đã submit xong thì không cảnh báo
+            if (answeredCount === 0 || submitResult) {
+                return;
+            }
+            e.preventDefault();
+            e.returnValue = 'Bạn đang làm bài exam. Nếu rời đi, tiến độ của bạn sẽ được tự động lưu. Bạn có chắc chắn muốn rời khỏi?';
+            return e.returnValue;
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [answeredCount, submitResult]);
 
     const handleAnswerChange = (questionId, optionId) => {
         setData('answers', {
@@ -112,9 +136,16 @@ export default function Take({ exam, section, questions, total_sections }) {
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-4">
                         {/* Left: Title */}
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                {exam.title}
-                            </h1>
+                            <div className="flex items-center gap-3 mb-1">
+                                <h1 className="text-2xl font-bold text-gray-900">
+                                    {exam.title}
+                                </h1>
+                                {exam.is_high_quality && (
+                                    <span className="badge badge-warning text-xs">
+                                        ⭐ HIGH QUALITY
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-sm text-gray-600">
                                 Phần {section.order}/{total_sections}
                             </p>
@@ -144,6 +175,23 @@ export default function Take({ exam, section, questions, total_sections }) {
                         <SaveIndicator isSaving={isSaving} lastSavedAt={lastSavedAt} error={saveError} />
                     </div>
                 </div>
+
+                {/* High-Quality Mode Info Banner */}
+                {exam.is_high_quality && (
+                    <div className="bg-amber-50 border-l-4 border-amber-500 mx-4 mb-4 p-4 rounded">
+                        <div className="flex items-start gap-3">
+                            <span className="text-2xl">⭐</span>
+                            <div>
+                                <h3 className="font-bold text-amber-900 mb-1">Chế độ High-Quality</h3>
+                                <ul className="text-sm text-amber-800 space-y-1">
+                                    <li>• Thời gian có hạn: <strong>20% ít hơn</strong> bình thường</li>
+                                    <li>• Yêu cầu điểm cao hơn: <strong>+20%</strong> so với bình thường</li>
+                                    <li>• Để thử thách khả năng của bạn</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Main Content */}
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

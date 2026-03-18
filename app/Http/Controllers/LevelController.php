@@ -17,7 +17,7 @@ class LevelController extends Controller
         // Lấy tất cả các level với số lượng exams
         $levels = Level::with([
             'exams' => function ($query) {
-                $query->select('id', 'level_id', 'name');
+                $query->select('id', 'level_id', 'title', 'description', 'duration', 'total_questions', 'is_active', 'is_high_quality', 'difficulty_score');
             }
         ])->get();
 

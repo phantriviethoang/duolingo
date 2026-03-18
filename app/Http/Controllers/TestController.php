@@ -214,9 +214,6 @@ class TestController extends Controller
             ->with('success', 'Đề thi đã được xóa thành công!');
     }
 
-    /**
-     * Show the test taking page
-     */
     public function take(Test $test)
     {
         // Kiểm tra test có tồn tại không
@@ -242,6 +239,31 @@ class TestController extends Controller
         // Tăng số lượt làm bài
         $test->increment('attempts');
 
+        $retakeWrong = request()->query('retake_wrong');
+        $resultId = request()->query('result_id');
+
+        if ($retakeWrong && $resultId) {
+            $previousResult = \App\Models\TestResult::where('id', $resultId)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if ($previousResult) {
+                $prevAnswers = (array)$previousResult->user_answer;
+                $wrongQuestions = collect();
+
+                foreach ($questions as $q) {
+                    $userAns = $prevAnswers[$q->id] ?? null;
+                    if ($userAns != $q->correct_option_id) {
+                        $wrongQuestions->push($q);
+                    }
+                }
+
+                if ($wrongQuestions->isNotEmpty()) {
+                    $questions = $wrongQuestions;
+                }
+            }
+        }
+
         // Transform questions for frontend (map to expected structure)
         $mappedQuestions = $questions->map(function ($q) {
             return [
@@ -250,7 +272,7 @@ class TestController extends Controller
                 'options' => is_array($q->options) ? $q->options : (is_string($q->options) ? json_decode($q->options, true) : []),
                 // Do not send correct_option_id, explanation, etc. to frontend during take
             ];
-        });
+        })->values();
 
         return Inertia::render('Tests/Take', [
             'test' => [
@@ -260,6 +282,8 @@ class TestController extends Controller
                 'duration' => $test->duration ?? 40,
                 'total_questions' => $questions->count(),
                 'questions' => $mappedQuestions,
+                'retake_wrong' => (bool)$retakeWrong,
+                'previous_result_id' => $resultId ? (int)$resultId : null,
             ],
         ]);
     }

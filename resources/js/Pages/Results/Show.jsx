@@ -1,8 +1,19 @@
 import { Head, Link } from "@inertiajs/react";
-import { CheckCircle2, AlertCircle, ArrowLeft, BookOpen } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowLeft, BookOpen, Filter } from "lucide-react";
 import Layout from "@/Layouts/Layout";
+import { useState } from "react";
 
 export default function Show({ test, result, questions }) {
+    const [filter, setFilter] = useState("all");
+
+    const enhancedQuestions = questions.map((q, idx) => ({ ...q, originalIndex: idx + 1 }));
+    const displayedQuestions = filter === "all" 
+        ? enhancedQuestions
+        : enhancedQuestions.filter(question => {
+            const userAnswerId = result.answers[question.id];
+            const correctOption = question.options.find((opt) => opt.is_correct);
+            return userAnswerId !== correctOption?.id;
+        });
 
     return (
         <Layout>
@@ -53,9 +64,33 @@ export default function Show({ test, result, questions }) {
                 {/* Chua bai */}
                 <div className="card bg-base-100 shadow-xl">
                     <div className="card-body">
-                        <h3 className="card-title mb-4">Chữa bài chi tiết</h3>
+                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                            <h3 className="card-title mb-0">Chữa bài chi tiết</h3>
+                            <div className="flex gap-2">
+                                <button 
+                                    className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-outline'}`}
+                                    onClick={() => setFilter('all')}
+                                >
+                                    Tất cả ({questions.length})
+                                </button>
+                                <button 
+                                    className={`btn btn-sm ${filter === 'wrong' ? 'btn-error' : 'btn-outline'}`}
+                                    onClick={() => setFilter('wrong')}
+                                >
+                                    Câu sai ({questions.length - result.correct})
+                                </button>
+                            </div>
+                        </div>
+
+                        {filter === 'wrong' && displayedQuestions.length === 0 && (
+                            <div className="text-center py-8 text-success">
+                                <CheckCircle2 size={48} className="mx-auto mb-2 opacity-50" />
+                                <p>Tuyệt vời! Bạn không làm sai câu nào.</p>
+                            </div>
+                        )}
+
                         <div className="space-y-4">
-                            {questions.map((question, index) => {
+                            {displayedQuestions.map((question, index) => {
                                 const userAnswerId =
                                     result.answers[question.id];
 
@@ -87,7 +122,7 @@ export default function Show({ test, result, questions }) {
                                                     : "badge-error"
                                                     }`}
                                             >
-                                                Câu {index + 1}
+                                                Câu {question.originalIndex}
                                             </span>
                                             <div className="flex justify-center items-center gap-1 mb-1">
                                                 {isCorrect ? (
@@ -229,18 +264,26 @@ export default function Show({ test, result, questions }) {
                             })}
                         </div>
 
-                        <div className="card-actions justify-center mt-6">
-                            <Link
-                                href="/tests"
-                                className="btn btn-primary rounded-xl btn-sm"
-                            >
-                                Làm bài khác
-                            </Link>
+                        <div className="card-actions justify-center mt-6 gap-3 flex-wrap">
+                            {result.correct < result.total && (
+                                <Link
+                                    href={`/tests/${test.id}/take?retake_wrong=1&result_id=${result.id}`}
+                                    className="btn btn-warning rounded-xl btn-sm text-warning-content font-semibold"
+                                >
+                                    Làm lại câu sai
+                                </Link>
+                            )}
                             <Link
                                 href={`/tests/${test.id}/take`}
                                 className="btn btn-outline rounded-xl btn-sm"
                             >
                                 Làm lại bài này
+                            </Link>
+                            <Link
+                                href="/tests"
+                                className="btn btn-primary rounded-xl btn-sm"
+                            >
+                                Làm bài khác
                             </Link>
                         </div>
                     </div>

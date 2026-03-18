@@ -31,7 +31,7 @@ class ExamResultService
             ->firstOrFail();
 
         // Lấy user progress
-        $userProgress = $user->progress()
+        $userProgress = $user->userProgress()
             ->where('exam_id', $exam->id)
             ->firstOrFail();
 
@@ -141,7 +141,7 @@ class ExamResultService
      */
     public function getExamStats(Exam $exam, Authenticatable $user): array
     {
-        $userProgress = $user->progress()
+        $userProgress = $user->userProgress()
             ->where('exam_id', $exam->id)
             ->first();
 

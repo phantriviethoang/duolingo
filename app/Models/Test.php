@@ -54,7 +54,7 @@ class Test extends Model
 
     public function userProgress()
     {
-        return $this->hasMany(UserProgress::class);
+        return $this->hasMany(UserProgress::class, 'exam_id');
     }
 
     public function statistics()

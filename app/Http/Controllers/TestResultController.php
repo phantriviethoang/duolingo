@@ -38,10 +38,26 @@ class TestResultController extends Controller
     {
         $data = $request->validate([
             'answers' => ['nullable', 'array'],
+            'retake_wrong' => ['nullable', 'boolean'],
+            'previous_result_id' => ['nullable', 'integer'],
         ]);
 
         // lay cau tra loi
         $answers = $data['answers'] ?? [];
+
+        if (!empty($data['retake_wrong']) && !empty($data['previous_result_id'])) {
+            $previousResult = TestResult::where('id', $data['previous_result_id'])
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if ($previousResult) {
+                $mergedAnswers = (array)$previousResult->user_answer;
+                foreach ($answers as $qId => $ans) {
+                    $mergedAnswers[$qId] = $ans;
+                }
+                $answers = $mergedAnswers;
+            }
+        }
 
         // get all
         $questions = $test->questions()->get();
@@ -94,11 +110,23 @@ class TestResultController extends Controller
         // map
         $mappedQuestions = $questions->map(function ($q) use ($answers, &$correct) {
             // lay cac dap an
-            $options = $q->options ?? [];
+            $rawOptions = is_array($q->options) ? $q->options : (is_string($q->options) ? json_decode($q->options, true) : []);
 
-            // gan ket qua dung
-            foreach ($options as &$opt) {
-                $opt['is_correct'] = $opt['id'] == $q->correct_option_id;
+            $formattedOptions = [];
+            foreach ($rawOptions ?? [] as $key => $opt) {
+                if (is_array($opt)) {
+                    $formattedOptions[] = [
+                        'id' => $opt['id'] ?? $key,
+                        'text' => $opt['text'] ?? '',
+                        'is_correct' => ($opt['id'] ?? $key) == $q->correct_option_id,
+                    ];
+                } else {
+                    $formattedOptions[] = [
+                        'id' => is_numeric($key) ? (int)$key : $key,
+                        'text' => (string)$opt,
+                        'is_correct' => $key == $q->correct_option_id,
+                    ];
+                }
             }
 
             // tinh diem
@@ -110,7 +138,7 @@ class TestResultController extends Controller
             return [
                 'id' => $q->id,
                 'question' => $q->question,
-                'options' => $options,
+                'options' => $formattedOptions,
                 'explanation' => $q->explanation,
                 'translation' => $q->translation,
                 'detailed_explanation' => $q->detailed_explanation,
