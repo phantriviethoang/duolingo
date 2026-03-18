@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            TestSeeder::class,
+            ComprehensiveTestSeeder::class,
             TestResultSeeder::class,
         ]);
     }

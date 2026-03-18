@@ -92,36 +92,82 @@ php artisan tinker
 
 ---
 
+## 🎨 UI/UX Improvements & Bug Fixes (18/03/2026)
+
+**Hoàn thành cải thiện giao diện và sửa lỗi:**
+
+- ✅ **Database Fix:** Thêm migration `add_section_id_to_test_questions_table` → liên kết câu hỏi với từng section
+- ✅ **Header Redesign:** Gradient blue, navigation mới (Levels, Tests, About, Contact, Admin), improved user menu
+- ✅ **UI Consistency:** Tests/Take.jsx và Exams/Take.jsx đồng nhất (layout, header, timer, progress bar, modals)
+- ✅ **Layout Wrapper:** Tất cả pages bao gồm Tests/Index, Tests/Take, Tests/Show, Results/Index, Results/Show
+- ✅ **Mobile Responsive:** Grid layout adaptive cho desktop/tablet/mobile
+- ✅ **Color Scheme:** Professional blue-gray palette với DaisyUI buttons
+
+**Tệp được cập nhật:**
+
+- AppHeader.jsx, Layout.jsx
+- Tests/Index.jsx, Tests/Take.jsx, Tests/Show.jsx
+- Results/Index.jsx, Results/Show.jsx
+- TestQuestion.php, Section.php (relationships)
+- Chi tiết: [UI_IMPROVEMENTS.md](UI_IMPROVEMENTS.md)
+
+---
+
 ## 📊 Metrics & Progress
 
-| Chỉ số                      | Trị số                 |
-| --------------------------- | ---------------------- |
-| **Phases Hoàn thành**       | 1/1 (PHASE 1.1) ✅     |
-| **Phases Trong tiến trình** | 0/3                    |
-| **Tasks Hoàn thành**        | 7/32                   |
-| **Migrations**              | 4 ✅                   |
-| **Models**                  | 4 (2 mới, 2 update) ✅ |
-| **Controllers**             | 1 ✅                   |
-| **Seeders**                 | 1 ✅                   |
-| **Thời gian ước tính**      | 17-21 ngày             |
-| **Ưu tiên**                 | 🔴 CAO                 |
+| Chỉ số                      | Trị số                         |
+| --------------------------- | ------------------------------ |
+| **Phases Hoàn thành**       | 3/4 (PHASE 1.1, 1.2, 2, 3) ✅  |
+| **Phases Trong tiến trình** | 1/4 (PHASE 4)                  |
+| **Tasks Hoàn thành**        | 28/32 ✅                       |
+| **Total Lines of Code**     | 2,500+ (Backend + Frontend)    |
+| **Database Migrations**     | 4 ✅                           |
+| **Models**                  | 4 (2 mới, 2 update) ✅         |
+| **Controllers**             | 2 (Exam, Level) ✅             |
+| **Seeders**                 | 2 ✅                           |
+| **React Components**        | 7 ✅                           |
+| **Custom Hooks**            | 1 ✅                           |
+| **Services**                | 1 ✅                           |
+| **Policies**                | 1 ✅                           |
+| **Thời gian ước tính**      | 21-24 ngày (87% hoàn thành)    |
+| **Ưu tiên**                 | 🟡 TRUNG BÌNH (giai đoạn cuối) |
 
 ---
 
 ## 💾 Cập nhật Gần Đây
 
-### 18 Tháng 3, 2026 - PHASE 1.1 HOÀN THÀNH
+### 20 Tháng 3, 2026 - PHASE 1.2, 2, 3 HOÀN THÀNH
 
-**Các thay đổi chính:**
+**PHASE 1.2: Routes & Testing** ✅
 
-- ✅ Tạo 4 migrations (levels, sections, add fields to tests, user_progress)
-- ✅ Tạo 2 models mới (Level, Section)
-- ✅ Cập nhật 2 models (Test, UserProgress)
-- ✅ Tạo ExamController với submitSection logic
-- ✅ Tạo LevelSeeder
-- ✅ Viết tài liệu chi tiết tiếng Việt (PHASE_1_1_VI.md)
+- ✅ Thêm 4 routes cho Exams với auth middleware
+- ✅ Tạo LevelController với index() method
+- ✅ Update ExamController thêm byLevel() method
 
-**Tính năng implement:**
+**PHASE 2: Backend Logic & Services** ✅
+
+- ✅ Tạo ExamResultService (submitSection, applyHighQualityMultiplier, calculateAdjustedDuration, getExamStats)
+- ✅ Tạo ExamPolicy (viewAny, view, take, submitSection, resume, create, update, delete)
+- ✅ Tạo SubmitSectionRequest với validation
+- ✅ Tạo ComprehensiveTestSeeder (9 tests, 18 sections, 180+ questions)
+- ✅ Update AppServiceProvider với policy registration
+- ✅ Update ExamController::submitSection để dùng service
+
+**PHASE 3: Frontend Components & Dashboard** ✅
+
+- ✅ Tạo useAutoSave hook (localStorage auto-save)
+- ✅ Tạo ResultCard component (pass/fail display)
+- ✅ Tạo SectionProgressBar component (progress visualization)
+- ✅ Tạo SaveIndicator component (save status indicator)
+- ✅ Update Exams/Take.jsx với đầy đủ tính năng:
+    - Auto-save to localStorage
+    - Result modal display
+    - Progress tracking
+    - Timer countdown
+    - Section progress visualization
+- ✅ Tạo 4 pages: Levels.jsx, ByLevel.jsx, Show.jsx, Take.jsx
+
+**Tính năng implement:** 🎯
 
 - 🔹 Hệ thống cấp độ (B1, B2, C1)
 - 🔹 Phần/Part trong bộ đề
@@ -129,14 +175,23 @@ php artisan tinker
 - 🔹 Kiểm soát truy cập phần (gatekeeping)
 - 🔹 Logic chế độ cao (is_high_quality × 1.2 threshold)
 - 🔹 Auto-resume từ phần cuối
-- 🔹 Flash messages cho Inertia
+- 🔹 Auto-save câu trả lời
+- 🔹 Results display với pass/fail
+- 🔹 Progress bar visualization
+- 🔹 Timer countdown
+- 🔹 localStorage persistence
+- 🔹 Policy-based authorization
+- 🔹 FormRequest validation
 
 ## 🔗 Tech Stack
 
-- **Backend:** Laravel 11 + Inertia.js
-- **Frontend:** React 19 + Tailwind CSS + DaisyUI
+- **Backend:** Laravel 11 + Inertia.js 2.3 + Eloquent ORM
+- **Frontend:** React 19 + Tailwind CSS 4.0 + DaisyUI 5.5
 - **Database:** SQL (Migrations)
-- **Testing:** Pest PHP
+- **Services:** ExamResultService (business logic)
+- **Hooks:** useAutoSave (client-side data persistence)
+- **Components:** React + Tailwind + lucide-react
+- **Testing:** Pest PHP (ready for Phase 4)
 - **Build:** Vite
 - **Convention:** PascalCase (Models), snake_case (tables), camelCase (methods)
 
@@ -144,16 +199,64 @@ php artisan tinker
 
 ## 📖 Tài Liệu
 
-| Tệp                         | Mục đích                           |
-| --------------------------- | ---------------------------------- |
-| **PHASE_1_1_VI.md**         | Chi tiết PHASE 1.1 (Tiếng Việt) ⭐ |
-| **PHASE_1_1_COMPLETE.md**   | Chi tiết PHASE 1.1 (Tiếng Anh)     |
-| **PROJECTPLAN.md**          | Yêu cầu dự án + features           |
-| **ASSESSMENT_AND_PLAN.md**  | Phân tích chi tiết + roadmap       |
-| **INERTIA_ARCHITECTURE.md** | Kiến trúc giao tiếp FE-BE          |
+| Tệp                         | Mục đích                              | Status |
+| --------------------------- | ------------------------------------- | ------ |
+| **PHASE_1_1_VI.md**         | Database & Models (Tiếng Việt) ⭐     | ✅     |
+| **PHASE_1_2_VI.md**         | Routes & Frontend Pages (Tiếng Việt)  | ✅     |
+| **PHASE_2_VI.md**           | Backend Logic & Services (Tiếng Việt) | ✅     |
+| **PHASE_3_VI.md**           | Frontend Components (Tiếng Việt)      | ✅     |
+| **PROJECTPLAN.md**          | Yêu cầu dự án + features              | 📄     |
+| **ASSESSMENT_AND_PLAN.md**  | Phân tích chi tiết + roadmap          | 📄     |
+| **INERTIA_ARCHITECTURE.md** | Kiến trúc giao tiếp FE-BE             | 📄     |
 
 ---
 
-**Cập nhật:** 18 Tháng 3, 2026
-**Phiên bản:** 1.1 (PHASE 1.1 Hoàn thành)
-**Trạng thái:** ✅ Sẵn sàng chạy migrations
+## 🚀 Tiến độ Chi Tiết
+
+### ✅ COMPLETED
+
+```
+Database & Models (PHASE 1.1)
+  ├─ 4 Migrations
+  ├─ 2 New Models (Level, Section)
+  ├─ 2 Updated Models (Test, UserProgress)
+  ├─ 1 Controller (ExamController)
+  └─ 1 Seeder
+
+Routes & Pages (PHASE 1.2)
+  ├─ 5 Routes for Exams
+  ├─ 1 LevelController
+  ├─ Update ExamController.byLevel()
+  └─ 4 React Pages (Levels, ByLevel, Show, Take)
+
+Backend Services (PHASE 2)
+  ├─ ExamResultService
+  ├─ ExamPolicy
+  ├─ SubmitSectionRequest
+  ├─ ComprehensiveTestSeeder (9 tests)
+  └─ Policy Registration
+
+Frontend Components (PHASE 3)
+  ├─ 1 Custom Hook (useAutoSave)
+  ├─ 3 Exam Components
+  ├─ 4 Updated Pages
+  └─ Auto-save + Result Display
+```
+
+### ⏳ REMAINING - PHASE 4
+
+```
+Testing & Polish (PHASE 4)
+  ├─ Unit Tests (Hooks, Components, Services)
+  ├─ Feature Tests (Exam workflow)
+  ├─ Error Handling & Validation
+  ├─ UI Polish & Responsive Design
+  ├─ Performance Optimization
+  └─ Dashboard Updates
+```
+
+---
+
+**Cập nhật:** 20 Tháng 3, 2026
+**Phiên bản:** 3.0 (PHASE 1-3 Hoàn thành, 87% tiến độ)
+**Trạng thái:** ✅ Sẵn sàng test, chỉ còn PHASE 4 (Testing & Polish)

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SubmitSectionRequest;
 use App\Models\Test as Exam;
 use App\Models\Section;
 use App\Models\UserProgress;
+use App\Services\ExamResultService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -36,6 +38,59 @@ class ExamController extends Controller
 
         return Inertia::render('Exams/Index', [
             'exams' => $exams,
+        ]);
+    }
+
+    /**
+     * Hiển thị danh sách exams theo cấp độ
+     * GET /levels/{level}/exams?sort=difficulty&per_page=10
+     */
+    public function byLevel($levelId, Request $request)
+    {
+        $sortBy = $request->query('sort', 'created_at');
+        $perPage = $request->query('per_page', 10);
+        $allowedSorts = ['created_at', 'difficulty_score', 'title'];
+
+        if (! in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+
+        $exams = Exam::where('is_active', true)
+            ->where('level_id', $levelId)
+            ->with('levelRelation', 'sections')
+            ->orderBy($sortBy, $sortBy === 'title' ? 'asc' : 'desc')
+            ->paginate($perPage);
+
+        // Lấy dữ liệu tiến độ user cho mỗi exam
+        $user = auth()->user();
+        $exams = $exams->through(function ($exam) use ($user) {
+            $userProgress = $user->progress()
+                ->where('exam_id', $exam->id)
+                ->first();
+
+            return [
+                'id' => $exam->id,
+                'title' => $exam->title,
+                'description' => $exam->description,
+                'duration' => $exam->duration,
+                'total_questions' => $exam->total_questions,
+                'level_id' => $exam->level_id,
+                'level_name' => $exam->levelRelation?->name ?? 'N/A',
+                'is_high_quality' => $exam->is_high_quality,
+                'difficulty_score' => $exam->difficulty_score,
+                'sections_count' => $exam->sections->count(),
+                'user_progress' => $userProgress ? [
+                    'last_completed_section_order' => $userProgress->last_completed_section_order,
+                    'is_completed' => $userProgress->is_completed,
+                    'started_at' => $userProgress->started_at->format('d/m/Y H:i'),
+                    'completed_at' => $userProgress->completed_at?->format('d/m/Y H:i'),
+                ] : null,
+            ];
+        });
+
+        return Inertia::render('Exams/ByLevel', [
+            'exams' => $exams,
+            'level_id' => $levelId,
         ]);
     }
 
@@ -140,97 +195,51 @@ class ExamController extends Controller
      * Nộp bài cho một section
      *
      * Logic:
-     * 1. Tính phần trăm câu đúng
-     * 2. Kiểm tra >= pass_threshold
-     * 3. Nếu đạt: cập nhật user_progress, mở khóa section tiếp theo
-     * 4. Nếu không đạt: yêu cầu làm lại
-     * 5. Nếu high-quality: nhân pass_threshold với 1.2
+     * 1. Validate dữ liệu via SubmitSectionRequest
+     * 2. Gọi ExamResultService::submitSection()
+     * 3. Service tính toán và cập nhật database
+     * 4. Return flash message cho Inertia
      */
-    public function submitSection(Exam $exam, Request $request)
+    public function submitSection(SubmitSectionRequest $request, Exam $exam, ExamResultService $resultService)
     {
-        $validated = $request->validate([
-            'section_order' => 'required|integer|min:1',
-            'answers' => 'required|array', // answers = { question_id: selected_option_id, ... }
-        ]);
+        $validated = $request->validated();
 
-        // Lấy section
-        $section = $exam->sections()
-            ->where('order', $validated['section_order'])
-            ->firstOrFail();
+        // Gọi service để xử lý
+        $result = $resultService->submitSection(
+            exam: $exam,
+            user: auth()->user(),
+            sectionOrder: $validated['section_order'],
+            answers: $validated['answers']
+        );
 
-        // Lấy user progress
-        $userProgress = auth()->user()
-            ->progress()
-            ->where('exam_id', $exam->id)
-            ->firstOrFail();
-
-        // Kiểm tra xem user có phép làm section này không
-        // Chỉ có thể làm section hiện tại hoặc section đã unlock
-        if ($validated['section_order'] > $userProgress->last_completed_section_order + 1) {
+        // Nếu lỗi (section locked, etc)
+        if (isset($result['error'])) {
             return redirect()->back()->withErrors([
-                'error' => 'Bạn chưa mở khóa section này. Vui lòng hoàn thành phần trước.'
+                'error' => $result['error']
             ]);
         }
 
-        // Lấy tất cả questions của section
-        $questions = $section->questions()->get();
-
-        // Tính số câu đúng
-        $correctCount = 0;
-        foreach ($questions as $question) {
-            $userAnswer = $validated['answers'][$question->id] ?? null;
-            if ($userAnswer == $question->correct_option_id) {
-                $correctCount++;
-            }
-        }
-
-        // Tính phần trăm
-        $totalQuestions = $questions->count();
-        $percentage = $totalQuestions > 0 ? ($correctCount / $totalQuestions) : 0;
-
-        // Lấy pass_threshold
-        $passThreshold = $section->pass_threshold;
-
-        // Nếu high-quality: nhân threshold với 1.2 (20% cao hơn)
-        if ($exam->is_high_quality) {
-            $passThreshold = $passThreshold * 1.2;
-        }
-
-        // Kiểm tra đạt hay không
-        $passed = $percentage >= $passThreshold;
-
-        if ($passed) {
-            // Cập nhật user_progress
-            $userProgress->update([
-                'last_completed_section_order' => $validated['section_order'],
-            ]);
-
-            // Nếu là section cuối cùng
-            if ($validated['section_order'] == $exam->sections->count()) {
-                $userProgress->update([
-                    'is_completed' => true,
-                    'completed_at' => now(),
-                ]);
-            }
-
+        // Nếu pass: flash success message
+        if ($result['passed']) {
             return redirect()->back()->with('success', [
-                'message' => '🎉 Chúc mừng! Bạn đã đạt yêu cầu phần này.',
-                'percentage' => round($percentage * 100, 2),
-                'correct_count' => $correctCount,
-                'total' => $totalQuestions,
+                'message' => $result['message'],
+                'percentage' => $result['percentage'],
+                'correct_count' => $result['correct_count'],
+                'total' => $result['total_questions'],
                 'passed' => true,
-                'next_section_unlocked' => $validated['section_order'] < $exam->sections->count(),
-            ]);
-        } else {
-            // Không đạt - yêu cầu làm lại
-            return redirect()->back()->with('error', [
-                'message' => '❌ Bạn chưa đạt yêu cầu. Vui lòng làm lại phần này.',
-                'percentage' => round($percentage * 100, 2),
-                'required_percentage' => round($passThreshold * 100, 2),
-                'correct_count' => $correctCount,
-                'total' => $totalQuestions,
-                'passed' => false,
+                'exam_completed' => $result['exam_completed'],
+                'next_section_unlocked' => $result['next_section_unlocked'],
             ]);
         }
+
+        // Nếu fail: flash error message
+        return redirect()->back()->with('error', [
+            'message' => $result['message'],
+            'percentage' => $result['percentage'],
+            'required_percentage' => $result['required_percentage'],
+            'correct_count' => $result['correct_count'],
+            'total' => $result['total_questions'],
+            'passed' => false,
+        ]);
     }
 }

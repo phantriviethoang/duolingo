@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExamController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LevelController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestQuestionController;
 use App\Http\Controllers\TestResultController;
@@ -27,7 +29,27 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middl
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// dethi
+// =========== EXAMS - LỘ TRÌNH CẤP ĐỘ ===========
+Route::middleware(['auth'])->group(function () {
+    // Chọn cấp độ
+    Route::get('/levels', [LevelController::class, 'index'])->name('levels.index');
+
+    // Danh sách đề theo cấp độ
+    Route::get('/levels/{level}/exams', [ExamController::class, 'byLevel'])->name('exams.by-level');
+
+    // Chi tiết exam
+    Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
+
+    // Vào phòng thi
+    Route::get('/exams/{exam}/take', [ExamController::class, 'take'])->name('exams.take');
+
+    // Nộp bài - phần chính (được bảo vệ bởi policy)
+    Route::post('/exams/{exam}/sections/submit', [ExamController::class, 'submitSection'])
+        ->name('exams.sections.submit')
+        ->middleware('throttle:60,1');
+});
+
+// =========== CỦA TESTS (cũ - giữ cho tương thích) ===========
 Route::middleware(['auth'])->group(function () {
     // hien thi ket qua bai lam
     Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
@@ -41,7 +63,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tests/{test}/results', [TestResultController::class, 'store'])->name('results.store');
 });
 
-// dashboard
+// =========== DASHBOARD ADMIN ===========
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin', DashboardController::class)->name('admin.dashboard');
 

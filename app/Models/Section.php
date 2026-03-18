@@ -32,6 +32,14 @@ class Section extends Model
     }
 
     /**
+     * Quan hệ: Một Section có nhiều Questions
+     */
+    public function questions()
+    {
+        return $this->hasMany(TestQuestion::class, 'section_id');
+    }
+
+    /**
      * Scope: Lấy sections theo thứ tự
      */
     public function scopeOrdered($query)

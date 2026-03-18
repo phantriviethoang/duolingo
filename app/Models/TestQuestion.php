@@ -12,6 +12,7 @@ class TestQuestion extends Model
 
     protected $fillable = [
         'test_id',
+        'section_id',
         'question',
         'question_number',
         'options',
@@ -29,6 +30,11 @@ class TestQuestion extends Model
     public function test()
     {
         return $this->belongsTo(Test::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
     }
 
     public function statistics()

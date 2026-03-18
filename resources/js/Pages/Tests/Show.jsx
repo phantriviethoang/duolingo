@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { Clock, Users, Calendar, Play, ArrowLeft, Edit, Trash2 } from "lucide-react";
+import Layout from "@/Layouts/Layout";
 
 export default function Show({ test }) {
     const { auth } = usePage().props;
@@ -12,9 +13,9 @@ export default function Show({ test }) {
     };
 
     return (
-        <>
+        <Layout>
             <Head title={test.title} />
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <Link
                         href="/tests"
@@ -165,6 +166,6 @@ export default function Show({ test }) {
                     </div>
                 </div>
             </div>
-        </>
+        </Layout>
     );
 }

@@ -1,12 +1,13 @@
 import { Head, Link } from "@inertiajs/react";
-import { CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowLeft, BookOpen } from "lucide-react";
+import Layout from "@/Layouts/Layout";
 
 export default function Show({ test, result, questions }) {
 
     return (
-        <>
+        <Layout>
             <Head title={`Kết quả - ${test.title}`} />
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="max-w-4xl mx-auto">
                 <Link
                     href="/results"
                     className="btn btn-ghost font-normal text-lg btn-sm gap-2 mb-6"
@@ -75,15 +76,15 @@ export default function Show({ test, result, questions }) {
                                     <div
                                         key={question.id}
                                         className={`p-4 rounded-lg border-2 ${isCorrect
-                                                ? "border-green-200 bg-success/10"
-                                                : "border-red-200 bg-error/10"
+                                            ? "border-green-200 bg-success/10"
+                                            : "border-red-200 bg-error/10"
                                             }`}
                                     >
                                         <div className="flex items-start gap-2 mb-2">
                                             <span
                                                 className={`text-white rounded-md badge ${isCorrect
-                                                        ? "badge-success"
-                                                        : "badge-error"
+                                                    ? "badge-success"
+                                                    : "badge-error"
                                                     }`}
                                             >
                                                 Câu {index + 1}
@@ -133,10 +134,10 @@ export default function Show({ test, result, questions }) {
                                                         <div
                                                             key={option.id}
                                                             className={`p-2 rounded ${isCorrectAnswer
-                                                                    ? "bg-success/15 border border-success/50"
-                                                                    : isUserAnswer
-                                                                        ? "bg-error/15 border border-error/50"
-                                                                        : "bg-base-200"
+                                                                ? "bg-success/15 border border-success/50"
+                                                                : isUserAnswer
+                                                                    ? "bg-error/15 border border-error/50"
+                                                                    : "bg-base-200"
                                                                 }`}
                                                         >
                                                             <div className="flex items-center gap-2">
@@ -245,6 +246,6 @@ export default function Show({ test, result, questions }) {
                     </div>
                 </div>
             </div>
-        </>
+        </Layout>
     );
 }

@@ -5,7 +5,7 @@ export default function Layout({ children }) {
     return (
         <Fragment>
             <AppHeader />
-            <main className="mx-auto max-w-6xl px-6 pb-0 pt-24">{children}</main>
+            <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 pt-32">{children}</main>
         </Fragment>
     );
 }
