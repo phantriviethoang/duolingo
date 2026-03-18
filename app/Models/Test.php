@@ -25,6 +25,9 @@ class Test extends Model
         'is_active',
         'pass_score',
         'attempts',
+        'level_id',
+        'is_high_quality',
+        'difficulty_score',
     ];
 
     protected $casts = [
@@ -34,6 +37,9 @@ class Test extends Model
         'total_questions' => 'integer',
         'part_number' => 'integer',
         'pass_score' => 'float',
+        'level_id' => 'integer',
+        'is_high_quality' => 'boolean',
+        'difficulty_score' => 'float',
     ];
 
     public function questions()
@@ -57,5 +63,45 @@ class Test extends Model
             QuestionStatistic::class,
             TestQuestion::class
         );
+    }
+
+    /**
+     * Quan hệ: Một Exam (Test) thuộc về một Level
+     */
+    public function levelRelation()
+    {
+        return $this->belongsTo(Level::class, 'level_id');
+    }
+
+    /**
+     * Quan hệ: Một Exam (Test) có nhiều Sections (Parts)
+     */
+    public function sections()
+    {
+        return $this->hasMany(Section::class, 'test_id')->orderBy('order');
+    }
+
+    /**
+     * Scope: Lọc exams theo Level
+     * Sử dụng: Test::byLevel(1)->get() hoặc Test::byLevel('B1')->get()
+     */
+    public function scopeByLevel($query, $levelId)
+    {
+        // Hỗ trợ cả ID và name
+        if (is_numeric($levelId)) {
+            return $query->where('level_id', $levelId);
+        }
+
+        return $query->whereHas('levelRelation', function ($q) use ($levelId) {
+            $q->where('name', $levelId);
+        });
+    }
+
+    /**
+     * Scope: Lọc exams theo chế độ High-Quality
+     */
+    public function scopeHighQuality($query, $isHighQuality = true)
+    {
+        return $query->where('is_high_quality', $isHighQuality);
     }
 }
