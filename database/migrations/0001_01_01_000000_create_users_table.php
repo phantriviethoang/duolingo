@@ -15,13 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('current_level', 10)->default('A1')->comment('Current CEFR learning level');
+            $table->string('target_level', 10)->nullable()->comment('Target CEFR level');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->string('role')->default('student'); // Vai trò: student, teacher, admin
             $table->foreignId('target_part_id')->nullable()->constrained('levels'); // Mục tiêu Part
             $table->boolean('is_high_quality')->default(false); // Chế độ cao cấp
-            $table->string('target_level')->default('A1'); // Mục tiêu trình độ: A1->C2
             $table->timestamps();
         });
 

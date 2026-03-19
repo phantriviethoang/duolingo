@@ -14,15 +14,19 @@ return new class extends Migration
         Schema::create('user_progress', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('exam_id')->constrained('tests')->cascadeOnDelete();
-            $table->integer('last_completed_section_order')->default(0)->comment('Section cuối cùng đã hoàn thành (0 = chưa hoàn thành)');
-            $table->boolean('is_completed')->default(false);
-            $table->timestamp('started_at')->nullable();
+            $table->string('level')->comment('CEFR level: A1, A2, B1, B2, C1, C2');
+            $table->integer('part')->comment('Part number: 1, 2, 3');
+            $table->integer('score')->default(0);
+            $table->decimal('percentage', 5, 2)->default(0)->comment('Percentage score: 0.00 - 100.00');
+            $table->boolean('is_passed')->default(false)->comment('User passed this part or not');
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
-            // Unique: một user chỉ có tối đa 1 progress record cho một exam
-            $table->unique(['user_id', 'exam_id']);
+            // Unique: một user chỉ có tối đa 1 progress record cho mỗi level + part
+            $table->unique(['user_id', 'level', 'part']);
+
+            // Index for faster queries
+            $table->index(['user_id', 'level']);
         });
     }
 

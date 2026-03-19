@@ -3,7 +3,7 @@ import Logo from "@/Components/Logo";
 
 const baseLinks = [
     { label: "Chọn Trình Độ", href: "/select-level", icon: "📊" },
-    { label: "Lộ Trình", href: "/roadmap", icon: "🎓" },
+    { label: "Lộ Trình", href: "/path", icon: "🎓" },
     { label: "Đề Thi", href: "/tests", icon: "📝" },
     { label: "Giới Thiệu", href: "/about", icon: "ℹ️" },
     { label: "Liên Hệ", href: "/contact", icon: "📞" },
@@ -74,7 +74,7 @@ export default function AppHeader() {
                                     <span className="text-xs text-gray-500 px-3 py-1 font-semibold">MENU CHÍNH</span>
                                 </li>
                                 <li>
-                                    <Link href="/roadmap" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
+                                    <Link href="/path" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
                                         Lộ trình học
                                     </Link>
                                 </li>

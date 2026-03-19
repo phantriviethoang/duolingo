@@ -101,7 +101,7 @@ export default function Levels({ levels, user_is_high_quality, user_target_part 
                                                 {!isLocked && (
                                                     <div className="ml-4">
                                                         <Link
-                                                            href={`/levels/${part.id}/exams`}
+                                                            href={`/path/${part.id}`}
                                                             className={`btn btn-sm ${isCompleted
                                                                 ? 'btn-outline btn-success'
                                                                 : 'btn-primary'

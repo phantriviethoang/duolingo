@@ -269,27 +269,27 @@ export default function Show({ test, result, questions }) {
                                 <>
                                     {result.section_order < result.total_sections ? (
                                         <Link
-                                            href={`/exams/${test.id}/take?section=${result.section_order + 1}`}
+                                            href={`/tests/${test.id}/take?section=${result.section_order + 1}`}
                                             className="btn btn-primary rounded-xl btn-sm"
                                         >
                                             Làm tiếp phần {result.section_order + 1}
                                         </Link>
                                     ) : (
                                         <Link
-                                            href={`/exams/${test.id}`}
+                                            href={`/tests/${test.id}`}
                                             className="btn btn-primary rounded-xl btn-sm"
                                         >
                                             Hoàn thành bài thi
                                         </Link>
                                     )}
                                     <Link
-                                        href={`/exams/${test.id}/take?section=${result.section_order}`}
+                                        href={`/tests/${test.id}/take?section=${result.section_order}`}
                                         className="btn btn-outline rounded-xl btn-sm"
                                     >
                                         Làm lại đoạn này
                                     </Link>
                                     <Link
-                                        href="/roadmap"
+                                        href="/path"
                                         className="btn btn-ghost rounded-xl btn-sm"
                                     >
                                         Về lộ trình

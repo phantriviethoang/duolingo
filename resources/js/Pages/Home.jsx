@@ -29,7 +29,7 @@ export default function Home({ featuredCourses = [], stats = {} }) {
                             <Link href="/select-level" className="rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700">
                                 Bắt đầu học
                             </Link>
-                            <Link href="/roadmap" className="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white hover:bg-green-700">
+                            <Link href="/path" className="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white hover:bg-green-700">
                                 Xem lộ trình
                             </Link>
                             <Link href="/tests" className="rounded-full bg-gray-700 px-8 py-3 text-sm font-semibold text-white hover:bg-gray-800">

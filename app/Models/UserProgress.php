@@ -13,22 +13,32 @@ class UserProgress extends Model
 
     protected $fillable = [
         'user_id',
-        'exam_id',
-        'last_completed_section_order',
-        'is_completed',
-        'started_at',
+        'level',
+        'part',
+        'score',
+        'percentage',
+        'is_passed',
         'completed_at',
     ];
 
     protected $casts = [
         'user_id' => 'integer',
-        'exam_id' => 'integer',
-        'last_completed_section_order' => 'integer',
-        'is_completed' => 'boolean',
-        'started_at' => 'datetime',
+        'part' => 'integer',
+        'score' => 'integer',
+        'percentage' => 'float',
+        'is_passed' => 'boolean',
         'completed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+    ];
+
+    /**
+     * CEFR pass thresholds for each part
+     */
+    const PASS_THRESHOLDS = [
+        1 => 60.0, // Part 1: 60%
+        2 => 75.0, // Part 2: 75%
+        3 => 90.0, // Part 3: 90%
     ];
 
     /**
@@ -40,59 +50,129 @@ class UserProgress extends Model
     }
 
     /**
-     * Quan hệ: UserProgress thuộc về một Exam (Test)
+     * Scope: Lấy progress theo level
      */
-    public function exam()
+    public function scopeByLevel($query, $level)
     {
-        return $this->belongsTo(Test::class, 'exam_id');
+        return $query->where('level', $level);
     }
 
     /**
-     * Scope: Lấy progress đang làm dở
+     * Scope: Lấy progress đã passed
      */
-    public function scopeInProgress($query)
+    public function scopePassed($query)
     {
-        return $query->where('is_completed', false);
+        return $query->where('is_passed', true);
     }
 
     /**
-     * Scope: Lấy progress đã hoàn thành
+     * Scope: Lấy progress chưa passed
      */
-    public function scopeCompleted($query)
+    public function scopeNotPassed($query)
     {
-        return $query->where('is_completed', true);
+        return $query->where('is_passed', false);
     }
 
     /**
-     * Kiểm tra user có thể truy cập section này không
-     *
-     * Quy tắc:
-     * - Section 1 luôn có thể truy cập sau khi bắt đầu
-     * - Section N chỉ có thể truy cập nếu section N-1 đã hoàn thành
-     * - User chưa hoàn thành exam
-     *
-     * @param int $sectionOrder
-     * @return bool
+     * Lấy ngưỡng đạt cho part hiện tại
      */
-    public function canAccessSection(int $sectionOrder): bool
+    public function getPassThreshold(): float
     {
-        // Nếu đã hoàn thành exam, cho phép truy cập LÀM LẠI bất kỳ section nào
-        if ($this->is_completed) {
+        return self::PASS_THRESHOLDS[$this->part] ?? 60.0;
+    }
+
+    /**
+     * Kiểm tra user có thể truy cập part này không
+     * Logic khóa/mở theo yêu cầu
+     */
+    public function canAccess(): bool
+    {
+        // Part 1 luôn mở
+        if ($this->part === 1) {
             return true;
         }
 
-        // Chỉ có thể truy cập section hiện tại hoặc các section đã unlock
-        return $sectionOrder <= $this->last_completed_section_order + 1;
+        // Kiểm tra part trước đó đã passed chưa
+        $previousPart = static::where('user_id', $this->user_id)
+            ->where('level', $this->level)
+            ->where('part', $this->part - 1)
+            ->where('is_passed', true)
+            ->first();
+
+        return $previousPart !== null;
     }
 
     /**
-     * Kiểm tra section có bị khóa không
-     *
-     * @param int $sectionOrder
-     * @return bool - true nếu section bị khóa
+     * Kiểm tra part có bị khóa không
      */
-    public function isSectionLocked(int $sectionOrder): bool
+    public function isLocked(): bool
     {
-        return ! $this->canAccessSection($sectionOrder);
+        return ! $this->canAccess();
+    }
+
+    /**
+     * Lấy thông tin khóa của part (nếu có)
+     */
+    public function getLockMessage(): ?string
+    {
+        if ($this->part === 1) {
+            return null; // Part 1 không bao giờ khóa
+        }
+
+        if ($this->isLocked()) {
+            $threshold = self::PASS_THRESHOLDS[$this->part - 1] ?? 60.0;
+            return "Bạn cần đạt ít nhất {$threshold}% ở Phần " . ($this->part - 1) . " để mở Phần {$this->part}";
+        }
+
+        return null;
+    }
+
+    /**
+     * Kiểm tra user đã hoàn thành toàn bộ level này chưa
+     */
+    public static function isLevelCompleted($userId, $level): bool
+    {
+        $passedParts = static::where('user_id', $userId)
+            ->where('level', $level)
+            ->where('is_passed', true)
+            ->count();
+
+        return $passedParts >= 3; // Cần pass cả 3 parts
+    }
+
+    /**
+     * Lấy progress của user cho một level
+     */
+    public static function getUserLevelProgress($userId, $level)
+    {
+        return static::where('user_id', $userId)
+            ->where('level', $level)
+            ->orderBy('part')
+            ->get()
+            ->keyBy('part');
+    }
+
+    /**
+     * Tạo hoặc update progress
+     */
+    public static function updateProgress($userId, $level, $part, $score, $totalQuestions)
+    {
+        $percentage = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
+        $threshold = self::PASS_THRESHOLDS[$part] ?? 60.0;
+        $isPassed = $percentage >= $threshold;
+
+        return static::updateOrCreate(
+            [
+                'user_id' => $userId,
+                'level' => $level,
+                'part' => $part,
+            ],
+            [
+                'score' => $score,
+                'percentage' => round($percentage, 2),
+                'is_passed' => $isPassed,
+                'completed_at' => $isPassed ? now() : null,
+            ]
+        );
     }
 }

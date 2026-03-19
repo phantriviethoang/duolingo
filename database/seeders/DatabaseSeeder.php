@@ -27,11 +27,12 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
             'role' => 'user',
+            'current_level' => 'A1',
         ]);
 
+        // Chỉ dùng CEFR seeder, tạm thời disable các seeder cũ
         $this->call([
-            ComprehensiveTestSeeder::class,
-            TestResultSeeder::class,
+            CEFRProgressSeeder::class,
         ]);
     }
 }

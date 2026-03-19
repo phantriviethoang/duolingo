@@ -1,7 +1,7 @@
-﻿import QuizTake from "@/Pages/Quiz/Take";
+import QuizTake from "@/Pages/Quiz/Take";
 
 export default function Take({ exam, section, questions }) {
-    const submitRoute = `/exams/${exam.id}/sections/submit`;
+    const submitRoute = `/tests/${exam.id}/sections/submit`;
     
     return (
         <QuizTake

@@ -50,7 +50,7 @@ export default function SectionLocked({ exam, requested_section, last_completed_
                     <div className="space-y-3">
                         {next_available_section > 1 && last_completed_section > 0 && (
                             <Link
-                                href={`/exams/${exam.id}/take?section=${next_available_section}`}
+                                href={`/tests/${exam.id}/take?section=${next_available_section}`}
                                 className="btn btn-primary w-full"
                             >
                                 Về Phần {next_available_section}
@@ -58,14 +58,14 @@ export default function SectionLocked({ exam, requested_section, last_completed_
                         )}
                         {last_completed_section === 0 && (
                             <Link
-                                href={`/exams/${exam.id}/take?section=1`}
+                                href={`/tests/${exam.id}/take?section=1`}
                                 className="btn btn-primary w-full"
                             >
                                 Bắt đầu Phần 1
                             </Link>
                         )}
                         <Link
-                            href={`/exams/${exam.id}`}
+                            href={`/tests/${exam.id}`}
                             className="btn btn-outline w-full flex items-center justify-center gap-2"
                         >
                             <ArrowLeft className="w-4 h-4" />

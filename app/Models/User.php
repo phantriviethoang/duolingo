@@ -6,11 +6,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Attributes\Attribute;
 
 use App\Models\TestResult;
 use App\Models\UserProgress;
 use App\Models\Level;
+use App\Models\Test;
 
 class User extends Authenticatable
 {
@@ -30,6 +30,7 @@ class User extends Authenticatable
         'target_part_id',
         'is_high_quality',
         'target_level',
+        'current_level',
     ];
 
     /**
@@ -54,6 +55,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_high_quality' => 'boolean',
             'target_level' => 'string',
+            'current_level' => 'string',
         ];
     }
 
@@ -81,38 +83,30 @@ class User extends Authenticatable
      * Dựa vào target_part + is_high_quality
      * VD: User target=B2 (65%) + high_quality=true → 65% * 1.1 = 71.5%
      */
-    protected function passThreshold(): Attribute
+    public function getPassThresholdAttribute()
     {
-        return Attribute::make(
-            get: function () {
-                if (! $this->targetPart) {
-                    return 0.5; // Mặc định 50%
-                }
+        if (! $this->targetPart) {
+            return 0.5; // Mặc định 50%
+        }
 
-                $base = $this->targetPart->pass_threshold;
-                if ($this->is_high_quality) {
-                    return min($base * 1.1, 1.0); // +10% nhưng max 100%
-                }
-                return $base;
-            }
-        );
+        $base = $this->targetPart->pass_threshold;
+        if ($this->is_high_quality) {
+            return min($base * 1.1, 1.0); // +10% nhưng max 100%
+        }
+        return $base;
     }
 
-    protected function getPassThresholdAttribute(): Attribute
+    public function getPassThresholdByLevelAttribute()
     {
-        return Attribute::make(
-            get: function () {
-                return match ($this->target_level ?? 'A1') {
-                    'A1' => 40,
-                    'A2' => 50,
-                    'B1' => 60,
-                    'B2' => 70,
-                    'C1' => 80,
-                    'C2' => 90,
-                    default => 40,
-                };
-            }
-        );
+        return match ($this->target_level ?? 'A1') {
+            'A1' => 40,
+            'A2' => 50,
+            'B1' => 60,
+            'B2' => 70,
+            'C1' => 80,
+            'C2' => 90,
+            default => 40,
+        };
     }
 
     public function getPassThreshold(): int
@@ -146,10 +140,10 @@ class User extends Authenticatable
      * Kiểm tra user đã pass section nào
      *
      * @param int|Section $section
-     * @param Exam|Test $exam
+     * @param Test $test
      * @return bool
      */
-    public function hasPassedSection($section, $exam = null)
+    public function hasPassedSection($section, $test = null)
     {
         $sectionId = $section instanceof Section ? $section->id : $section;
 
@@ -162,8 +156,8 @@ class User extends Authenticatable
         }
 
         // Determine high-quality mode
-        $isHighQuality = $exam
-            ? $exam->is_high_quality
+        $isHighQuality = $test
+            ? $test->is_high_quality
             : ($result->test->is_high_quality ?? false);
 
         return $result->is_section_passed ? true : false;

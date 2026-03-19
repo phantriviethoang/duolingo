@@ -67,7 +67,7 @@ export default function Dashboard({ levels, stats, recent_results }) {
                                             <div className="flex items-start justify-between mb-4">
                                                 <div>
                                                     <Link
-                                                        href={`/levels/${level.id}/exams`}
+                                                        href={`/path/${level.id}/exams`}
                                                         className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
                                                     >
                                                         {level.name}
@@ -109,7 +109,7 @@ export default function Dashboard({ levels, stats, recent_results }) {
                                             {/* CTA */}
                                             <div className="mt-4 pt-4 border-t border-gray-200">
                                                 <Link
-                                                    href={`/levels/${level.id}/exams`}
+                                                    href={`/path/${level.id}/exams`}
                                                     className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors"
                                                 >
                                                     Xem các bài thi
