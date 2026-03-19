@@ -862,81 +862,41 @@ export default function Take({
             <Head title={`Làm đề thi: ${quiz.title}`} />
             <AppHeader />
             <div className="min-h-screen bg-gray-50 mt-20">
-                <div className="sticky top-24 z-40 bg-white shadow border-b border-gray-200">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                {quiz.title}
-                            </h1>
-                            {isRetakeWrong && (
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="inline-block px-2 py-0.5 bg-amber-50 text-[10px] font-black text-amber-600 rounded-lg uppercase tracking-widest border border-amber-100">
-                                        Đang làm lại các câu sai
-                                    </span>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="flex flex-col lg:flex-row gap-8 items-start relative">
+                        <div className="flex-1 min-w-0 w-full">
+                            {/* Test Header Info - Now part of the content */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                                            {quiz.title}
+                                        </h1>
+                                        {isRetakeWrong && (
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="inline-block px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded uppercase tracking-wider border border-amber-100">
+                                                    Đang làm lại các câu sai
+                                                </span>
+                                            </div>
+                                        )}
+                                        <p className="text-gray-500 text-sm mt-1 flex items-center gap-2">
+                                            {section ? `Phần ${section.order} • ` : ""}
+                                            Tổng số {totalQuestions} câu hỏi
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                        <div className="text-center px-4">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                                                Đã trả lời
+                                            </p>
+                                            <p className="text-xl font-bold text-blue-600">
+                                                {answeredCount}/{totalQuestions}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
-                            <p className="text-sm text-gray-600">
-                                {section ? `Phần ${section.order} - ` : ""}
-                                Câu {currentQuestionDisplay}/{totalQuestions}
-                            </p>
-                        </div>
-
-                        <div className="text-center">
-                            <p className="text-xs text-gray-600 uppercase">
-                                Đã trả lời
-                            </p>
-                            <p className="text-lg font-bold text-blue-600">
-                                {answeredCount}/{totalQuestions}
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <div
-                                className={`flex items-center gap-2 ${timeLeft < 60 ? "text-red-600" : "text-gray-700"}`}
-                            >
-                                <Clock
-                                    className={`w-5 h-5 ${timeLeft < 60 ? "animate-pulse" : ""}`}
-                                />
-                                <span className="font-bold text-lg">
-                                    {formatTime(timeLeft)}
-                                </span>
                             </div>
-
-                            <button
-                                onClick={() => setShowSubmitConfirm(true)}
-                                disabled={isSubmitting}
-                                className="btn btn-success btn-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <span className="loading loading-spinner loading-sm"></span>
-                                        Đang nộp...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send className="w-4 h-4" />
-                                        Nộp Bài
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-50 border-t border-gray-200 px-4 sm:px-6 lg:px-8 py-2">
-                        <div className="max-w-6xl mx-auto">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${progress}%` }}
-                                ></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-3">
                             <InfiniteScroll
                                 data="questionsFeed"
                                 buffer={200}
@@ -1030,6 +990,15 @@ export default function Take({
 
                         <div className="lg:col-span-1">
                             <div className="bg-white rounded-lg shadow-md p-6 sticky top-56 space-y-6">
+                                {/* Timer Section moved here */}
+                                <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-100">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Thời gian còn lại</p>
+                                    <div className={`flex items-center justify-center gap-2 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-gray-900"}`}>
+                                        <Clock className="w-5 h-5" />
+                                        <span className="text-2xl font-bold tabular-nums">{formatTime(timeLeft)}</span>
+                                    </div>
+                                </div>
+
                                 <h3 className="font-bold text-gray-900">
                                     Danh sách câu hỏi
                                 </h3>
