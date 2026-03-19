@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Clock, ChevronLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAutoSave } from '@/Hooks/useAutoSave';
@@ -14,7 +14,7 @@ export default function TestsShow({ test }) {
     const [startTime] = useState(Date.now());
     const [selectedAnswers, setSelectedAnswers] = useState({});
 
-    // Dùng useAutoSave hook có sẵn
+    // Dùng useAutoSave hook có sẵn - chỉ cho answers
     const { isSaving, lastSavedAt, error, getStoredAnswers, clearStoredAnswers } = useAutoSave(
         selectedAnswers,
         test?.id,
@@ -22,36 +22,100 @@ export default function TestsShow({ test }) {
         30000 // 30 seconds
     );
 
+    // Custom storage cho toàn bộ state
+    const storageKey = `test_${test?.id}_full_state`;
+
+    // Lưu toàn bộ state vào localStorage
+    const saveFullState = useCallback(() => {
+        try {
+            const fullState = {
+                selectedAnswers,
+                currentQuestion,
+                timeLeft,
+                startTime,
+                lastSaved: Date.now(), // Thời điểm lưu lần cuối
+                testId: test?.id
+            };
+            localStorage.setItem(storageKey, JSON.stringify(fullState));
+            console.log('Saved full state to localStorage with timestamp');
+        } catch (err) {
+            console.error('Failed to save full state:', err);
+        }
+    }, [selectedAnswers, currentQuestion, timeLeft, startTime, test?.id, storageKey]);
+
+    // Lấy full state từ localStorage
+    const getFullState = useCallback(() => {
+        try {
+            const stored = localStorage.getItem(storageKey);
+            return stored ? JSON.parse(stored) : null;
+        } catch (err) {
+            console.error('Failed to read full state:', err);
+            return null;
+        }
+    }, [storageKey]);
+
+    // Xóa full state
+    const clearFullState = useCallback(() => {
+        try {
+            localStorage.removeItem(storageKey);
+            console.log('Cleared full state from localStorage');
+        } catch (err) {
+            console.error('Failed to clear full state:', err);
+        }
+    }, [storageKey]);
+
     // State cho thông báo khôi phục tiến độ
     const [showRestoreNotification, setShowRestoreNotification] = useState(false);
 
-    // Khôi phục tiến độ khi component mount
+    // Khôi phục toàn bộ state khi component mount
     useEffect(() => {
-        const stored = getStoredAnswers();
-        if (stored && stored.answers && Object.keys(stored.answers).length > 0) {
-            // Tính thời gian đã trôi qua
-            const elapsedSeconds = Math.floor((Date.now() - new Date(stored.timestamp).getTime()) / 1000);
-            const adjustedTimeLeft = Math.max(0, (test?.duration || 40) * 60 - elapsedSeconds);
+        const fullState = getFullState();
+        if (fullState && fullState.testId === test?.id) {
+            // Tính thời gian đã trôi qua từ LẦN LƯU CUỐI CÙNG, không phải từ startTime ban đầu
+            const elapsedSinceLastSave = Math.floor((Date.now() - new Date(fullState.lastSaved || fullState.startTime).getTime()) / 1000);
+            const originalDuration = (test?.duration || 40) * 60;
+
+            // Thời gian còn lại = thời gian còn lại lúc lưu + thời gian đã trôi qua từ lúc lưu
+            const adjustedTimeLeft = Math.max(0, fullState.timeLeft - elapsedSinceLastSave);
 
             setTimeLeft(adjustedTimeLeft);
-            setSelectedAnswers(stored.answers);
+            setSelectedAnswers(fullState.selectedAnswers || {});
+            setCurrentQuestion(fullState.currentQuestion || 0);
 
             // Hiển thị thông báo nếu có dữ liệu
-            setShowRestoreNotification(true);
-            setTimeout(() => setShowRestoreNotification(false), 5000);
+            if (Object.keys(fullState.selectedAnswers || {}).length > 0) {
+                setShowRestoreNotification(true);
+                setTimeout(() => setShowRestoreNotification(false), 5000);
+            }
 
-            console.log('Restored progress from useAutoSave:', {
-                elapsed: elapsedSeconds,
+            console.log('Restored full state with accurate timer:', {
+                elapsedSinceLastSave: elapsedSinceLastSave,
+                originalDuration: originalDuration,
+                savedTimeLeft: fullState.timeLeft,
                 adjustedTimeLeft: adjustedTimeLeft,
-                answersCount: Object.keys(stored.answers).length
+                answersCount: Object.keys(fullState.selectedAnswers || {}).length,
+                currentQuestion: fullState.currentQuestion || 0
             });
         }
-    }, [getStoredAnswers, test?.duration]);
+    }, [getFullState, test?.id]);
+
+    // Auto-save full state mỗi 10 giây
+    useEffect(() => {
+        if (isSubmitted) return;
+
+        const autoSaveInterval = setInterval(() => {
+            saveFullState();
+        }, 10000); // 10 seconds
+
+        return () => clearInterval(autoSaveInterval);
+    }, [saveFullState, isSubmitted]);
 
     // Cảnh báo trước khi refresh/đóng tab
     useEffect(() => {
         const handleBeforeUnload = (event) => {
             if (!isSubmitted && Object.keys(selectedAnswers).length > 0) {
+                // Lưu state trước khi unload
+                saveFullState();
                 const message = 'Bạn có chắc muốn rời đi? Dữ liệu sẽ được lưu tự động.';
                 event.returnValue = message;
                 return message;
@@ -60,12 +124,13 @@ export default function TestsShow({ test }) {
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [selectedAnswers, isSubmitted]);
+    }, [selectedAnswers, isSubmitted, saveFullState]);
 
     // Xóa localStorage khi nộp bài thành công
     const clearProgress = () => {
         clearStoredAnswers();
-        console.log('Cleared saved progress after submit');
+        clearFullState();
+        console.log('Cleared all saved progress after submit');
     };
 
     // Utility functions

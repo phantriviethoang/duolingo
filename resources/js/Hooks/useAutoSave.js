@@ -29,6 +29,8 @@ export function useAutoSave(answers, examId, sectionOrder, interval = 30000) {
             const key = `exam_${examId}_section_${sectionOrder}_answers`;
             localStorage.setItem(key, JSON.stringify({
                 answers,
+                currentQuestion: 0, // Sẽ được override từ component
+                startTime: Date.now(),
                 timestamp: new Date().toISOString(),
             }));
         } catch (err) {
