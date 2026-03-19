@@ -33,14 +33,16 @@ const CEFRLevelProgress = ({ level, levelProgress, overallProgress, nextLevel })
     };
 
     const getPartStatusText = (part) => {
-        if (part.is_passed) return 'Đã hoàn thành';
+        if (part.is_passed) return `Đạt yêu cầu (${part.percentage}%)`;
         if (part.is_locked) return 'Bị khóa';
+        if (part.percentage > 0) return `Chưa đạt (${part.percentage}%)`;
         return 'Chưa làm';
     };
 
     const getPartIcon = (part) => {
         if (part.is_passed) return <CheckCircle className="w-5 h-5" />;
         if (part.is_locked) return <Lock className="w-5 h-5" />;
+        if (part.percentage > 0) return <AlertCircle className="w-5 h-5 text-yellow-600" />;
         return <BookOpen className="w-5 h-5" />;
     };
 
@@ -166,8 +168,8 @@ const CEFRLevelProgress = ({ level, levelProgress, overallProgress, nextLevel })
 
                                             {/* Score Display */}
                                             {part.percentage > 0 && (
-                                                <div className="mb-4">
-                                                    <div className="flex items-center justify-between mb-1">
+                                                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                    <div className="flex items-center justify-between mb-2">
                                                         <span className="text-sm text-gray-600">Điểm của bạn:</span>
                                                         <span className={`text-sm font-bold ${part.is_passed ? 'text-green-600' : 'text-red-600'
                                                             }`}>
@@ -180,6 +182,24 @@ const CEFRLevelProgress = ({ level, levelProgress, overallProgress, nextLevel })
                                                                 }`}
                                                             style={{ width: `${part.percentage}%` }}
                                                         />
+                                                    </div>
+                                                    <div className="mt-2 text-xs text-gray-500">
+                                                        {part.is_passed ?
+                                                            `✅ Đạt yêu cầu (cần ≥${part.pass_threshold}%)` :
+                                                            `❌ Chưa đạt yêu cầu (cần ≥${part.pass_threshold}%)`
+                                                        }
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* No Score Display */}
+                                            {part.percentage === 0 && (
+                                                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                    <div className="text-sm text-gray-500 text-center">
+                                                        Chưa có điểm số
+                                                    </div>
+                                                    <div className="text-xs text-gray-400 text-center mt-1">
+                                                        Yêu cầu: ≥{part.pass_threshold}%
                                                     </div>
                                                 </div>
                                             )}
@@ -198,14 +218,15 @@ const CEFRLevelProgress = ({ level, levelProgress, overallProgress, nextLevel })
                                             <button
                                                 disabled={part.is_locked || processing}
                                                 className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${part.is_passed ? 'bg-green-600 text-white hover:bg-green-700' :
-                                                    part.is_locked ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
-                                                        'bg-blue-600 text-white hover:bg-blue-700'
+                                                        part.is_locked ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
+                                                            part.percentage > 0 ? 'bg-orange-600 text-white hover:bg-orange-700' :
+                                                                'bg-blue-600 text-white hover:bg-blue-700'
                                                     }`}
                                                 onClick={() => handleStartPart(part)}
                                             >
                                                 {part.is_passed ? 'Làm lại' :
                                                     part.is_locked ? 'Bị khóa' :
-                                                        part.percentage > 0 ? 'Tiếp tục' : 'Bắt đầu'}
+                                                        part.percentage > 0 ? 'Tiếp tục làm' : 'Bắt đầu làm'}
                                             </button>
 
                                             {/* Completed At */}

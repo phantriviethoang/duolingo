@@ -162,6 +162,53 @@ class CEFRProgressService
     }
 
     /**
+     * Get questions for a specific level and part
+     */
+    public function getQuestionsForPart(string $level, int $part)
+    {
+        // Tìm test phù hợp với level và part
+        $test = \App\Models\Test::where('title', 'like', "%{$level}%")
+            ->orWhere('title', 'like', "%Part {$part}%")
+            ->first();
+
+        if (! $test) {
+            // Nếu không tìm thấy, lấy test đầu tiên
+            $test = \App\Models\Test::first();
+        }
+
+        if (! $test) {
+            return [];
+        }
+
+        // Lấy câu hỏi của test
+        $questions = $test->questions()
+            ->orderBy('question_number')
+            ->get()
+            ->map(function ($question) {
+                return [
+                    'id' => $question->id,
+                    'question_number' => $question->question_number,
+                    'question' => $question->question,
+                    'options' => $question->options,
+                    'correct_option_id' => $question->correct_option_id,
+                    'explanation' => $question->explanation,
+                    'translation' => $question->translation,
+                ];
+            });
+
+        return [
+            'test' => [
+                'id' => $test->id,
+                'title' => $test->title,
+                'description' => $test->description,
+                'duration' => $test->duration,
+                'total_questions' => $test->total_questions,
+            ],
+            'questions' => $questions,
+        ];
+    }
+
+    /**
      * Check if user can start a new level
      * Luôn cho phép chọn bất kỳ trình độ nào (không khóa)
      */
@@ -170,5 +217,18 @@ class CEFRProgressService
         // Luôn cho phép chọn bất kỳ trình độ nào
         // User có thể tự do chuyển giữa các trình độ
         return true;
+    }
+
+    /**
+     * Get pass threshold for a part
+     */
+    public function getPassThreshold(int $part): int
+    {
+        return match ($part) {
+            1 => 60,  // Part 1: 60%
+            2 => 75,  // Part 2: 75%
+            3 => 90,  // Part 3: 90%
+            default => 60,
+        };
     }
 }

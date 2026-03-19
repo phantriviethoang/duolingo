@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SubmitSectionRequest;
 use App\Models\Test as Exam;
-use App\Models\Section;
-use App\Models\UserProgress;
 use App\Services\ExamResultService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ExamController extends Controller
@@ -62,7 +61,7 @@ class ExamController extends Controller
             ->paginate($perPage);
 
         // Lấy dữ liệu tiến độ user cho mỗi exam
-        $user = auth()->user();
+        $user = Auth::user();
         $exams = $exams->through(function ($exam) use ($user) {
             $userProgress = $user->userProgress()
                 ->where('exam_id', $exam->id)
@@ -101,7 +100,7 @@ class ExamController extends Controller
     {
         $exam->load('levelRelation', 'sections.questions');
 
-        $userProgress = auth()->user()
+        $userProgress = Auth::user()
             ->userProgress()
             ->where('exam_id', $exam->id)
             ->first();
@@ -144,71 +143,35 @@ class ExamController extends Controller
      */
     public function take(Exam $exam, Request $request)
     {
-        $sectionOrder = (int) $request->query('section', 1);
+        // Với CEFR system, không tạo user_progress ở đây
+        // UserProgress sẽ được tạo bởi CEFRProgressService khi hoàn thành
 
-        // Lấy hoặc tạo user progress
-        $userProgress = auth()->user()
-            ->userProgress()
-            ->where('exam_id', $exam->id)
-            ->firstOrCreate([
-                'exam_id' => $exam->id,
-            ], [
-                'last_completed_section_order' => 0, // Chưa unlock section nào
-                'is_completed' => false,
-                'started_at' => now(),
-            ]);
+        // Load exam với questions
+        $exam->load([
+            'questions' => function ($query) {
+                $query->orderBy('question_number');
+            }
+        ]);
 
-        // Nếu yêu cầu resume
-        if ($request->query('resume') === 'true') {
-            $sectionOrder = $userProgress->last_completed_section_order + 1;
-        }
-
-        // ✅ AUTHORIZATION: Kiểm tra user có thể truy cập section này không
-        if (! $userProgress->canAccessSection($sectionOrder)) {
-            // Return error view hoặc redirect
-            return Inertia::render('Exams/SectionLocked', [
-                'exam' => [
-                    'id' => $exam->id,
-                    'title' => $exam->title,
-                ],
-                'requested_section' => $sectionOrder,
-                'last_completed_section' => $userProgress->last_completed_section_order,
-                'next_available_section' => $userProgress->last_completed_section_order + 1,
-            ]);
-        }
-
-        // Kiểm tra section có tồn tại không
-        $section = $exam->sections()
-            ->where('order', $sectionOrder)
-            ->firstOrFail();
-
-        // Lấy các câu hỏi của section đó
-        // ⚠️ CHÚ Ý: Không truyền explanation + detailed_explanation để ko lộ đáp án!
-        $questions = $section->questions()
-            ->get()
-            ->map(fn ($q) => [
-                'id' => $q->id,
-                'question' => $q->question,
-                'options' => $q->options,
-                // NOT including: explanation, detailed_explanation, translation
-                // (để tránh lộ đáp án lúc làm bài)
-            ])
-            ->toArray();
-
-        return Inertia::render('Exams/Take', [
-            'exam' => [
+        // Render trang làm bài với component có sẵn
+        return Inertia::render('Tests/Take', [
+            'test' => [
                 'id' => $exam->id,
                 'title' => $exam->title,
+                'description' => $exam->description,
                 'duration' => $exam->duration,
-                'is_high_quality' => $exam->is_high_quality,
+                'total_questions' => $exam->total_questions,
+                'questions' => $exam->questions->map(function ($question) {
+                    return [
+                        'id' => $question->id,
+                        'question_number' => $question->question_number,
+                        'question' => $question->question,
+                        'options' => $question->options,
+                        // Không gửi correct_option_id để tránh lộ đáp án
+                    ];
+                }),
             ],
-            'section' => [
-                'id' => $section->id,
-                'order' => $section->order,
-                'pass_threshold' => $section->pass_threshold,
-            ],
-            'questions' => $questions,
-            'total_sections' => $exam->sections->count(),
+            'section' => null, // CEFR system không dùng sections
         ]);
     }
 
@@ -226,9 +189,10 @@ class ExamController extends Controller
         $validated = $request->validated();
 
         // Gọi service để xử lý
+        $user = Auth::user();
         $result = $resultService->submitSection(
             exam: $exam,
-            user: auth()->user(),
+            user: $user,
             sectionOrder: $validated['section_order'],
             answers: $validated['answers']
         );

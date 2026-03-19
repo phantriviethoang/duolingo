@@ -81,22 +81,22 @@ class CEFRProgressController extends Controller
             abort(404);
         }
 
-        // Check if user can access this part
-        if (! $this->cefrService->canAccessPart($user, $level, $part)) {
-            $progress = $this->cefrService->getUserLevelProgress($user, $level);
-            $partProgress = $progress->get($part) ?: new \App\Models\UserProgress([
-                'user_id' => $user->id,
-                'level' => $level,
-                'part' => $part,
-            ]);
+        // Tìm exam phù hợp với level và part
+        $exam = \App\Models\Test::where('title', 'like', "%{$level}%")
+            ->orWhere('title', 'like', "%Part {$part}%")
+            ->first();
 
-            return back()->with('error', $partProgress->getLockMessage());
+        if (! $exam) {
+            // Fallback: lấy exam đầu tiên active
+            $exam = \App\Models\Test::where('is_active', true)->first();
         }
 
-        // Tạm thời redirect về trang level với thông báo
-        // TODO: Sau này sẽ redirect đến trang làm bài test thực tế
-        return redirect()->route('cefr.level', ['level' => $level])
-            ->with('info', "Đang bắt đầu Part {$part} của Level {$level} - Tính năng đang phát triển!");
+        if (! $exam) {
+            return back()->with('error', 'Không tìm thấy bài kiểm tra phù hợp.');
+        }
+
+        // Redirect đến trang làm bài có sẵn
+        return redirect()->route('exams.take', ['exam' => $exam->id]);
     }
 
     /**
@@ -120,28 +120,21 @@ class CEFRProgressController extends Controller
             $validated['total_questions']
         );
 
-        // Check if level is completed
-        $isLevelCompleted = \App\Models\UserProgress::isLevelCompleted($user->id, $level);
+        // Calculate percentage
+        $percentage = round(($validated['score'] / $validated['total_questions']) * 100, 2);
+        $isPassed = $percentage >= $this->cefrService->getPassThreshold($part);
 
-        if ($isLevelCompleted) {
-            $message = "🎉 Chúc mừng! Bạn đã hoàn thành trình độ {$level}!";
-
-            // Check if there's next level
-            $nextLevel = $this->cefrService->getNextLevel($user);
-            if ($nextLevel) {
-                $message .= " Hãy thử thách với trình độ {$nextLevel}!";
-            }
-        } else {
-            $threshold = $progress->getPassThreshold();
-            if ($progress->is_passed) {
-                $message = "✅ Tốt! Bạn đã đạt {$progress->percentage}% (yêu cầu: {$threshold}%).";
-            } else {
-                $message = "❌ Bạn cần đạt ít nhất {$threshold}% để hoàn thành Phần {$part}.";
-            }
-        }
-
-        return redirect()->route('cefr.level', ['level' => $level])
-            ->with('success', ['message' => $message]);
+        // Render result page
+        return Inertia::render('CEFR/Result', [
+            'level' => $level,
+            'part' => $part,
+            'score' => $validated['score'],
+            'totalQuestions' => $validated['total_questions'],
+            'percentage' => $percentage,
+            'isPassed' => $isPassed,
+            'passThreshold' => $this->cefrService->getPassThreshold($part),
+            'completedAt' => $progress->completed_at,
+        ]);
     }
 
     /**
