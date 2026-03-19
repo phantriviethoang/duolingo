@@ -3,6 +3,7 @@ import Logo from "@/Components/Logo";
 import { BookOpen, Zap, Trophy, HelpCircle } from "lucide-react";
 
 const baseLinks = [
+    { label: "Dashboard", href: "/dashboard", icon: "📊" },
     { label: "Lộ trình", href: "/levels", icon: "🎓" },
     { label: "Bài thi cơ bản", href: "/tests", icon: "📝" },
     { label: "Giới thiệu", href: "/about", icon: "ℹ️" },

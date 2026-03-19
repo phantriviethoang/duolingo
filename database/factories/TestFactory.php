@@ -20,6 +20,11 @@ class TestFactory extends Factory
             'English Grammar Practice',
             'Reading Practice',
             'Grammar & Reading Practice',
+            'Grammar & Reading Practice',
+            'Grammar & Reading Practice',
+            'Grammar & Reading Practice',
+            'Grammar & Reading Practice',
+            'Grammar & Reading Practice',
         ];
 
         $testType = fake()->randomElement($testTypes);

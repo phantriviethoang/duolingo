@@ -18,11 +18,26 @@ class TestResultController extends Controller
             ->orderByDesc('completed_at')
             ->get()
             ->map(function ($result) {
+                // Tính số câu sai
+                $questions = $result->test?->questions ?? collect();
+                $answers = (array) $result->user_answer;
+                $wrongCount = 0;
+
+                foreach ($questions as $question) {
+                    $userAnswer = $answers[$question->id] ?? null;
+                    if ($userAnswer !== null && $userAnswer != $question->correct_option_id) {
+                        $wrongCount++;
+                    }
+                }
+
                 return [
                     'id' => $result->id,
                     'test_id' => $result->test_id,
                     'test_title' => $result->test->title,
                     'score' => $result->score,
+                    'wrong_count' => $wrongCount,
+                    'total_questions' => $questions->count(),
+                    'correct_count' => $questions->count() - $wrongCount,
                     'completed_at' => $result->completed_at?->format('Y-m-d H:i'),
                 ];
             })
@@ -45,13 +60,13 @@ class TestResultController extends Controller
         // lay cau tra loi
         $answers = $data['answers'] ?? [];
 
-        if (!empty($data['retake_wrong']) && !empty($data['previous_result_id'])) {
+        if (! empty($data['retake_wrong']) && ! empty($data['previous_result_id'])) {
             $previousResult = TestResult::where('id', $data['previous_result_id'])
                 ->where('user_id', auth()->id())
                 ->first();
 
             if ($previousResult) {
-                $mergedAnswers = (array)$previousResult->user_answer;
+                $mergedAnswers = (array) $previousResult->user_answer;
                 foreach ($answers as $qId => $ans) {
                     $mergedAnswers[$qId] = $ans;
                 }
@@ -122,8 +137,8 @@ class TestResultController extends Controller
                     ];
                 } else {
                     $formattedOptions[] = [
-                        'id' => is_numeric($key) ? (int)$key : $key,
-                        'text' => (string)$opt,
+                        'id' => is_numeric($key) ? (int) $key : $key,
+                        'text' => (string) $opt,
                         'is_correct' => $key == $q->correct_option_id,
                     ];
                 }
@@ -160,6 +175,71 @@ class TestResultController extends Controller
                 'completed_at' => $result->completed_at?->format('Y-m-d H:i'),
             ],
             'questions' => $mappedQuestions,
+        ]);
+    }
+
+    /**
+     * Lấy danh sách câu hỏi sai để làm lại
+     */
+    public function getWrongQuestions(TestResult $result)
+    {
+        $this->authorize('view', $result);
+
+        $result->load('test');
+        $test = $result->test;
+        $questions = $test?->questions ?? collect();
+        $answers = (array) $result->user_answer;
+
+        // Lọc chỉ những câu sai
+        $wrongQuestions = $questions->filter(function ($q) use ($answers) {
+            $userAnswer = $answers[$q->id] ?? null;
+            return $userAnswer !== null && $userAnswer != $q->correct_option_id;
+        })->values();
+
+        // Map dữ liệu
+        $mappedQuestions = $wrongQuestions->map(function ($q) use ($answers) {
+            $rawOptions = is_array($q->options) ? $q->options : (is_string($q->options) ? json_decode($q->options, true) : []);
+
+            $formattedOptions = [];
+            foreach ($rawOptions ?? [] as $key => $opt) {
+                if (is_array($opt)) {
+                    $formattedOptions[] = [
+                        'id' => $opt['id'] ?? $key,
+                        'text' => $opt['text'] ?? '',
+                        'is_correct' => ($opt['id'] ?? $key) == $q->correct_option_id,
+                    ];
+                } else {
+                    $formattedOptions[] = [
+                        'id' => is_numeric($key) ? (int) $key : $key,
+                        'text' => (string) $opt,
+                        'is_correct' => $key == $q->correct_option_id,
+                    ];
+                }
+            }
+
+            return [
+                'id' => $q->id,
+                'question' => $q->question,
+                'options' => $formattedOptions,
+                'explanation' => $q->explanation,
+                'translation' => $q->translation,
+                'detailed_explanation' => $q->detailed_explanation,
+                'user_answer' => $answers[$q->id] ?? null,
+            ];
+        });
+
+        return response()->json([
+            'test' => [
+                'id' => $test?->id,
+                'title' => $test?->title,
+                'duration' => $test?->duration,
+            ],
+            'result' => [
+                'id' => $result->id,
+                'score' => $result->score,
+                'wrong_count' => count($wrongQuestions),
+            ],
+            'questions' => $mappedQuestions->toArray(),
         ]);
     }
 }

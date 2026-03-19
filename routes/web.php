@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\HomeController;
@@ -51,11 +52,17 @@ Route::middleware(['auth'])->group(function () {
 
 // =========== CỦA TESTS (cũ - giữ cho tương thích) ===========
 Route::middleware(['auth'])->group(function () {
+    // Dashboard tiến độ
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
     // hien thi ket qua bai lam
     Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
 
     // chi tiet
     Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
+
+    // Lấy danh sách câu sai để làm lại
+    Route::get('/results/{result}/wrong-questions', [TestResultController::class, 'getWrongQuestions'])->name('results.wrong-questions');
 
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
     Route::get('/tests/{test}', [TestController::class, 'show'])->name('tests.show');
@@ -65,7 +72,7 @@ Route::middleware(['auth'])->group(function () {
 
 // =========== DASHBOARD ADMIN ===========
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin', DashboardController::class)->name('admin.dashboard');
+    Route::get('/admin', AdminDashboardController::class)->name('admin.dashboard');
 
     Route::get('/admin/tests', [TestController::class, 'adminIndex'])->name('admin.tests');
     Route::get('/admin/tests/create', [TestController::class, 'create'])->name('tests.create');

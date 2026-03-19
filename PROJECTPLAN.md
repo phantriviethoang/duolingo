@@ -20,3 +20,5 @@ Dashboard Tiến độ: Hiển thị % hoàn thành lộ trình (ví dụ: Lộ 
 Lịch sử thông minh: Bảng lịch sử có tính năng Sắp xếp (Sort) theo số câu sai (từ nhiều đến ít) để nhận diện lỗ hổng kiến thức.
 
 Chế độ "Làm lại câu sai": Một tính năng tách biệt giúp người dùng chỉ tập trung giải lại những câu đã sai trong bộ đề đó cho đến khi đúng hoàn toàn.
+
+D. Thêm tính năng phân chia câu hỏi theo phần theo mục, tách nhau bởi part 1234 chẳng hạn, tiếp phần  lộ trình người học, phân chia theo mục làm, độ khó, độ hoàn thành, tiếp đến bổ sung phần phân loại câu hỏi theo dạng, để người dùng dễ dàng luyện tập theo câu hỏi từng dạng đó.
