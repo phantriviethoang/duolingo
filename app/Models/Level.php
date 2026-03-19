@@ -12,6 +12,7 @@ class Level extends Model
     use HasFactory;
 
     protected $fillable = [
+        'target_level',
         'name',
         'description',
         'order',
@@ -51,7 +52,7 @@ class Level extends Model
     protected function passThreshold(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->pass_threshold ?? 0.5
+            get: fn ($value) => $value ?? 0.5
         )->shouldCache();
     }
 
@@ -61,7 +62,7 @@ class Level extends Model
     protected function adjustedPassThreshold(): Attribute
     {
         return Attribute::make(
-            get: fn () => min($this->pass_threshold * 1.1, 1.0)
+            get: fn ($value, $attributes) => min(($attributes['pass_threshold'] ?? 0.5) * 1.1, 1.0)
         )->shouldCache();
     }
 
@@ -79,8 +80,10 @@ class Level extends Model
             return false;
         }
 
-        // Lấy Part trước đó
-        $prevPart = Level::where('order', $this->order - 1)->first();
+        // Lấy Part trước đó thuộc cùng khóa học/level
+        $prevPart = Level::where('target_level', $this->target_level)
+            ->where('order', $this->order - 1)
+            ->first();
         if (! $prevPart) {
             return true; // Không có Part trước → khóa
         }
@@ -90,7 +93,8 @@ class Level extends Model
             ->whereHas('test', fn ($q) => $q->where('level_id', $prevPart->id))
             ->get()
             ->filter(function ($result) use ($user, $prevPart) {
-                $threshold = $user->is_high_quality ? $prevPart->adjusted_pass_threshold : $prevPart->pass_threshold;
+                $userThreshold = $user->getPassThreshold() / 100;
+                $threshold = $user->is_high_quality ? min($userThreshold * 1.1, 1.0) : $userThreshold;
                 $percentage = $result->total_questions > 0
                     ? ($result->correct_answers / $result->total_questions)
                     : 0;

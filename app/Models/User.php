@@ -98,37 +98,33 @@ class User extends Authenticatable
         );
     }
 
-    /**
-     * Accessor: Lấy ngưỡng điểm đạt dựa vào target_level
-     *
-     * @return int (50, 70, 90) tương ứng với ('Trung bình', 'Khá', 'Tốt')
-     */
     protected function getPassThresholdAttribute(): Attribute
     {
         return Attribute::make(
             get: function () {
-                return match ($this->target_level ?? 'Trung bình') {
-                    'Trung bình' => 50,
-                    'Khá' => 70,
-                    'Tốt' => 90,
-                    default => 50,
+                return match ($this->target_level ?? 'A1') {
+                    'A1' => 40,
+                    'A2' => 50,
+                    'B1' => 60,
+                    'B2' => 70,
+                    'C1' => 80,
+                    'C2' => 90,
+                    default => 40,
                 };
             }
         );
     }
 
-    /**
-     * Method: Lấy ngưỡng điểm theo target_level (dạng chuyên dụng)
-     *
-     * @return int (50, 70, 90)
-     */
     public function getPassThreshold(): int
     {
-        return match ($this->target_level ?? 'Trung bình') {
-            'Trung bình' => 50,
-            'Khá' => 70,
-            'Tốt' => 90,
-            default => 50,
+        return match ($this->target_level ?? 'A1') {
+            'A1' => 40,
+            'A2' => 50,
+            'B1' => 60,
+            'B2' => 70,
+            'C1' => 80,
+            'C2' => 90,
+            default => 40,
         };
     }
 

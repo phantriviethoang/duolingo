@@ -265,26 +265,60 @@ export default function Show({ test, result, questions }) {
                         </div>
 
                         <div className="card-actions justify-center mt-6 gap-3 flex-wrap">
-                            {result.correct < result.total && (
-                                <Link
-                                    href={`/tests/${test.id}/take?retake_wrong=1&result_id=${result.id}`}
-                                    className="btn btn-warning rounded-xl btn-sm text-warning-content font-semibold"
-                                >
-                                    Làm lại câu sai
-                                </Link>
+                            {result.is_exam_section ? (
+                                <>
+                                    {result.section_order < result.total_sections ? (
+                                        <Link
+                                            href={`/exams/${test.id}/take?section=${result.section_order + 1}`}
+                                            className="btn btn-primary rounded-xl btn-sm"
+                                        >
+                                            Làm tiếp phần {result.section_order + 1}
+                                        </Link>
+                                    ) : (
+                                        <Link
+                                            href={`/exams/${test.id}`}
+                                            className="btn btn-primary rounded-xl btn-sm"
+                                        >
+                                            Hoàn thành bài thi
+                                        </Link>
+                                    )}
+                                    <Link
+                                        href={`/exams/${test.id}/take?section=${result.section_order}`}
+                                        className="btn btn-outline rounded-xl btn-sm"
+                                    >
+                                        Làm lại đoạn này
+                                    </Link>
+                                    <Link
+                                        href="/roadmap"
+                                        className="btn btn-ghost rounded-xl btn-sm"
+                                    >
+                                        Về lộ trình
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    {result.correct < result.total && (
+                                        <Link
+                                            href={`/tests/${test.id}/take?retake_wrong=1&result_id=${result.id}`}
+                                            className="btn btn-warning rounded-xl btn-sm text-warning-content font-semibold"
+                                        >
+                                            Làm lại câu sai
+                                        </Link>
+                                    )}
+                                    <Link
+                                        href={`/tests/${test.id}/take`}
+                                        className="btn btn-outline rounded-xl btn-sm"
+                                    >
+                                        Làm lại bài này
+                                    </Link>
+                                    <Link
+                                        href="/tests"
+                                        className="btn btn-primary rounded-xl btn-sm"
+                                    >
+                                        Làm bài khác
+                                    </Link>
+                                </>
                             )}
-                            <Link
-                                href={`/tests/${test.id}/take`}
-                                className="btn btn-outline rounded-xl btn-sm"
-                            >
-                                Làm lại bài này
-                            </Link>
-                            <Link
-                                href="/tests"
-                                className="btn btn-primary rounded-xl btn-sm"
-                            >
-                                Làm bài khác
-                            </Link>
                         </div>
                     </div>
                 </div>

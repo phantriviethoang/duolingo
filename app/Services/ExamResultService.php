@@ -68,6 +68,10 @@ class ExamResultService
         // Convert thành dạng decimal (50 → 0.5, 70 → 0.7, 90 → 0.9)
         $passThresholdPercent = $user->getPassThreshold() / 100;
 
+        if ($user->is_high_quality) {
+            $passThresholdPercent = min($passThresholdPercent * 1.1, 1.0);
+        }
+
         // Kiểm tra đạt hay không
         $passed = $percentage >= $passThresholdPercent;
 
@@ -118,7 +122,7 @@ class ExamResultService
         // Nếu pass: cập nhật progress
         if ($passed) {
             $userProgress->update([
-                'last_completed_section_order' => $sectionOrder,
+                'last_completed_section_order' => max($userProgress->last_completed_section_order, $sectionOrder),
             ]);
 
             // Nếu là section cuối cùng

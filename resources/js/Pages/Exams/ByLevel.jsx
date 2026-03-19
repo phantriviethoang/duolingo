@@ -138,9 +138,9 @@ export default function ByLevel({ exams, level_id }) {
                                                 ) : (
                                                     <span className="text-gray-500 text-sm">Chưa bắt đầu</span>
                                                 )}
-                                                <button className="btn btn-primary btn-sm">
+                                                <div className="btn btn-primary btn-sm">
                                                     {exam.user_progress?.is_completed ? 'Làm lại' : 'Bắt đầu'}
-                                                </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </Link>

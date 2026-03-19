@@ -39,9 +39,10 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const intervalRef = useRef(null);
 
-    // Storage keys
-    const storageKey = `quiz_${quiz?.id}_answers`;
-    const storageStartTimeKey = `quiz_${quiz?.id}_startTime`;
+    // Storage keys (phân biệt cả section nếu có)
+    const sectionSuffix = section ? `_sec_${section.order}` : '';
+    const storageKey = `quiz_${quiz?.id}${sectionSuffix}_answers`;
+    const storageStartTimeKey = `quiz_${quiz?.id}${sectionSuffix}_startTime`;
     const quizDurationSeconds = (quiz?.duration || 40) * 60;
 
     // Initialize time left: tính từ startTime nếu tồn tại
@@ -266,7 +267,7 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
     const question = questions[currentQuestion];
 
     return (
-        <Layout>
+        <>
             <Head title={`Làm đề thi: ${quiz.title}`} />
             <div className="min-h-screen bg-gray-50">
                 {/* Fixed Header */}
@@ -499,6 +500,6 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 }

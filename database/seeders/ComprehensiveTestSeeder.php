@@ -23,119 +23,38 @@ class ComprehensiveTestSeeder extends Seeder
     use HasQuestionBank;
     public function run(): void
     {
-        // Lấy hoặc tạo levels
-        $b1 = Level::firstOrCreate(
-            ['name' => 'B1'],
-            [
-                'order' => 3,
-                'pass_threshold' => 0.50,
-                'description' => 'Tiếng Anh cơ bản'
-            ]
-        );
+        $targetLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
-        $b2 = Level::firstOrCreate(
-            ['name' => 'B2'],
-            [
-                'order' => 4,
-                'pass_threshold' => 0.65,
-                'description' => 'Tiếng Anh trung cấp'
-            ]
-        );
+        foreach ($targetLevels as $tl) {
+            for ($part = 1; $part <= 3; $part++) {
+                // Tạo 3 phần (Parts) cho mỗi target_level
+                $level = Level::firstOrCreate(
+                    [
+                        'target_level' => $tl,
+                        'order' => $part
+                    ],
+                    [
+                        'name' => "Phần $part",
+                        'description' => "Nội dung học $tl - Phần $part",
+                        'pass_threshold' => 0.5,
+                    ]
+                );
 
-        $c1 = Level::firstOrCreate(
-            ['name' => 'C1'],
-            [
-                'order' => 6,
-                'pass_threshold' => 0.80,
-                'description' => 'Tiếng Anh cao cấp'
-            ]
-        );
+                // Tạo tự động N Test exams cho Phần này (ví dụ mỗi Phần có 2 bài thi)
+                for ($examIdx = 1; $examIdx <= 2; $examIdx++) {
+                    $this->createTestWithSections($level, [
+                        'title' => "$tl - Bài kiểm tra Phần $part - Đề $examIdx",
+                        'description' => "Đánh giá năng lực $tl - Phần $part - Mã đề $examIdx",
+                        'duration' => 30 + ($examIdx * 5),
+                        'total_questions' => 20,
+                        'difficulty_score' => $part * 2 + $examIdx,
+                        'is_high_quality' => ($part == 3 && $examIdx == 2), // Đề cuối phần cuối là chất lượng cao
+                    ]);
+                }
+            }
+        }
 
-        // ============= B1 TESTS =============
-        $this->createTestWithSections($b1, [
-            'title' => 'B1 Test 1: Basic Skills',
-            'description' => 'Kiểm tra ngữ pháp cơ bản, từ vựng đơn giản',
-            'duration' => 30,
-            'total_questions' => 20,
-            'difficulty_score' => 2,
-            'is_high_quality' => false,
-        ]);
-
-        $this->createTestWithSections($b1, [
-            'title' => 'B1 Test 2: Communication',
-            'description' => 'Kỹ năng giao tiếp và cách diễn đạt',
-            'duration' => 35,
-            'total_questions' => 20,
-            'difficulty_score' => 2,
-            'is_high_quality' => true, // High-quality test
-        ]);
-
-        $this->createTestWithSections($b1, [
-            'title' => 'B1 Test 3: Reading Comprehension',
-            'description' => 'Đọc hiểu các văn bản ngắn, trích đoạn',
-            'duration' => 40,
-            'total_questions' => 15,
-            'difficulty_score' => 3,
-            'is_high_quality' => false,
-        ]);
-
-        // ============= B2 TESTS =============
-        $this->createTestWithSections($b2, [
-            'title' => 'B2 Test 1: Advanced Grammar',
-            'description' => 'Ngữ pháp tiếng Anh nâng cao',
-            'duration' => 45,
-            'total_questions' => 25,
-            'difficulty_score' => 5,
-            'is_high_quality' => false,
-        ]);
-
-        $this->createTestWithSections($b2, [
-            'title' => 'B2 Test 2: Business English',
-            'description' => 'Tiếng Anh trong môi trường công sở',
-            'duration' => 50,
-            'total_questions' => 25,
-            'difficulty_score' => 6,
-            'is_high_quality' => true,
-        ]);
-
-        $this->createTestWithSections($b2, [
-            'title' => 'B2 Test 3: Listening & Speaking',
-            'description' => 'Nghe hiểu và nói tiếng Anh thành thạo',
-            'duration' => 55,
-            'total_questions' => 30,
-            'difficulty_score' => 6,
-            'is_high_quality' => false,
-        ]);
-
-        // ============= C1 TESTS =============
-        $this->createTestWithSections($c1, [
-            'title' => 'C1 Test 1: Mastery Level',
-            'description' => 'Trình độ thành thạo, các chủ đề phức tạp',
-            'duration' => 60,
-            'total_questions' => 35,
-            'difficulty_score' => 8,
-            'is_high_quality' => false,
-        ]);
-
-        $this->createTestWithSections($c1, [
-            'title' => 'C1 Test 2: Academic English',
-            'description' => 'Tiếng Anh học thuật, các tài liệu chuyên sâu',
-            'duration' => 75,
-            'total_questions' => 40,
-            'difficulty_score' => 9,
-            'is_high_quality' => true,
-        ]);
-
-        $this->createTestWithSections($c1, [
-            'title' => 'C1 Test 3: Proficiency Test',
-            'description' => 'Bài thi trình độ cao nhất, content chuyên nghiệp',
-            'duration' => 90,
-            'total_questions' => 50,
-            'difficulty_score' => 10,
-            'is_high_quality' => true,
-        ]);
-
-        $this->command->info('✅ Comprehensive test data created successfully!');
+        $this->command->info('✅ Lộ trình cá nhân hóa (6 cấp x 3 phần) created successfully!');
     }
 
     /**

@@ -76,9 +76,9 @@ class UserProgress extends Model
      */
     public function canAccessSection(int $sectionOrder): bool
     {
-        // Nếu đã hoàn thành exam, không thể truy cập thêm
+        // Nếu đã hoàn thành exam, cho phép truy cập LÀM LẠI bất kỳ section nào
         if ($this->is_completed) {
-            return false;
+            return true;
         }
 
         // Chỉ có thể truy cập section hiện tại hoặc các section đã unlock

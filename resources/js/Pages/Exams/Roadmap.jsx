@@ -1,27 +1,4 @@
-/**
- * ⭐ PHẦN MỚI: Roadmap Component
- *
- * 📋 Hiển thị lộ trình học tập cá nhân + Unlock logic
- *
- * ⭐ FIX: Dùng React.Fragment key={part.id} để fix React warning
- *        "Each child in a list should have a unique key prop"
- *
- * Props từ LevelController@index:
- * - levels[] → Danh sách 3+ levels (B1, B2, C1)
- *   - name, order, description
- *   - pass_threshold (60/70/90 từ user.target_level)
- *   - is_locked (Part 1 mở, phần sau khóa đến Part N-1 đạt)
- *   - status → 'locked' | 'in-progress' | 'completed'
- *   - progress_percent → (completed_exams / total_exams) * 100
- * - user_pass_threshold → 50/70/90 từ users.target_level
- * - user_target_part → users.target_part_id
- *
- * Logic:
- * Part 1: Luôn mở
- * Part N: Khóa nếu Part N-1 chưa PASS
- *
- * Action: Click "Làm bài" → /levels/{level.id}/exams
- */
+
 
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
@@ -110,9 +87,8 @@ export default function Levels({ levels, user_is_high_quality, user_target_part 
                                                         </span>
                                                     </div>
 
-                                                    {/* Info */}
                                                     <div className="mt-2 text-sm text-gray-600">
-                                                        Yêu cầu: {Math.round(part.pass_threshold * 100)}%
+                                                        Yêu cầu: {part.pass_threshold}%
                                                         {isLocked && (
                                                             <span className="ml-3 text-red-600 font-semibold">
                                                                 Hoàn thành phần {part.order - 1} để mở khóa

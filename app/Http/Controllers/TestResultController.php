@@ -114,10 +114,16 @@ class TestResultController extends Controller
     public function show(TestResult $result)
     {
         // load
-        $result->load('test');
+        $result->load('test', 'section');
         $test = $result->test;
 
-        $questions = $test?->questions ?? collect();
+        // Lấy đúng câu hỏi của section thay vì toàn bộ exam
+        if ($result->section_id && $result->section) {
+            $questions = $result->section->questions ?? collect();
+        } else {
+            $questions = $test?->questions ?? collect();
+        }
+
         $answers = (array) $result->user_answer;
 
         $correct = 0;
@@ -173,6 +179,9 @@ class TestResultController extends Controller
                 'total' => $questions->count(),
                 'answers' => $answers,
                 'completed_at' => $result->completed_at?->format('Y-m-d H:i'),
+                'is_exam_section' => $result->section_id !== null,
+                'section_order' => $result->section_id ? $result->section->order : null,
+                'total_sections' => $result->section_id ? $test->sections()->count() : null,
             ],
             'questions' => $mappedQuestions,
         ]);

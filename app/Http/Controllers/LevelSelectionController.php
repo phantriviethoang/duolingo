@@ -16,7 +16,6 @@ use Inertia\Inertia;
  *
  * Flow:
  * 1. User truy cập /select-level
- * 2. Hiển thị 3 lựa chọn target_level (Trung bình/Khá/Tốt)
  * 3. User chọn 1 → POST /select-target-level {target_level: ...}
  * 4. Validate + lưu vào users.target_level
  * 5. Redirect /roadmap → LevelController@index
@@ -37,7 +36,7 @@ class LevelSelectionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'target_level' => 'required|in:Trung bình,Khá,Tốt',
+            'target_level' => 'required|in:A1,A2,B1,B2,C1,C2',
         ]);
 
         // Cập nhật target_level của user

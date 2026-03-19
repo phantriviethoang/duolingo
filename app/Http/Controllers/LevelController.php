@@ -14,8 +14,9 @@ class LevelController extends Controller
     {
         $user = auth()->user();
 
-        // Lấy tất cả các level với số lượng exams, sắp xếp theo order
-        $levels = Level::with([
+        // Lấy tất cả các level thuộc target_level của user (thường là 3 parts), sắp xếp theo thứ tự
+        $levels = Level::where('target_level', $user->target_level ?? 'A1')
+            ->with([
             'exams' => function ($query) {
                 $query->select('id', 'level_id', 'title', 'description', 'duration', 'total_questions', 'is_active', 'is_high_quality', 'difficulty_score');
             }

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('role')->default('student'); // Vai trò: student, teacher, admin
             $table->foreignId('target_part_id')->nullable()->constrained('levels'); // Mục tiêu Part
             $table->boolean('is_high_quality')->default(false); // Chế độ cao cấp
-            $table->enum('target_level', ['Trung bình', 'Khá', 'Tốt'])->default('Trung bình'); // Mục tiêu trình độ: 50%, 70%, 90%
+            $table->string('target_level')->default('A1'); // Mục tiêu trình độ: A1->C2
             $table->timestamps();
         });
 

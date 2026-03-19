@@ -66,18 +66,18 @@ class TestResult extends Model
      * - Nếu là section result: so sánh với section->pass_threshold
      * - Nếu là exam result (no section_id): so sánh với test->pass_score
      */
-    public function isSectionPassedAttribute()
+    public function getIsSectionPassedAttribute()
     {
         if (! $this->section_id || ! $this->section) {
             return null;
         }
 
-        // Lấy pass_threshold của section
-        $threshold = $this->section->pass_threshold;
+        // Lấy pass_threshold dựa trên user->target_level
+        $threshold = $this->user ? ($this->user->getPassThreshold() / 100) : $this->section->pass_threshold;
 
-        // Nếu exam là high-quality: nhân threshold với 1.2 (20% cao hơn)
-        if ($this->test->is_high_quality) {
-            $threshold = min($threshold * 1.2, 1.0);
+        // Nếu user hoặc exam là high-quality: nhân threshold với 1.1 (cộng thêm 10%)
+        if ($this->user && $this->user->is_high_quality) {
+            $threshold = min($threshold * 1.1, 1.0);
         }
 
         return $this->percentage >= ($threshold * 100);
@@ -88,7 +88,7 @@ class TestResult extends Model
      *
      * Dùng khi không có section_id (test result toàn exam)
      */
-    public function isExamPassedAttribute()
+    public function getIsExamPassedAttribute()
     {
         return $this->percentage >= $this->test->pass_score;
     }
@@ -96,7 +96,7 @@ class TestResult extends Model
     /**
      * Accessor cũ để backward compatibility
      */
-    public function isPassedAttribute()
+    public function getIsPassedAttribute()
     {
         // Ưu tiên section pass, nếu không có thì dùng exam pass
         if ($this->section_id) {
