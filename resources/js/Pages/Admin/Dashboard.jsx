@@ -15,7 +15,7 @@ export default function AdminDashboard({ stats = [], recentResults = [] }) {
         { label: "Tổng số người dùng", value: "1,284", icon: Users, color: "blue", trend: "+12%" },
         { label: "Tổng đề thi", value: "48", icon: FileText, color: "purple", trend: "+5%" },
         { label: "Tổng bài làm", value: "15,402", icon: CheckCircle, color: "green", trend: "+18%" },
-        { label: "Đề thi đang mở", value: "32", icon: PlayCircle, color: "orange", trend: "Stable" },
+        { label: "Đề thi đang mở", value: "32", icon: PlayCircle, color: "orange", trend: "Ổn định" },
     ];
 
     const displayStats = stats.length ? stats.map((s, i) => ({

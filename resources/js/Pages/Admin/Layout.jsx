@@ -1,18 +1,20 @@
 import { Link, usePage } from "@inertiajs/react";
-import { 
-    LayoutDashboard, 
-    FileText, 
-    Users, 
-    Settings, 
-    LogOut, 
+import {
+    LayoutDashboard,
+    FileText,
+    Users,
+    Settings,
+    LogOut,
     Home,
     ChevronRight,
-    Bell
+    Bell,
+    Compass,
 } from "lucide-react";
 
 const navItems = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Quản lý đề thi", href: "/admin/tests", icon: FileText },
+    { label: "Quản lý lộ trình", href: "/admin/path", icon: Compass },
     { label: "Quản lý người dùng", href: "/admin/users", icon: Users },
 ];
 
@@ -42,8 +44,8 @@ export default function AdminLayout({ children, current }) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 group ${
-                                    isActive 
-                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                    isActive
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                                         : "hover:bg-slate-800 hover:text-white"
                                 }`}
                             >
@@ -92,7 +94,7 @@ export default function AdminLayout({ children, current }) {
                             <Bell className="w-5 h-5" />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
-                        
+
                         <div className="h-8 w-px bg-gray-200"></div>
 
                         <div className="flex items-center gap-3">

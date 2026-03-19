@@ -2,12 +2,16 @@ import { useForm, router, Link } from "@inertiajs/react";
 import AdminLayout from "./Layout";
 import { Plus, Edit2, Trash2, Search, Filter, BookOpen } from "lucide-react";
 
-export default function AdminTests({ tests = [] }) {
+export default function AdminTests({ tests = [], filters = {} }) {
     const handleDelete = (testId) => {
         if (!confirm("Bạn có chắc muốn xóa đề thi này?")) return;
         router.delete(route("tests.destroy", testId), {
             preserveScroll: true,
         });
+    };
+
+    const clearFilters = () => {
+        router.get(route('admin.tests'));
     };
 
     return (
@@ -16,15 +20,30 @@ export default function AdminTests({ tests = [] }) {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Quản lý đề thi</h1>
-                        <p className="text-gray-500 mt-1">Danh sách tất cả các bài thi trên hệ thống.</p>
+                        <p className="text-gray-500 mt-1">
+                            {filters.level || filters.part 
+                                ? `Đang lọc theo: ${filters.level ? `Trình độ ${filters.level}` : ''} ${filters.part ? ` - Phần ${filters.part}` : ''}`
+                                : 'Danh sách tất cả các bài thi trên hệ thống.'
+                            }
+                        </p>
                     </div>
-                    <Link 
-                        href={route("tests.create")} 
-                        className="btn btn-primary bg-blue-600 border-none hover:bg-blue-700 text-white rounded-2xl px-6 flex items-center gap-2 shadow-lg shadow-blue-500/20"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Thêm đề thi mới
-                    </Link>
+                    <div className="flex gap-3">
+                        {(filters.level || filters.part) && (
+                            <button 
+                                onClick={clearFilters}
+                                className="btn btn-ghost text-gray-500 font-bold rounded-2xl px-6"
+                            >
+                                Xóa bộ lọc
+                            </button>
+                        )}
+                        <Link 
+                            href={route("tests.create")} 
+                            className="btn btn-primary bg-blue-600 border-none hover:bg-blue-700 text-white rounded-2xl px-6 flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Thêm đề thi mới
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Filters & Search */}

@@ -13,6 +13,28 @@ class PathController extends Controller
     private const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
     /**
+     * Admin view for managing the learning path structure
+     */
+    public function adminIndex()
+    {
+        $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        $pathData = [];
+
+        foreach ($levels as $level) {
+            $pathData[$level] = [
+                'part1' => Test::where('level', $level)->where('part', 1)->count(),
+                'part2' => Test::where('level', $level)->where('part', 2)->count(),
+                'part3' => Test::where('level', $level)->where('part', 3)->count(),
+            ];
+        }
+
+        return Inertia::render('Admin/Path/Index', [
+            'pathData' => $pathData,
+            'levels' => $levels,
+        ]);
+    }
+
+    /**
      * Display learning path for current level
      */
     public function target()
@@ -20,6 +42,9 @@ class PathController extends Controller
         return $this->index();
     }
 
+    /**
+     * Display the overall learning path for students
+     */
     public function index()
     {
         $user = Auth::user();

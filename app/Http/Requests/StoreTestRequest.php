@@ -26,12 +26,16 @@ class StoreTestRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'duration' => ['required', 'integer', 'min:1'],
+            'level' => ['required', 'string', 'in:A1,A2,B1,B2,C1,C2'],
+            'part' => ['required', 'integer', 'min:1', 'max:3'],
             'questions' => ['required', 'array', 'min:1'],
             'questions.*.question' => ['required', 'string'],
             'questions.*.options' => ['required', 'array', 'min:2'],
             'questions.*.options.*.text' => ['required', 'string'],
             'questions.*.options.*.is_correct' => ['required', 'boolean'],
             'questions.*.explanation' => ['nullable', 'string'],
+            'questions.*.translation' => ['nullable', 'string'],
+            'questions.*.detailed_explanation' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];
     }

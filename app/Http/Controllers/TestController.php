@@ -16,9 +16,19 @@ class TestController extends Controller
     /**
      * Display admin listing of tests
      */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        $tests = Test::orderByDesc('created_at')
+        $query = Test::query();
+
+        if ($request->has('level')) {
+            $query->where('level', $request->level);
+        }
+
+        if ($request->has('part')) {
+            $query->where('part', $request->part);
+        }
+
+        $tests = $query->orderByDesc('created_at')
             ->get(['id', 'title', 'description', 'duration', 'total_questions', 'created_at'])
             ->map(function (Test $test) {
                 return [
@@ -35,6 +45,7 @@ class TestController extends Controller
 
         return Inertia::render('Admin/Tests', [
             'tests' => $tests,
+            'filters' => $request->only(['level', 'part']),
         ]);
     }
 

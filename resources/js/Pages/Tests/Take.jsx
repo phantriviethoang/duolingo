@@ -61,12 +61,11 @@ export default function Take({
     const isHydratedRef = useRef(false);
     const isSubmittingRef = useRef(false);
     const hasProgressRef = useRef(false);
-    const allowHistoryLeaveRef = useRef(false);
     const leavePromptOpenRef = useRef(false);
     const hasConfirmedLeaveRef = useRef(false);
     const lastPromptAtRef = useRef(0);
     const lastPromptDecisionRef = useRef(false);
-    const historyGuardInitializedRef = useRef(false);
+    const ignoreNextPopRef = useRef(false);
     const LEAVE_WARNING_MESSAGE =
         "Leave site? Changes you made may not be saved.";
 
@@ -556,84 +555,43 @@ export default function Take({
     useEffect(() => {
         if (!isHydrated || !quiz?.id) return;
 
-        if (historyGuardInitializedRef.current) {
-            return;
-        }
-
-        const guardKey = `__test_guard_${quiz.id}`;
-        const state = window.history.state ?? {};
-        const fallbackBackUrl =
-            levelFromUrl && quiz?.part
-                ? `/path/${levelFromUrl}/part-${quiz.part}`
-                : "/path/level";
-
-        historyGuardInitializedRef.current = true;
-
-        if (!state[guardKey]) {
-            window.history.pushState(
-                { ...state, [guardKey]: true },
-                "",
-                window.location.href,
-            );
-        }
-
-        const navigateBackTarget = () => {
-            let target = fallbackBackUrl;
-
-            try {
-                if (document.referrer) {
-                    const referrerUrl = new URL(document.referrer);
-                    const currentUrl = new URL(window.location.href);
-
-                    if (
-                        referrerUrl.origin === currentUrl.origin &&
-                        referrerUrl.pathname !== currentUrl.pathname
-                    ) {
-                        target = `${referrerUrl.pathname}${referrerUrl.search}${referrerUrl.hash}`;
-                    }
-                }
-            } catch (error) {
-                console.error("Could not resolve referrer for back navigation:", error);
-            }
-
-            allowHistoryLeaveRef.current = true;
-            hasConfirmedLeaveRef.current = true;
-            window.location.assign(target);
-        };
-
-        const handlePopState = (event) => {
-            if (allowHistoryLeaveRef.current) {
+        const handlePopState = () => {
+            if (ignoreNextPopRef.current) {
+                ignoreNextPopRef.current = false;
                 return;
             }
 
-            if (isSubmittingRef.current || !hasProgressRef.current) {
-                navigateBackTarget();
+            const hasProgress = hasProgressRef.current;
+            const isSubmittingNow = isSubmittingRef.current;
+
+            if (isSubmittingNow || !hasProgress) {
                 return;
             }
 
             const confirmed = confirmLeaveOnce();
-
-            if (!confirmed) {
-                window.history.pushState(
-                    { ...(event.state ?? {}), [guardKey]: true },
-                    "",
-                    window.location.href,
-                );
+            if (confirmed) {
+                hasConfirmedLeaveRef.current = true;
                 return;
             }
 
-            navigateBackTarget();
+            // Browser has already moved back one entry; move forward again to stay.
+            ignoreNextPopRef.current = true;
+            window.history.go(1);
         };
 
         window.addEventListener("popstate", handlePopState);
 
         return () => {
             window.removeEventListener("popstate", handlePopState);
-            hasConfirmedLeaveRef.current = false;
-            allowHistoryLeaveRef.current = false;
-            historyGuardInitializedRef.current = false;
+            ignoreNextPopRef.current = false;
         };
-    }, [isHydrated, quiz?.id, quiz?.part, levelFromUrl, confirmLeaveOnce]);
+    }, [isHydrated, quiz?.id, confirmLeaveOnce]);
+
+    useEffect(() => {
+        return () => {
+            hasConfirmedLeaveRef.current = false;
+        };
+    }, []);
 
     if (!quiz) {
         return (

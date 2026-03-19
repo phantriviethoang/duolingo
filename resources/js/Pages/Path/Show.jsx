@@ -4,7 +4,48 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CheckCircle, Lock, Play, Clock, FileQuestion } from 'lucide-react';
 
 export default function PathShow({ level, parts, selectedPart = null }) {
-    const partEntries = Object.entries(parts || {});
+    // Định nghĩa mức điểm đạt tùy chỉnh (Bạn có thể thay đổi các giá trị này để điều chỉnh độ khó)
+    const CUSTOM_PASS_THRESHOLDS = {
+        1: 60, // Phần 1: Cần 60% để mở Phần 2
+        2: 70, // Phần 2: Cần 70% để mở Phần 3 (Ví dụ thay đổi từ 75 xuống 70)
+        3: 80, // Phần 3: Cần 80% để hoàn thành Level (Ví dụ thay đổi từ 90 xuống 80)
+    };
+
+    // Xử lý lại dữ liệu parts dựa trên mức điểm tùy chỉnh
+    const processedParts = {};
+    const partKeys = Object.keys(parts).map(Number).sort((a, b) => a - b);
+
+    partKeys.forEach((partKey) => {
+        const originalPart = parts[partKey];
+        const userScore = originalPart.progress.score || 0;
+        const requiredScore = CUSTOM_PASS_THRESHOLDS[partKey];
+
+        // Trạng thái hoàn thành dựa trên điểm tùy chỉnh
+        const isCompleted = userScore >= requiredScore;
+
+        let isUnlocked = false;
+        if (partKey === 1) {
+            isUnlocked = true;
+        } else {
+            const previousPartKey = partKey - 1;
+            const previousPart = parts[previousPartKey];
+            const previousScore = previousPart.progress.score || 0;
+            const previousRequired = CUSTOM_PASS_THRESHOLDS[previousPartKey];
+            isUnlocked = previousScore >= previousRequired;
+        }
+
+        processedParts[partKey] = {
+            ...originalPart,
+            pass_score: requiredScore,
+            unlocked: isUnlocked,
+            progress: {
+                ...originalPart.progress,
+                completed: isCompleted
+            }
+        };
+    });
+
+    const partEntries = Object.entries(processedParts);
     const visiblePartEntries = selectedPart
         ? partEntries.filter(([partKey]) => Number(partKey) === Number(selectedPart))
         : partEntries;
@@ -19,125 +60,89 @@ export default function PathShow({ level, parts, selectedPart = null }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title={`${level} Learning Path`} />
+            <Head title={`Lộ trình học: ${level}`} />
 
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <Link href={route('path.target')}>
+                    <Link href={route('path.levels')}>
                         <button className="btn btn-outline btn-sm mb-4">
-                            ← Back to Path
+                            ← Quay lại
                         </button>
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Level {level}</h1>
-                    <p className="text-gray-600">
+                    <h1 className="text-3xl font-black text-gray-900 mb-2">Trình độ {level}</h1>
+                    <p className="text-gray-600 font-medium">
                         {level === 'A1'
-                            ? 'Complete this part to unlock the next level'
-                            : 'Complete all three parts to unlock the next level'
+                            ? 'Hoàn thành phần này để mở khóa trình độ tiếp theo'
+                            : 'Vượt qua cả 3 phần để chinh phục trình độ này'
                         }
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {partEntries.map(([partKey, part]) => (
-                        <div key={part.name} className={`card bg-base-100 shadow-lg ${!part.unlocked ? 'opacity-75' : ''}`}>
+                        <div key={part.name} className={`card bg-base-100 shadow-xl border border-gray-100 ${!part.unlocked ? 'opacity-75' : ''}`}>
                             <div className="card-body">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="card-title">{part.name}</h2>
+                                    <h2 className="card-title font-bold">Phần {partKey}</h2>
                                     {part.progress.completed ? (
-                                        <span className="badge badge-success">
+                                        <span className="badge badge-success text-white font-bold">
                                             <CheckCircle className="w-3 h-3 mr-1" />
-                                            Completed
+                                            Đã đạt
                                         </span>
                                     ) : part.unlocked ? (
-                                        <span className="badge badge-primary">Available</span>
+                                        <span className="badge badge-primary text-white font-bold">Sẵn sàng</span>
                                     ) : (
-                                        <span className="badge badge-neutral">
+                                        <span className="badge badge-neutral font-bold">
                                             <Lock className="w-3 h-3 mr-1" />
-                                            Locked
+                                            Đang khóa
                                         </span>
                                     )}
                                 </div>
 
                                 <div className="mb-4">
-                                    <div className="flex justify-between text-sm mb-2">
-                                        <span>Score</span>
-                                        <span>{part.progress.score}%</span>
+                                    <div className="flex justify-between text-sm mb-2 font-medium">
+                                        <span className="text-gray-500">Điểm cao nhất</span>
+                                        <span className="text-gray-900 font-bold">{part.progress.score}%</span>
                                     </div>
-                                    <div className="flex justify-between text-sm mb-2">
-                                        <span>Required</span>
-                                        <span>{part.pass_score}%</span>
+                                    <div className="flex justify-between text-sm mb-2 font-medium">
+                                        <span className="text-gray-500">Yêu cầu</span>
+                                        <span className="text-blue-600 font-bold">{part.pass_score}%</span>
                                     </div>
-                                    <div className="progress progress-primary w-full" style={{ '--value': part.progress.score }}></div>
+                                    <progress className="progress progress-primary w-full" value={part.progress.score} max="100"></progress>
                                 </div>
 
-                                <div className="text-sm text-gray-600 mb-4">
-                                    <div className="flex items-center mb-2">
-                                        <FileQuestion className="w-4 h-4 mr-1" />
-                                        {part.tests.length} tests available
+                                <div className="text-sm text-gray-600 mb-6 space-y-2 font-medium">
+                                    <div className="flex items-center">
+                                        <FileQuestion className="w-4 h-4 mr-2 text-gray-400" />
+                                        {part.tests.length} bài tập có sẵn
                                     </div>
                                     <div className="flex items-center">
-                                        <Clock className="w-4 h-4 mr-1" />
-                                        {part.tests.reduce((acc, test) => acc + test.duration, 0)} minutes total
+                                        <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                                        {part.tests.reduce((acc, test) => acc + test.duration, 0)} phút tổng cộng
                                     </div>
                                 </div>
 
-                                <div className="card-actions justify-end">
+                                <div className="card-actions">
                                     {part.unlocked ? (
-                                        <Link href={getPartTakeHref(part) || route('path.tests', { level, part: Number(partKey) })}>
-                                            <button className="btn btn-primary">
-                                                <Play className="w-4 h-4 mr-2" />
-                                                Làm ngay Part này
+                                        <Link
+                                            href={getPartTakeHref(part) || route('path.tests', { level, part: Number(partKey) })}
+                                            className="w-full"
+                                        >
+                                            <button className="btn btn-primary w-full font-bold">
+                                                <Play className="w-4 h-4 mr-2 fill-current" />
+                                                Bắt đầu ngay
                                             </button>
                                         </Link>
                                     ) : (
-                                        <button className="btn btn-disabled" disabled>
+                                        <button className="btn btn-disabled w-full font-bold" disabled>
                                             <Lock className="w-4 h-4 mr-2" />
-                                            Locked
+                                            Đang khóa
                                         </button>
                                     )}
                                 </div>
                             </div>
                         </div>
                     ))}
-                </div>
-
-                {/* Tests List */}
-                <div className="mt-12">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Tests</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {visiblePartEntries.flatMap(([partKey, part]) =>
-                            part.tests.map(test => (
-                                <div key={test.id} className={`card bg-base-100 shadow-lg ${!part.unlocked ? 'opacity-75' : ''}`}>
-                                    <div className="card-body p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <h3 className="font-semibold">{test.title}</h3>
-                                            <span className="badge badge-outline">{part.name}</span>
-                                        </div>
-                                        <p className="text-sm text-gray-600 mb-3">{test.description}</p>
-                                        <div className="flex items-center text-sm text-gray-500 mb-3">
-                                            <Clock className="w-4 h-4 mr-1" />
-                                            {test.duration} minutes
-                                            <FileQuestion className="w-4 h-4 ml-4 mr-1" />
-                                            {test.total_questions} questions
-                                        </div>
-                                        {part.unlocked ? (
-                                            <Link href={route('path.test.take', { level, test: test.id })}>
-                                                <button className="btn btn-primary btn-sm">
-                                                    <Play className="w-4 h-4 mr-2" />
-                                                    Bắt đầu làm
-                                                </button>
-                                            </Link>
-                                        ) : (
-                                            <div className="text-gray-500 text-sm">
-                                                <Lock className="w-4 h-4 mr-2" />
-                                                <span>Hoàn thành phần trước để mở khóa</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

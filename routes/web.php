@@ -105,6 +105,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     // TEST CRUD
     Route::get('/tests', [TestController::class, 'adminIndex'])->name('admin.tests');
+    Route::get('/path', [PathController::class, 'adminIndex'])->name('admin.path');
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
     Route::get('/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit');

@@ -1,23 +1,26 @@
 import { Head, Link, useForm } from "@inertiajs/react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Plus, Trash2, Save, FileText, Layout, Info, CheckCircle2, Languages, HelpCircle } from "lucide-react";
+import AdminLayout from "../Admin/Layout";
 
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         description: "",
-        duration: 40,
+        duration: 15,
+        level: "A1",
+        part: 1,
         questions: [
             {
-                id: 1,
                 question: "",
                 options: [
-                    { id: 0, text: "", is_correct: false },
-                    { id: 1, text: "", is_correct: false },
-                    { id: 2, text: "", is_correct: false },
-                    { id: 3, text: "", is_correct: false },
+                    { text: "", is_correct: true },
+                    { text: "", is_correct: false },
+                    { text: "", is_correct: false },
+                    { text: "", is_correct: false },
                 ],
                 explanation: "",
+                translation: "",
+                detailed_explanation: "",
             },
         ],
         is_active: true,
@@ -27,15 +30,16 @@ export default function Create() {
         setData("questions", [
             ...data.questions,
             {
-                id: data.questions.length + 1,
                 question: "",
                 options: [
-                    { id: 0, text: "", is_correct: false },
-                    { id: 1, text: "", is_correct: false },
-                    { id: 2, text: "", is_correct: false },
-                    { id: 3, text: "", is_correct: false },
+                    { text: "", is_correct: true },
+                    { text: "", is_correct: false },
+                    { text: "", is_correct: false },
+                    { text: "", is_correct: false },
                 ],
                 explanation: "",
+                translation: "",
+                detailed_explanation: "",
             },
         ]);
     };
@@ -43,10 +47,7 @@ export default function Create() {
     const removeQuestion = (index) => {
         if (data.questions.length > 1) {
             const newQuestions = data.questions.filter((_, i) => i !== index);
-            setData(
-                "questions",
-                newQuestions.map((q, i) => ({ ...q, id: i + 1 }))
-            );
+            setData("questions", newQuestions);
         }
     };
 
@@ -56,12 +57,9 @@ export default function Create() {
         setData("questions", newQuestions);
     };
 
-    const updateOption = (questionIndex, optionIndex, field, value) => {
+    const updateOption = (questionIndex, optionIndex, value) => {
         const newQuestions = [...data.questions];
-        newQuestions[questionIndex].options[optionIndex] = {
-            ...newQuestions[questionIndex].options[optionIndex],
-            [field]: value,
-        };
+        newQuestions[questionIndex].options[optionIndex].text = value;
         setData("questions", newQuestions);
     };
 
@@ -75,301 +73,255 @@ export default function Create() {
 
     const submit = (e) => {
         e.preventDefault();
-        post("/admin/tests", {
-            preserveScroll: true,
-        });
+        post(route("tests.store"));
     };
 
     return (
-        <>
-            <Head title="Tạo đề thi mới" />
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
-                <Link
-                    href="/tests"
-                    className="btn btn-ghost btn-sm gap-2 mb-6"
-                >
-                    <ArrowLeft size={16} />
-                    Quay lại
-                </Link>
+        <AdminLayout current="/admin/tests">
+            <Head title="Thêm đề thi mới" />
+            
+            <div className="max-w-5xl mx-auto space-y-10 pb-20">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href={route('admin.tests')}
+                            className="p-3 bg-white border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 rounded-2xl transition-all shadow-sm"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Tạo đề thi mới</h1>
+                            <p className="text-gray-500 mt-1">Thiết lập cấu hình bài thi và bộ câu hỏi.</p>
+                        </div>
+                    </div>
+                    
+                    <button
+                        onClick={submit}
+                        disabled={processing}
+                        className="btn btn-primary bg-blue-600 border-none hover:bg-blue-700 text-white rounded-2xl px-8 flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                    >
+                        {processing ? (
+                            <span className="loading loading-spinner loading-sm"></span>
+                        ) : (
+                            <Save className="w-5 h-5" />
+                        )}
+                        Lưu đề thi
+                    </button>
+                </div>
 
-                <h1 className="text-3xl font-bold mb-6">Tạo đề thi mới</h1>
-
-                <form onSubmit={submit} className="space-y-6">
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h2 className="card-title mb-4">
-                                Thông tin đề thi
-                            </h2>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text">
-                                        Tiêu đề <span className="text-error">*</span>
-                                    </span>
-                                </label>
-                                <input
-                                    type="text"
-                                    className={`input input-bordered w-full ${errors.title ? "input-error" : ""
-                                        }`}
-                                    value={data.title}
-                                    onChange={(e) =>
-                                        setData("title", e.target.value)
-                                    }
-                                    placeholder="VD: Grammar Practice 1"
-                                />
-                                {errors.title && (
-                                    <label className="label">
-                                        <span className="label-text-alt text-error">
-                                            {errors.title}
-                                        </span>
-                                    </label>
-                                )}
+                <form onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Cột trái: Thông tin cấu hình */}
+                    <div className="lg:col-span-1 space-y-8">
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
+                                <h2 className="text-lg font-black text-gray-900 flex items-center gap-2 uppercase tracking-tight">
+                                    <Layout className="w-5 h-5 text-blue-500" />
+                                    Cấu hình
+                                </h2>
                             </div>
+                            <div className="p-8 space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Tiêu đề</label>
+                                    <input
+                                        type="text"
+                                        className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold ${errors.title ? 'border-red-500' : ''}`}
+                                        value={data.title}
+                                        onChange={(e) => setData("title", e.target.value)}
+                                        placeholder="Ví dụ: Grammar A1 - Part 1"
+                                    />
+                                    {errors.title && <p className="text-xs text-red-500 font-bold">{errors.title}</p>}
+                                </div>
 
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text">Mô tả (lý thuyết)</span>
-                                </label>
-                                <textarea
-                                    className="textarea w-full textarea-bordered text-base-content bg-base-100"
-                                    value={data.description}
-                                    onChange={(e) =>
-                                        setData("description", e.target.value)
-                                    }
-                                    placeholder="Nhập nội dung lý thuyết cho đề thi..."
-                                    rows="4"
-                                />
-                            </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Trình độ</label>
+                                        <select
+                                            className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold"
+                                            value={data.level}
+                                            onChange={(e) => setData("level", e.target.value)}
+                                        >
+                                            {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(lvl => (
+                                                <option key={lvl} value={lvl}>{lvl}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Phần (Part)</label>
+                                        <select
+                                            className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold"
+                                            value={data.part}
+                                            onChange={(e) => setData("part", parseInt(e.target.value))}
+                                        >
+                                            {[1, 2, 3].map(p => (
+                                                <option key={p} value={p}>Phần {p}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
 
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text">
-                                        Thời gian làm bài (phút){" "}
-                                        <span className="text-error">*</span>
-                                    </span>
-                                </label>
-                                <input
-                                    type="number"
-                                    className={`input input-bordered text-black w-full ${errors.duration ? "input-error" : ""
-                                        }`}
-                                    value={data.duration}
-                                    onChange={(e) =>
-                                        setData(
-                                            "duration",
-                                            parseInt(e.target.value) || 0
-                                        )
-                                    }
-                                    min="1"
-                                />
-                                {errors.duration && (
-                                    <label className="label">
-                                        <span className="label-text-alt text-error">
-                                            {errors.duration}
-                                        </span>
-                                    </label>
-                                )}
-                            </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Thời gian (phút)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold"
+                                        value={data.duration}
+                                        onChange={(e) => setData("duration", parseInt(e.target.value))}
+                                    />
+                                </div>
 
-                            <div className="form-control">
-                                <label className="label cursor-pointer justify-start gap-3">
+                                <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
+                                    <span className="text-sm font-bold text-gray-700">Trạng thái kích hoạt</span>
                                     <input
                                         type="checkbox"
                                         className="toggle toggle-primary"
                                         checked={data.is_active}
-                                        onChange={(e) =>
-                                            setData("is_active", e.target.checked)
-                                        }
+                                        onChange={(e) => setData("is_active", e.target.checked)}
                                     />
-                                    <span className="label-text">Kích hoạt đề thi</span>
-                                </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+                            <div className="flex items-start gap-3">
+                                <Info className="w-5 h-5 text-amber-500 flex-shrink-0 mt-1" />
+                                <p className="text-sm text-gray-500 leading-relaxed">
+                                    <span className="font-bold text-gray-700 block mb-1">Lưu ý về Part:</span>
+                                    Part 1 yêu cầu 60%, Part 2 yêu cầu 75%, Part 3 yêu cầu 90% để mở khóa lộ trình tiếp theo.
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="card-title">Câu hỏi</h2>
-                                <button
-                                    type="button"
-                                    onClick={addQuestion}
-                                    className="btn btn-sm btn-neutral gap-2"
-                                >
-                                    <Plus size={16} />
-                                    Thêm câu hỏi
-                                </button>
+                    {/* Cột phải: Danh sách câu hỏi */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                                <span className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-black">
+                                    {data.questions.length}
+                                </span>
+                                Danh sách câu hỏi
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={addQuestion}
+                                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Thêm câu
+                            </button>
+                        </div>
+
+                        {errors.questions && (
+                            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold">
+                                {errors.questions}
                             </div>
+                        )}
 
-                            {errors.questions && (
-                                <div className="alert alert-error mb-4">
-                                    <span>{errors.questions}</span>
-                                </div>
-                            )}
-
-                            <div className="space-y-6">
-                                {data.questions.map((question, qIndex) => (
-                                    <div
-                                        key={qIndex}
-                                        className="border border-base-300 rounded-lg p-4"
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <h3 className="font-semibold">
-                                                Câu {qIndex + 1}
-                                                {!question.options.some(opt => opt.is_correct) && (
-                                                    <span className="badge badge-warning badge-sm ml-2">Chưa chọn đáp án đúng</span>
-                                                )}
-                                            </h3>
-                                            {data.questions.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        removeQuestion(qIndex)
-                                                    }
-                                                    className="btn btn-ghost btn-sm text-error"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className="form-control mb-4">
-                                            <label className="label">
-                                                <span className="label-text">
-                                                    Câu hỏi{" "}
-                                                    <span className="text-error">
-                                                        *
-                                                    </span>
-                                                </span>
-                                            </label>
-                                            <textarea
-                                                className={`textarea w-full textarea-bordered text-base-content bg-base-100 ${errors[
-                                                    `questions.${qIndex}.question`
-                                                ]
-                                                    ? "textarea-error"
-                                                    : ""
-                                                    }`}
-                                                value={question.question}
-                                                onChange={(e) =>
-                                                    updateQuestion(
-                                                        qIndex,
-                                                        "question",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                placeholder="Nhập câu hỏi..."
-                                                rows="2"
-                                            />
-                                            {errors[`questions.${qIndex}.question`] && (
-                                                <label className="label">
-                                                    <span className="label-text-alt text-error">
-                                                        {errors[`questions.${qIndex}.question`]}
-                                                    </span>
+                        <div className="space-y-8">
+                            {data.questions.map((question, qIndex) => (
+                                <div key={qIndex} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group">
+                                    <div className="px-8 py-4 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+                                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Câu hỏi #{qIndex + 1}</span>
+                                        {data.questions.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeQuestion(qIndex)}
+                                                className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="p-8 space-y-8">
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                    <FileText className="w-3 h-3" /> Nội dung câu hỏi
                                                 </label>
-                                            )}
-                                        </div>
+                                                <textarea
+                                                    className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium min-h-[100px]"
+                                                    value={question.question}
+                                                    onChange={(e) => updateQuestion(qIndex, "question", e.target.value)}
+                                                    placeholder="Nhập nội dung câu hỏi..."
+                                                />
+                                            </div>
 
-                                        <div className="space-y-2 mb-4">
-                                            <label className="label">
-                                                <span className="label-text">
-                                                    Đáp án{" "}
-                                                    <span className="text-error">
-                                                        *
-                                                    </span>
-                                                </span>
-                                            </label>
-                                            {question.options.map(
-                                                (option, oIndex) => (
-                                                    <div
-                                                        key={oIndex}
-                                                        className="flex gap-2 items-center"
-                                                    >
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {question.options.map((option, oIndex) => (
+                                                    <div key={oIndex} className={`relative p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${option.is_correct ? 'border-green-100 bg-green-50/30 ring-2 ring-green-500/20' : 'border-gray-50 bg-gray-50/30'}`}>
                                                         <input
                                                             type="radio"
                                                             name={`correct-${qIndex}`}
-                                                            checked={
-                                                                option.is_correct
-                                                            }
-                                                            onChange={() =>
-                                                                setCorrectAnswer(
-                                                                    qIndex,
-                                                                    oIndex
-                                                                )
-                                                            }
-                                                            className="radio radio-primary"
+                                                            checked={option.is_correct}
+                                                            onChange={() => setCorrectAnswer(qIndex, oIndex)}
+                                                            className="radio radio-success radio-sm"
                                                         />
                                                         <input
                                                             type="text"
-                                                            className={`input input-bordered w-full text-base-content bg-base-100 flex-1 ${option.is_correct
-                                                                ? "input-primary"
-                                                                : ""
-                                                                }`}
+                                                            className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-gray-700"
                                                             value={option.text}
-                                                            onChange={(e) =>
-                                                                updateOption(
-                                                                    qIndex,
-                                                                    oIndex,
-                                                                    "text",
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            }
+                                                            onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
                                                             placeholder={`Đáp án ${String.fromCharCode(65 + oIndex)}`}
                                                         />
-                                                        {errors[`questions.${qIndex}.options.${oIndex}.text`] && (
-                                                            <span className="text-error text-xs">
-                                                                {errors[`questions.${qIndex}.options.${oIndex}.text`]}
-                                                            </span>
-                                                        )}
+                                                        {option.is_correct && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                                                     </div>
-                                                )
-                                            )}                                            {errors[`questions.${qIndex}.options`] && (
-                                                <label className="label">
-                                                    <span className="label-text-alt text-error">
-                                                        {errors[`questions.${qIndex}.options`]}
-                                                    </span>
-                                                </label>
-                                            )}                                        </div>
+                                                ))}
+                                            </div>
+                                        </div>
 
-                                        <div className="form-control">
-                                            <label className="label">
-                                                <span className="label-text">
-                                                    Giải thích (tùy chọn)
-                                                </span>
-                                            </label>
-                                            <textarea
-                                                className="textarea w-full textarea-bordered text-base-content bg-base-100"
-                                                value={question.explanation || ""}
-                                                onChange={(e) =>
-                                                    updateQuestion(
-                                                        qIndex,
-                                                        "explanation",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                placeholder="Giải thích đáp án..."
-                                                rows="2"
-                                            />
+                                        <div className="space-y-4 pt-6 border-t border-gray-50">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                        <Languages className="w-3 h-3" /> Dịch câu (Vietnamese)
+                                                    </label>
+                                                    <textarea
+                                                        className="w-full px-4 py-2 rounded-xl border-gray-50 bg-gray-50/30 focus:border-blue-500 focus:ring-0 transition-all text-xs font-medium"
+                                                        value={question.translation}
+                                                        onChange={(e) => updateQuestion(qIndex, "translation", e.target.value)}
+                                                        rows="2"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                        <HelpCircle className="w-3 h-3" /> Giải thích ngắn
+                                                    </label>
+                                                    <textarea
+                                                        className="w-full px-4 py-2 rounded-xl border-gray-50 bg-gray-50/30 focus:border-blue-500 focus:ring-0 transition-all text-xs font-medium"
+                                                        value={question.explanation}
+                                                        onChange={(e) => updateQuestion(qIndex, "explanation", e.target.value)}
+                                                        rows="2"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                    <Info className="w-3 h-3" /> Giải thích chi tiết / Ngữ pháp
+                                                </label>
+                                                <textarea
+                                                    className="w-full px-4 py-2 rounded-xl border-gray-50 bg-gray-50/30 focus:border-blue-500 focus:ring-0 transition-all text-xs font-medium"
+                                                    value={question.detailed_explanation}
+                                                    onChange={(e) => updateQuestion(qIndex, "detailed_explanation", e.target.value)}
+                                                    rows="3"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
 
-                    <div className="flex justify-end gap-4">
-                        <Link href="/tests" className="btn btn-ghost">
-                            Hủy
-                        </Link>
                         <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={processing}
+                            type="button"
+                            onClick={addQuestion}
+                            className="w-full py-6 border-2 border-dashed border-gray-200 rounded-3xl text-gray-400 font-bold hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-2"
                         >
-                            {processing ? "Đang tạo..." : "Tạo đề thi"}
+                            <Plus className="w-8 h-8" />
+                            <span>Thêm câu hỏi tiếp theo</span>
                         </button>
                     </div>
                 </form>
             </div>
-        </>
+        </AdminLayout>
     );
 }
