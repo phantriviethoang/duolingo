@@ -1,3 +1,29 @@
+/**
+ * ⭐ Take Component - Làm bài trắc nghiệm
+ *
+ * 📋 Giao diện làm bài + Quản lý trạng thái
+ *
+ * ⭐ FIX:
+ * 1. Đổi state từ isSubmitted → isSubmitting (tránh ReferenceError)
+ * 2. Xóa hiển thị translation dưới câu hỏi
+ * 3. Backend không truyền explanation/translation (tránh lộ đáp án)
+ *
+ * Props:
+ * - quiz {id, title, duration, ...}
+ * - questions[] → Danh sách câu hỏi (chỉ question + options)
+ * - section {order, pass_threshold}
+ * - submitRoute → POST endpoint
+ *
+ * Chức năng:
+ * ✅ localStorage: Lưu answers + startTime (ko mất khi F5)
+ * ✅ Timer: Đếm ngược từ duration (tính từ startTime)
+ * ✅ Auto-save: Mỗi khi chọn đáp án
+ * ✅ Navigation: Câu trước/sau + Quick jump sidebar
+ * ✅ Submit: Nộp bài → POST /exams/{exam}/sections/submit
+ *
+ * Auto-submit: Khi timer = 0, tự động nộp bài
+ */
+
 import { Head, router, usePage } from "@inertiajs/react";
 import { Clock, AlertCircle, Send } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -136,7 +162,7 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
     };
 
     const handleAnswerSelect = (questionId, answerId) => {
-        if (isSubmitted) return;
+        if (isSubmitting) return;
         setSelectedAnswers((prev) => ({
             ...prev,
             [questionId]: answerId,
@@ -261,10 +287,31 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                             <p className="text-lg font-bold text-blue-600">{answeredCount}/{questions.length}</p>
                         </div>
 
-                        {/* Right: Timer */}
-                        <div className={`flex items-center gap-2 ${timeLeft < 60 ? 'text-red-600' : 'text-gray-700'}`}>
-                            <Clock className={`w-5 h-5 ${timeLeft < 60 ? 'animate-pulse' : ''}`} />
-                            <span className="font-bold text-lg">{formatTime(timeLeft)}</span>
+                        {/* Right: Timer + Submit Button */}
+                        <div className="flex items-center gap-4">
+                            <div className={`flex items-center gap-2 ${timeLeft < 60 ? 'text-red-600' : 'text-gray-700'}`}>
+                                <Clock className={`w-5 h-5 ${timeLeft < 60 ? 'animate-pulse' : ''}`} />
+                                <span className="font-bold text-lg">{formatTime(timeLeft)}</span>
+                            </div>
+
+                            {/* Submit Button */}
+                            <button
+                                onClick={() => setShowSubmitConfirm(true)}
+                                disabled={isSubmitting}
+                                className="btn btn-success btn-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <span className="loading loading-spinner loading-sm"></span>
+                                        Đang nộp...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-4 h-4" />
+                                        Nộp Bài
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
 
@@ -293,9 +340,6 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                                         Câu {currentQuestion + 1}/{questions.length}
                                     </p>
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">{question.question}</h3>
-                                    {question.translation && (
-                                        <p className="text-sm text-gray-600 italic">({question.translation})</p>
-                                    )}
                                 </div>
 
                                 {/* Options */}
@@ -354,40 +398,21 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                                     >
                                         ← Câu trước
                                     </button>
-                                    {currentQuestion < questions.length - 1 ? (
-                                        <button
-                                            onClick={handleNext}
-                                            className="btn btn-primary flex-1"
-                                        >
-                                            Câu tiếp theo →
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => setShowSubmitConfirm(true)}
-                                            disabled={isSubmitting}
-                                            className="btn btn-success flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {isSubmitting ? (
-                                                <>
-                                                    <span className="loading loading-spinner loading-sm"></span>
-                                                    Đang nộp...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Send className="w-4 h-4" />
-                                                    Nộp bài
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={handleNext}
+                                        disabled={currentQuestion === questions.length - 1}
+                                        className="btn btn-primary flex-1 disabled:opacity-50"
+                                    >
+                                        Câu tiếp theo →
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
                         {/* Question Navigator Sidebar */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-96">
-                                <h3 className="font-bold text-gray-900 mb-4">Danh sách câu hỏi</h3>
+                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-96 space-y-6">
+                                <h3 className="font-bold text-gray-900">Danh sách câu hỏi</h3>
                                 <div className="grid grid-cols-5 gap-2">
                                     {questions.map((q, index) => (
                                         <button
@@ -405,16 +430,24 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                                     ))}
                                 </div>
 
-                                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                    <p className="text-xs text-gray-600 mb-2">
+                                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 text-sm space-y-2">
+                                    <p className="text-gray-600">
                                         <span className="inline-block w-3 h-3 rounded border-2 border-gray-300 mr-2"></span>
                                         Chưa trả lời
                                     </p>
-                                    <p className="text-xs text-gray-600">
+                                    <p className="text-gray-600">
                                         <span className="inline-block w-3 h-3 rounded bg-green-100 border-2 border-green-500 mr-2"></span>
                                         Đã trả lời
                                     </p>
                                 </div>
+
+                                <button
+                                    onClick={() => setShowSubmitConfirm(true)}
+                                    disabled={isSubmitting || Object.keys(selectedAnswers).length === 0}
+                                    className="w-full btn btn-success disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? "Đang nộp..." : "Nộp bài"}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\LevelSelectionController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestQuestionController;
 use App\Http\Controllers\TestResultController;
@@ -30,30 +31,53 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middl
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// =========== EXAMS - LỘ TRÌNH CẤP ĐỘ ===========
+// =========== ⭐ PHẦN MỚI: CHỌN TRÌNH ĐỘ & ROADMAP ===========
+//
+// Flow:
+// /select-level → Chọn target_level (Trung bình/Khá/Tốt = 60%/75%/90%)
+//      ↓ POST
+// /select-target-level → Lưu users.target_level = ...
+//      ↓ Redirect
+// /roadmap → Hiển thị danh sách levels + exams + unlock logic
+//      ↓ Click "Làm bài"
+// /levels/{level}/exams → Danh sách bộ đề theo level
+//      ↓ Click bộ đề
+// /exams/{exam} → Chi tiết bộ đề
+//      ↓ Nút "Bắt đầu"
+// /exams/{exam}/take → Làm bài trắc nghiệm (2 sections)
+//      ↓ Nộp bài
+// /exams/{exam}/sections/submit → Tính điểm + unlock phần tiếp
+//      ↓ Redirect
+// /exams/results → Hiển thị kết quả
+//
 Route::middleware(['auth'])->group(function () {
-    // Chọn cấp độ
-    Route::get('/levels', [LevelController::class, 'index'])->name('levels.index');
+    // 1. Chọn trình độ
+    Route::get('/select-level', [LevelSelectionController::class, 'create'])->name('level-selection.create');
+    Route::post('/select-target-level', [LevelSelectionController::class, 'store'])->name('level-selection.store');
 
-    // Danh sách đề theo cấp độ
+    // 2. Roadmap - danh sách các levels
+    Route::get('/roadmap', [LevelController::class, 'index'])->name('roadmap.index');
+
+    // 3. Danh sách đề theo level
     Route::get('/levels/{level}/exams', [ExamController::class, 'byLevel'])->name('exams.by-level');
 
-    // Chi tiết exam
+    // 4. Chi tiết exam
     Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
 
-    // Vào phòng thi
+    // 5. Vào phòng thi (2 sections/exam)
     Route::get('/exams/{exam}/take', [ExamController::class, 'take'])->name('exams.take');
 
-    // Nộp bài - phần chính (được bảo vệ bởi policy)
+    // 6. Nộp bài - tính điểm + unlock phần tiếp theo
     Route::post('/exams/{exam}/sections/submit', [ExamController::class, 'submitSection'])
         ->name('exams.sections.submit')
         ->middleware('throttle:60,1');
 
-    // Trang kết quả
+    // 7. Trang kết quả (pass/fail)
     Route::get('/exams/results', function () {
         return inertia('Quiz/Results');
     })->name('exams.results');
 });
+// ============================================================
 
 // =========== CỦA TESTS (cũ - giữ cho tương thích) ===========
 Route::middleware(['auth'])->group(function () {

@@ -134,6 +134,9 @@ class ExamController extends Controller
     /**
      * Vào phòng thi - hiển thị các câu hỏi của một section
      *
+     * ⭐ FIX: Chỉ truyền question + options, không truyền explanation/translation
+     *        để tránh lộ đáp án lúc làm bài
+     *
      * Authorization:
      * - User phải bắt đầu exam (create UserProgress)
      * - User chỉ được truy cập sections đã unlock
@@ -180,15 +183,15 @@ class ExamController extends Controller
             ->firstOrFail();
 
         // Lấy các câu hỏi của section đó
+        // ⚠️ CHÚ Ý: Không truyền explanation + detailed_explanation để ko lộ đáp án!
         $questions = $section->questions()
             ->get()
             ->map(fn ($q) => [
                 'id' => $q->id,
                 'question' => $q->question,
                 'options' => $q->options,
-                'explanation' => $q->explanation,
-                'translation' => $q->translation,
-                'detailed_explanation' => $q->detailed_explanation,
+                // NOT including: explanation, detailed_explanation, translation
+                // (để tránh lộ đáp án lúc làm bài)
             ])
             ->toArray();
 
@@ -237,18 +240,7 @@ class ExamController extends Controller
             ]);
         }
 
-        // Redirect tới trang Results với flash message
-        $flashKey = $result['passed'] ? 'success' : 'error';
-
-        return redirect()->route('exams.results')->with($flashKey, [
-            'message' => $result['message'],
-            'percentage' => $result['percentage'],
-            'correct_count' => $result['correct_count'],
-            'total' => $result['total_questions'],
-            'required_percentage' => $result['required_percentage'],
-            'passed' => $result['passed'],
-            'exam_completed' => $result['exam_completed'] ?? false,
-            'next_section_unlocked' => $result['next_section_unlocked'] ?? false,
-        ]);
+        // Redirect tới trang Results với test result ID
+        return redirect()->route('results.show', $result['test_result_id']);
     }
 }

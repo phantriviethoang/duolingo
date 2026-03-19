@@ -72,7 +72,7 @@ class ExamResultService
         $passed = $percentage >= $passThresholdPercent;
 
         // Lưu TestResult (section-level result)
-        TestResult::create([
+        $testResult = TestResult::create([
             'user_id' => $user->id,
             'test_id' => $exam->id,
             'section_id' => $section->id,
@@ -84,6 +84,7 @@ class ExamResultService
 
         // Chuẩn bị kết quả
         $result = [
+            'test_result_id' => $testResult->id,
             'passed' => $passed,
             'percentage' => round($percentage * 100, 2),
             'correct_count' => $correctCount,
@@ -92,6 +93,26 @@ class ExamResultService
             'message' => $passed
                 ? '🎉 Chúc mừng! Bạn đã đạt yêu cầu phần này.'
                 : '❌ Bạn chưa đạt yêu cầu. Vui lòng làm lại phần này.',
+            // Thêm questions + answers để hiển thị review
+            'questions_review' => $questions->map(function ($question) use ($answers) {
+                $userAnswer = $answers[$question->id] ?? null;
+                $correctAnswer = $question->correct_option_id;
+                $isCorrect = $userAnswer !== null && (int) $userAnswer === (int) $correctAnswer;
+
+                $options = is_array($question->options)
+                    ? $question->options
+                    : (array) $question->options;
+
+                return [
+                    'id' => $question->id,
+                    'question' => $question->question,
+                    'user_answer' => $userAnswer,
+                    'correct_answer' => $correctAnswer,
+                    'is_correct' => $isCorrect,
+                    'options' => $options,
+                    'explanation' => $question->explanation ?? null,
+                ];
+            })->toArray(),
         ];
 
         // Nếu pass: cập nhật progress

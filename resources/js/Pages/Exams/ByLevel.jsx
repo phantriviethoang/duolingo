@@ -26,7 +26,7 @@ export default function ByLevel({ exams, level_id }) {
                 <div className="max-w-6xl mx-auto">
                     {/* Header with Back Button */}
                     <div className="mb-8">
-                        <Link href={route('levels.index')} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-4 font-semibold">
+                        <Link href={route('roadmap.index')} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-4 font-semibold">
                             <ArrowLeft className="w-5 h-5" />
                             Quay lại
                         </Link>
@@ -49,8 +49,8 @@ export default function ByLevel({ exams, level_id }) {
                             <button
                                 onClick={() => setSortBy('created_at')}
                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${sortBy === 'created_at'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 Mới nhất
@@ -58,8 +58,8 @@ export default function ByLevel({ exams, level_id }) {
                             <button
                                 onClick={() => setSortBy('difficulty_score')}
                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${sortBy === 'difficulty_score'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 Độ khó
@@ -67,8 +67,8 @@ export default function ByLevel({ exams, level_id }) {
                             <button
                                 onClick={() => setSortBy('title')}
                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${sortBy === 'title'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 Tên A-Z
@@ -165,8 +165,8 @@ export default function ByLevel({ exams, level_id }) {
                                         page,
                                     })}
                                     className={`px-3 py-2 rounded-lg font-medium transition-all ${page === exams.current_page
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-600'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-600'
                                         }`}
                                 >
                                     {page}

@@ -1,3 +1,28 @@
+/**
+ * ⭐ PHẦN MỚI: Roadmap Component
+ *
+ * 📋 Hiển thị lộ trình học tập cá nhân + Unlock logic
+ *
+ * ⭐ FIX: Dùng React.Fragment key={part.id} để fix React warning
+ *        "Each child in a list should have a unique key prop"
+ *
+ * Props từ LevelController@index:
+ * - levels[] → Danh sách 3+ levels (B1, B2, C1)
+ *   - name, order, description
+ *   - pass_threshold (60/70/90 từ user.target_level)
+ *   - is_locked (Part 1 mở, phần sau khóa đến Part N-1 đạt)
+ *   - status → 'locked' | 'in-progress' | 'completed'
+ *   - progress_percent → (completed_exams / total_exams) * 100
+ * - user_pass_threshold → 50/70/90 từ users.target_level
+ * - user_target_part → users.target_part_id
+ *
+ * Logic:
+ * Part 1: Luôn mở
+ * Part N: Khóa nếu Part N-1 chưa PASS
+ *
+ * Action: Click "Làm bài" → /levels/{level.id}/exams
+ */
+
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import Layout from '@/Layouts/Layout';
@@ -34,8 +59,8 @@ export default function Levels({ levels, user_is_high_quality, user_target_part 
                                 const isInProgress = part.status === 'in-progress';
 
                                 return (
-                                    <>
-                                        <div key={part.id} className="flex items-center">
+                                    <React.Fragment key={part.id}>
+                                        <div className="flex items-center">
                                             {/* Step indicator */}
                                             <div className="flex items-center flex-1">
                                                 {/* Circle */}
@@ -117,7 +142,7 @@ export default function Levels({ levels, user_is_high_quality, user_target_part 
                                         {idx < levels.length - 1 && (
                                             <div className="ml-6 w-1 h-6 bg-gradient-to-b from-gray-300 to-gray-200" />
                                         )}
-                                    </>
+                                    </React.Fragment>
                                 );
                             })}
                         </div>
@@ -148,7 +173,7 @@ export default function Levels({ levels, user_is_high_quality, user_target_part 
                         </div>
                     </div>
                 </div>
-                </div>
+            </div>
         </Layout>
     );
 }

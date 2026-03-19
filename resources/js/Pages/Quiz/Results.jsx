@@ -1,12 +1,40 @@
+/**
+ * ⭐ Results Component - Kết quả nộp bài
+ *
+ * 📋 Hiển thị điểm số + Xác định pass/fail
+ *
+ * Props từ flash message (ExamController@submitSection):
+ * - message: "Chúc mừng" hoặc "Chưa đạt"
+ * - percentage: Điểm bạn đạt (0-100)
+ * - required_percentage: Điểm yêu cầu (60/75/90)
+ * - correct_count: Số câu đúng
+ * - total: Tổng câu hỏi
+ * - passed: true | false
+ * - exam_completed: Hoàn thành toàn bộ exam?
+ * - next_section_unlocked: Mở khóa section tiếp theo?
+ *
+ * Logic Pass/Fail:
+ * - Nếu percentage >= required_percentage → PASS ✅
+ *   - Update users_progress.last_completed_section_order
+ *   - Unlock section tiếp theo
+ * - Nếu < required_percentage → FAIL ❌
+ *   - Cho phép làm lại (reset localStorage)
+ *
+ * Action:
+ * - PASS: "Quay lại danh sách" → /levels/{level_id}/exams
+ * - FAIL: "Làm lại" → F5 reset quiz | "Quay lại" → /levels/{level_id}/exams
+ */
+
 import { Head, router, usePage } from "@inertiajs/react";
 import { CheckCircle, XCircle } from "lucide-react";
 import Layout from "@/Layouts/Layout";
+import React, { useEffect } from "react";
 
 export default function Results() {
     const { flash } = usePage().props;
 
-    // Lấy kết quả từ flash message (success hoặc error)
-    const result = flash.success || flash.error || {};
+    // ⭐ FIX: Lấy kết quả từ flash message (success hoặc error)
+    const result = flash?.success || flash?.error || {};
     const {
         message = "Chưa có kết quả",
         percentage = 0,
@@ -16,11 +44,18 @@ export default function Results() {
         passed = false,
         exam_completed = false,
         next_section_unlocked = false,
+        questions_review = [],
     } = result;
 
+    // Debug: Log flash message
+    useEffect(() => {
+        console.log("Flash message:", flash);
+        console.log("Result data:", result);
+    }, [flash, result]);
+
     const handleRetry = () => {
-        // Quay lại trang trước (sẽ reset quiz state)
-        router.get(window.history.back());
+        // Quay lại trang trước để làm lại
+        window.history.back();
     };
 
     const handleBack = () => {
@@ -125,6 +160,58 @@ export default function Results() {
                         </button>
                     </div>
                 </div>
+
+                {/* Questions Review */}
+                {questions_review && questions_review.length > 0 && (
+                    <div className="mt-12">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Đáp án chi tiết</h2>
+                        <div className="space-y-4">
+                            {questions_review.map((q, index) => {
+                                const userAnswerValue = Object.entries(q.options || {}).find(
+                                    ([key]) => String(key) === String(q.user_answer)
+                                )?.[1];
+
+                                const correctAnswerValue = Object.entries(q.options || {}).find(
+                                    ([key]) => String(key) === String(q.correct_answer)
+                                )?.[1];
+
+                                return (
+                                    <div
+                                        key={q.id}
+                                        className={`p-4 rounded-lg border-l-4 ${q.is_correct
+                                                ? "bg-green-50 border-green-500"
+                                                : "bg-red-50 border-red-500"
+                                            }`}
+                                    >
+                                        <p className="font-semibold text-gray-900 mb-2">
+                                            Câu {index + 1}: {q.question}
+                                        </p>
+
+                                        <div className="space-y-2 text-sm">
+                                            <p className="text-gray-700">
+                                                <span className="font-medium">Đáp án của bạn:</span>{" "}
+                                                <span className={q.is_correct ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                                                    {userAnswerValue || "Không trả lời"}
+                                                </span>
+                                            </p>
+                                            {!q.is_correct && (
+                                                <p className="text-gray-700">
+                                                    <span className="font-medium">Đáp án đúng:</span>{" "}
+                                                    <span className="text-green-600 font-semibold">{correctAnswerValue}</span>
+                                                </p>
+                                            )}
+                                            {q.explanation && (
+                                                <p className="text-gray-700 bg-white/50 p-2 rounded">
+                                                    <span className="font-medium">Giải thích:</span> {q.explanation}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </Layout>
     );

@@ -1,20 +1,18 @@
 import { Link, usePage } from "@inertiajs/react";
 import Logo from "@/Components/Logo";
-import { BookOpen, Zap, Trophy, HelpCircle } from "lucide-react";
 
 const baseLinks = [
-    { label: "Dashboard", href: "/dashboard", icon: "📊" },
-    { label: "Lộ trình", href: "/levels", icon: "🎓" },
-    { label: "Bài thi cơ bản", href: "/tests", icon: "📝" },
-    { label: "Giới thiệu", href: "/about", icon: "ℹ️" },
-    { label: "Liên hệ", href: "/contact", icon: "📞" },
+    { label: "Chọn Trình Độ", href: "/select-level", icon: "📊" },
+    { label: "Lộ Trình", href: "/roadmap", icon: "🎓" },
+    { label: "Đề Thi", href: "/tests", icon: "📝" },
+    { label: "Giới Thiệu", href: "/about", icon: "ℹ️" },
+    { label: "Liên Hệ", href: "/contact", icon: "📞" },
 ];
 
 export default function AppHeader() {
     const { auth, ziggy } = usePage().props;
     const user = auth?.user;
     const current = ziggy?.location ?? "";
-    const navLinks = user?.role === "admin" ? [...baseLinks, { label: "Admin", href: "/admin", icon: "⚙️" }] : baseLinks;
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-white shadow-sm">
@@ -30,7 +28,7 @@ export default function AppHeader() {
 
                 {/* Navigation */}
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-                    {baseLinks.slice(0, 5).map((item) => {
+                    {baseLinks.slice(0, 3).map((item) => {
                         const isActive = current.includes(item.href);
                         return (
                             <Link
@@ -42,7 +40,6 @@ export default function AppHeader() {
                                     }`}
                             >
                                 <div className="flex items-center gap-1.5">
-                                    <span>{item.icon}</span>
                                     {item.label}
                                 </div>
                                 {isActive && (
@@ -63,7 +60,7 @@ export default function AppHeader() {
                             >
                                 <div className="hidden sm:flex flex-col items-end">
                                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' ? '👑 Admin' : '👤 Học viên'}</p>
+                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' ? ' Admin' : 'Học viên'}</p>
                                 </div>
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
                                     {user.name.charAt(0).toUpperCase()}
@@ -73,17 +70,17 @@ export default function AppHeader() {
                                 tabIndex={0}
                                 className="dropdown-content z-50 menu p-3 shadow-lg bg-white rounded-lg w-56 border border-gray-200"
                             >
-                                <li className="mb-2">
+                                <li>
                                     <span className="text-xs text-gray-500 px-3 py-1 font-semibold">MENU CHÍNH</span>
                                 </li>
                                 <li>
-                                    <Link href="/levels" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
-                                        🎓 Lộ trình học
+                                    <Link href="/roadmap" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
+                                        Lộ trình học
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/results" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
-                                        🏆 Kết quả của tôi
+                                        Kết quả của tôi
                                     </Link>
                                 </li>
                                 {user.role === 'admin' && (
@@ -93,7 +90,7 @@ export default function AppHeader() {
                                         </li>
                                         <li>
                                             <Link href="/admin" className="text-gray-800 hover:bg-amber-100 hover:text-amber-700 rounded-lg">
-                                                ⚙️ Trang quản lý
+                                                ️ Trang quản lý
                                             </Link>
                                         </li>
                                     </>
@@ -105,7 +102,7 @@ export default function AppHeader() {
                                         as="button"
                                         className="text-red-600 hover:bg-red-100 rounded-lg"
                                     >
-                                        🚪 Đăng xuất
+                                        Đăng xuất
                                     </Link>
                                 </li>
                             </ul>
@@ -143,7 +140,6 @@ export default function AppHeader() {
                                     : "text-gray-700 hover:bg-gray-100"
                                     }`}
                             >
-                                <div>{item.icon}</div>
                                 <div>{item.label}</div>
                             </Link>
                         );
