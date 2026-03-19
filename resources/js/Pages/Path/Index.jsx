@@ -1,4 +1,3 @@
-import React from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CheckCircle, Lock, Play } from 'lucide-react';

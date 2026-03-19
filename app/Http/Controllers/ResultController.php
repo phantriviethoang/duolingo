@@ -15,17 +15,35 @@ class ResultController extends Controller
     /**
      * Display user's test results
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        // Allow sorting by columns in results table
+        $allowedSortBy = ['created_at', 'score', 'time_spent'];
+        if (! in_array($sortBy, $allowedSortBy)) {
+            $sortBy = 'created_at';
+        }
+
+        $allowedSortOrder = ['asc', 'desc'];
+        if (! in_array($sortOrder, $allowedSortOrder)) {
+            $sortOrder = 'desc';
+        }
 
         $results = Result::where('user_id', $user->id)
             ->with('test')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->orderBy($sortBy, $sortOrder)
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('Results/Index', [
             'results' => $results,
+            'filters' => [
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder,
+            ],
         ]);
     }
 
@@ -44,9 +62,8 @@ class ResultController extends Controller
             abort(404);
         }
 
-        // Check if test is accessible
         if (! $this->canAccessTest($user, $test)) {
-            abort(403, 'This part is locked');
+            abort(403);
         }
 
         $answers = (array) $request->input('answers', []);
@@ -142,7 +159,7 @@ class ResultController extends Controller
             foreach ($result->test->questions as $question) {
                 $userAnswerId = $result->answers[$question->id] ?? null;
 
-                if (!$userAnswerId) {
+                if (! $userAnswerId) {
                     $skipped++;
                 } else {
                     $correctAnswer = $question->answers->firstWhere('is_correct', true);
@@ -161,7 +178,7 @@ class ResultController extends Controller
         $result->skipped_count = $skipped;
         $result->total_count = $total;
         $result->accuracy = $total > 0 ? round(($correct / $total) * 100, 1) : 0;
-        
+
         // Bổ sung ngưỡng đạt và trạng thái đạt của part hiện tại
         $levelConfig = \App\Models\Level::where('name', $test->level)->first();
         $threshold = 60.0;

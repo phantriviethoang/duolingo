@@ -143,7 +143,7 @@ class TestController extends Controller
 
         // Lấy pass threshold từ database (bảng levels)
         $levelConfig = \App\Models\Level::where('name', $test->level)->first();
-        
+
         $threshold = 60.0; // Default
         if ($levelConfig) {
             $thresholdField = "pass_threshold_part{$previousPart}";
@@ -307,13 +307,11 @@ class TestController extends Controller
         }
 
         $user = Auth::user();
-        
-        // Kiểm tra quyền truy cập chi tiết
+
         if (! $this->canAccessTest($user, $test)) {
-            // Lấy thông tin về part trước đó để hiển thị lỗi
             $prevPart = $test->part > 1 ? $test->part - 1 : 3;
             $prevLevel = $test->part > 1 ? $test->level : $this->getPreviousLevel($test->level);
-            
+
             $progress = \App\Models\Progress::where('user_id', $user->id)
                 ->where('level', $prevLevel)
                 ->where('part', $prevPart)
@@ -323,12 +321,14 @@ class TestController extends Controller
             $thresholdField = "pass_threshold_part{$prevPart}";
             $threshold = $levelConfig->$thresholdField ?? ($test->part === 1 ? 90 : 60);
 
-            return Inertia::render('Errors/Forbidden', [
-                'level' => $test->level,
-                'part' => $test->part,
-                'required_score' => $threshold,
-                'previous_score' => $progress->percentage ?? 0,
-            ]);
+            abort(403);
+
+            // return Inertia::render('Errors/Forbidden', [
+            //     'level' => $test->level,
+            //     'part' => $test->part,
+            //     'required_score' => $threshold,
+            //     'previous_score' => $progress->percentage ?? 0,
+            // ]);
         }
 
         // Kiểm tra test có active không
@@ -458,9 +458,9 @@ class TestController extends Controller
                 'level' => $test->level,
                 'part' => $test->part,
                 'total_questions' => $paginator->total(),
-                'retake_wrong' => (bool) $retakeWrong,
-                'previous_result_id' => $resultId ? (int) $resultId : null,
             ],
+            'retake_wrong' => (bool) $retakeWrong,
+            'previous_result_id' => $resultId ? (int) $resultId : null,
             'questionsFeed' => Inertia::scroll(fn () => $paginator),
             'testSession' => $activeSession ? [
                 'id' => $activeSession->id,

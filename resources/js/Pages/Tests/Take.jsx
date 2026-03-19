@@ -868,6 +868,13 @@ export default function Take({
                             <h1 className="text-2xl font-bold text-gray-900">
                                 {quiz.title}
                             </h1>
+                            {isRetakeWrong && (
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="inline-block px-2 py-0.5 bg-amber-50 text-[10px] font-black text-amber-600 rounded-lg uppercase tracking-widest border border-amber-100">
+                                        Đang làm lại các câu sai
+                                    </span>
+                                </div>
+                            )}
                             <p className="text-sm text-gray-600">
                                 {section ? `Phần ${section.order} - ` : ""}
                                 Câu {currentQuestionDisplay}/{totalQuestions}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import {
+    Lock,
     TrendingUp,
     BookOpen,
     Target,
@@ -23,28 +24,20 @@ export default function ProgressDashboard({ stats }) {
         recent_results
     } = stats;
 
-    // Định nghĩa mức điểm đạt tùy chỉnh (Đồng bộ với PathShow)
     const CUSTOM_PASS_THRESHOLDS = {
         1: 60,
-        2: 70, // Ví dụ: Giảm từ 75 xuống 70
-        3: 80  // Ví dụ: Giảm từ 90 xuống 80
+        2: 70,
+        3: 80
     };
 
-    // Xử lý lại level_progress dựa trên mức điểm tùy chỉnh
     const processedParts = level_progress.parts.map((part, index) => {
         const partNum = part.part;
-        
-        // Ưu tiên dùng điểm từ CUSTOM_PASS_THRESHOLDS nếu bạn muốn ghi đè nhanh tại UI
-        // Nếu không, mặc định sử dụng pass_threshold được gửi từ database qua props
-        const requiredScore = CUSTOM_PASS_THRESHOLDS[partNum] ?? part.pass_threshold;
-        
-        const userPercentage = part.percentage || 0;
 
-        // Trạng thái đạt dựa trên điểm tùy chỉnh
+        const requiredScore = CUSTOM_PASS_THRESHOLDS[partNum] ?? part.pass_threshold;
+
+        const userPercentage = part.percentage || 0;
         const isPassed = userPercentage >= requiredScore;
 
-        // Trạng thái khóa:
-        // Part 1 luôn mở. Các part sau mở nếu part trước đó đã đạt điểm tùy chỉnh.
         let isLocked = false;
         if (partNum > 1) {
             const previousPart = level_progress.parts.find(p => p.part === partNum - 1);
@@ -57,9 +50,9 @@ export default function ProgressDashboard({ stats }) {
 
         return {
             ...part,
-            pass_threshold: requiredScore, // Ghi đè mức điểm yêu cầu
-            is_passed: isPassed,           // Ghi đè trạng thái đạt
-            is_locked: isLocked,           // Ghi đè trạng thái khóa
+            pass_threshold: requiredScore,
+            is_passed: isPassed,
+            is_locked: isLocked,
             lock_message: isLocked ? `Hoàn thành Phần ${partNum - 1} với tối thiểu ${CUSTOM_PASS_THRESHOLDS[partNum - 1]}% để mở khóa.` : ''
         };
     });
@@ -80,10 +73,8 @@ export default function ProgressDashboard({ stats }) {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Cột trái: Trình độ hiện tại & Đề xuất */}
                     <div className="lg:col-span-1 space-y-8">
-                        {/* Trình độ hiện tại */}
-                        <div className="card bg-gradient-to-br from-indigo-600 to-blue-700 text-white shadow-2xl">
+                        <div className="card bg-slate-700 text-white shadow-lg">
                             <div className="card-body">
                                 <div className="flex justify-between items-start">
                                     <div>
@@ -120,7 +111,7 @@ export default function ProgressDashboard({ stats }) {
                                     Trình độ đề xuất
                                 </h3>
                                 <div className="flex items-center mt-4">
-                                    <div className="text-4xl font-bold text-indigo-600 mr-4">{recommended_level}</div>
+                                    <div className="text-4xl font-bold text-indigo-500 mr-4">{recommended_level}</div>
                                     <div className="text-sm text-gray-500">
                                         Dựa trên kết quả học tập, chúng tôi đề xuất bạn nên rèn luyện ở trình độ này.
                                     </div>
@@ -128,7 +119,7 @@ export default function ProgressDashboard({ stats }) {
                                 <div className="card-actions mt-6">
                                     <Link
                                         href="/path/level"
-                                        className="btn btn-indigo btn-block text-white bg-indigo-600 hover:bg-indigo-700 border-none font-bold"
+                                        className="btn btn-neutral btn-block text-white hover:bg-indigo-700 border-none font-bold"
                                     >
                                         Chuyển lộ trình ngay
                                     </Link>
@@ -165,30 +156,31 @@ export default function ProgressDashboard({ stats }) {
                         </div>
                     </div>
 
-                    {/* Cột phải: Câu hỏi hay sai & Kết quả gần đây */}
                     <div className="lg:col-span-2 space-y-8">
-                        {/* Tiến độ chi tiết từng phần */}
                         <div className="card bg-base-100 shadow-xl">
                             <div className="card-body">
                                 <h3 className="card-title text-gray-800 mb-6">Chi tiết Level {current_level}</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {processedLevelProgress.parts.map((part) => {
-                                        const partContent = (
+                                    {processedLevelProgress.parts.map((part) => (
+                                        <Link
+                                            key={part.part}
+                                            href={`/path/${current_level}/part-${part.part}`}
+                                            className="block no-underline"
+                                        >
                                             <div
-                                                className={`p-5 rounded-2xl border-2 transition-all h-full ${
-                                                    part.is_passed
-                                                        ? 'border-green-100 bg-green-50/30 hover:bg-green-100/40'
-                                                        : part.is_locked
-                                                            ? 'border-gray-100 bg-gray-50/50 opacity-60 cursor-not-allowed'
-                                                            : 'border-indigo-100 bg-indigo-50/30 ring-2 ring-indigo-500 ring-offset-2 hover:bg-indigo-100/40 cursor-pointer'
-                                                }`}
+                                                className={`p-5 rounded-2xl border-2 transition-all h-full ${part.is_passed
+                                                    ? 'border-green-100 bg-green-50/30 hover:bg-green-100/40'
+                                                    : part.is_locked
+                                                        ? 'border-gray-100 bg-gray-50/50 hover:bg-gray-100/60 opacity-80'
+                                                        : 'border-indigo-100 bg-indigo-50/30 ring-2 ring-indigo-500 ring-offset-2 hover:bg-indigo-100/40 cursor-pointer'
+                                                    }`}
                                             >
                                                 <div className="flex justify-between items-start mb-4">
                                                     <span className="font-bold text-gray-900 text-lg">Phần {part.part}</span>
                                                     {part.is_passed ? (
                                                         <CheckCircle className="w-6 h-6 text-green-500" />
                                                     ) : part.is_locked ? (
-                                                        <XCircle className="w-6 h-6 text-gray-400" />
+                                                        <Lock className="w-6 h-6 text-gray-400" />
                                                     ) : (
                                                         <TrendingUp className="w-6 h-6 text-indigo-500 animate-pulse" />
                                                     )}
@@ -216,22 +208,8 @@ export default function ProgressDashboard({ stats }) {
                                                     )}
                                                 </div>
                                             </div>
-                                        );
-
-                                        if (part.is_locked) {
-                                            return <div key={part.part}>{partContent}</div>;
-                                        }
-
-                                        return (
-                                            <Link
-                                                key={part.part}
-                                                href={`/path/${current_level}/part-${part.part}`}
-                                                className="block no-underline"
-                                            >
-                                                {partContent}
-                                            </Link>
-                                        );
-                                    })}
+                                        </Link>
+                                    ))}
                                 </div>
                             </div>
                         </div>

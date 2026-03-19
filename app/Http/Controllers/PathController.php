@@ -182,7 +182,7 @@ class PathController extends Controller
     private function buildPartsData($user, string $level): array
     {
         $levelConfig = \App\Models\Level::where('name', $level)->first();
-        
+
         $thresholds = [
             1 => $levelConfig->pass_threshold_part1 ?? 60,
             2 => $levelConfig->pass_threshold_part2 ?? 75,
@@ -268,7 +268,7 @@ class PathController extends Controller
             // Part 1 của các level sau (A2, B1...) cần Part 3 của level trước đó đạt điểm
             $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
             $currentIndex = array_search($level, $levels);
-            
+
             if ($currentIndex === 0 || $currentIndex === false) {
                 return true; // Fallback cho A1
             }

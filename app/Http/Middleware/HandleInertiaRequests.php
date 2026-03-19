@@ -43,6 +43,8 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
+                    'current_level' => $request->user()->current_level ?? 'A1',
+                    'overall_progress' => $request->user() ? \App\Models\Progress::where('user_id', $request->user()->id)->avg('percentage') ?? 0 : 0,
                 ] : null,
             ],
             'flash' => [

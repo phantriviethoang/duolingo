@@ -103,7 +103,7 @@ export default function AppHeader() {
                 </nav>
 
                 {/* User Section */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                     {user ? (
                         <div className="dropdown dropdown-end">
                             <label
