@@ -988,8 +988,8 @@ export default function Take({
                             </InfiniteScroll>
                         </div>
 
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-56 space-y-6">
+                        <div className="lg:col-span-1 lg:sticky lg:top-24">
+                            <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
                                 {/* Timer Section moved here */}
                                 <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-100">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Thời gian còn lại</p>
