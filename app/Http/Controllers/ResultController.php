@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Test;
 use App\Models\Result;
 use App\Models\Progress;
+use App\Models\TestSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -49,9 +50,12 @@ class ResultController extends Controller
         }
 
         $answers = (array) $request->input('answers', []);
+        $questionLimit = $test->configuredQuestionCount();
         $questions = $test->questions()
             ->with('answers:id,question_id,is_correct')
-            ->get(['id', 'correct_option_id']);
+            ->orderBy('order')
+            ->take($questionLimit)
+            ->get(['id']);
 
         $total = $questions->count();
         $correct = 0;
@@ -76,8 +80,21 @@ class ResultController extends Controller
             'score' => $score,
             'correct' => $correct,
             'total' => $total,
+            'time_spent' => $request->input('time_spent'),
             'completed_at' => now(),
         ]);
+
+        TestSession::query()
+            ->where('user_id', $user->id)
+            ->where('test_id', $test->id)
+            ->where('status', 'in_progress')
+            ->update([
+                'status' => 'submitted',
+                'answers' => $answers,
+                'current_question' => 0,
+                'time_left' => 0,
+                'last_synced_at' => now(),
+            ]);
 
         // Update progress
         $this->updateProgress($user, $test, $score);
@@ -95,30 +112,59 @@ class ResultController extends Controller
             abort(403);
         }
 
-        $result->load('test.questions.answers');
+        $test = $result->test()->first();
 
-        // Tính số câu đúng và tổng số câu
+        if (! $test) {
+            abort(404, 'Test not found for this result.');
+        }
+
+        $questionLimit = $test->configuredQuestionCount();
+
+        $test->load([
+            'questions' => function ($query) use ($questionLimit) {
+                $query->with('answers')
+                    ->orderBy('order')
+                    ->take($questionLimit);
+            }
+        ]);
+
+        $result->setRelation('test', $test);
+
+        // Tính toán chi tiết kết quả
         $correct = 0;
+        $wrong = 0;
+        $skipped = 0;
         $total = 0;
 
         if ($result->test->questions) {
             $total = $result->test->questions->count();
 
             foreach ($result->test->questions as $question) {
-                if ($question->answers) {
-                    $correctAnswer = $question->answers->firstWhere('is_correct', true);
-                    $userAnswerId = $result->answers[$question->id] ?? null;
+                $userAnswerId = $result->answers[$question->id] ?? null;
 
-                    if ($userAnswerId && $correctAnswer && $userAnswerId === $correctAnswer->id) {
+                if (!$userAnswerId) {
+                    $skipped++;
+                } else {
+                    $correctAnswer = $question->answers->firstWhere('is_correct', true);
+                    if ($correctAnswer && $userAnswerId === $correctAnswer->id) {
                         $correct++;
+                    } else {
+                        $wrong++;
                     }
                 }
             }
         }
 
-        // Thêm thông tin vào result
-        $result->correct = $correct;
-        $result->total = $total;
+        // Đảm bảo các giá trị được gán vào result để FE nhận được
+        $result->correct_count = $correct;
+        $result->wrong_count = $wrong;
+        $result->skipped_count = $skipped;
+        $result->total_count = $total;
+        $result->accuracy = $total > 0 ? round(($correct / $total) * 100, 1) : 0;
+        
+        // Bổ sung ngưỡng đạt và trạng thái đạt của part hiện tại
+        $result->pass_threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$test->part] ?? 60.0;
+        $result->is_passed_requirement = $result->accuracy >= $result->pass_threshold;
 
         return Inertia::render('Results/Show', [
             'result' => $result,
@@ -144,8 +190,8 @@ class ResultController extends Controller
             return false;
         }
 
-        $passScores = [1 => 60, 2 => 75, 3 => 90];
-        return $previousProgress->score >= $passScores[$previousPart];
+        $passScores = \App\Models\UserProgress::PASS_THRESHOLDS;
+        return $previousProgress->score >= ($passScores[$previousPart] ?? 60);
     }
 
     /**
@@ -169,8 +215,8 @@ class ResultController extends Controller
         $progress->score = max($progress->score, $score);
         $progress->attempts += 1;
 
-        $passScores = [1 => 60, 2 => 75, 3 => 90];
-        if ($score >= $passScores[$test->part]) {
+        $passScores = \App\Models\UserProgress::PASS_THRESHOLDS;
+        if ($score >= ($passScores[$test->part] ?? 60)) {
             $progress->completed = true;
         }
 

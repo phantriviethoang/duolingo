@@ -124,25 +124,44 @@ class PathController extends Controller
             1 => [
                 'name' => 'Part 1',
                 'pass_score' => 60,
-                'tests' => Test::where('level', $level)->where('part', 1)->get(),
+                'tests' => $this->mapTestsForPart($level, 1),
                 'unlocked' => true,
                 'progress' => $this->getPartProgress($user, $level, 1),
             ],
             2 => [
                 'name' => 'Part 2',
                 'pass_score' => 75,
-                'tests' => Test::where('level', $level)->where('part', 2)->get(),
+                'tests' => $this->mapTestsForPart($level, 2),
                 'unlocked' => $this->isPartUnlocked($user, $level, 2),
                 'progress' => $this->getPartProgress($user, $level, 2),
             ],
             3 => [
                 'name' => 'Part 3',
                 'pass_score' => 90,
-                'tests' => Test::where('level', $level)->where('part', 3)->get(),
+                'tests' => $this->mapTestsForPart($level, 3),
                 'unlocked' => $this->isPartUnlocked($user, $level, 3),
                 'progress' => $this->getPartProgress($user, $level, 3),
             ],
         ];
+    }
+
+    private function mapTestsForPart(string $level, int $part)
+    {
+        return Test::where('level', $level)
+            ->where('part', $part)
+            ->get()
+            ->map(function (Test $test) {
+                return [
+                    'id' => $test->id,
+                    'title' => $test->title,
+                    'description' => $test->description,
+                    'duration' => $test->configuredDuration(),
+                    'level' => $test->level,
+                    'part' => $test->part,
+                    'total_questions' => $test->configuredQuestionCount(),
+                ];
+            })
+            ->values();
     }
 
     /**

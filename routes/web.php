@@ -5,6 +5,7 @@ use App\Http\Controllers\PathController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\TestSessionController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
@@ -69,6 +70,12 @@ Route::middleware(['auth'])->group(function () {
             ->whereIn('level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
             ->whereNumber('test')
             ->name('path.test.submit');
+
+        // sync session khi đang làm bài
+        Route::post('/{level}/test-{test}/session/sync', [TestSessionController::class, 'sync'])
+            ->whereIn('level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
+            ->whereNumber('test')
+            ->name('path.test.session.sync');
     });
 
     Route::prefix('results')->group(function () {
@@ -78,6 +85,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/progress', [ProgressController::class, 'index'])
         ->name('progress.index');
+
+    Route::get('/progress/dashboard', [ProgressController::class, 'dashboard'])
+        ->name('progress.dashboard');
 
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('profile.index');

@@ -14,31 +14,26 @@ export default function Home({ featuredCourses = [], stats = {} }) {
         <AuthenticatedLayout>
             <Head title="Home" />
             <div className="min-h-screen bg-white">
-                <section className="bg-[#cfe8ff] py-16 text-center text-gray-900">
-                    <div className="mx-auto max-w-4xl px-6">
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-700">
-                            Chào mừng bạn đến với LingGo!!!
-                        </p>
-                        <h1 className="mt-4 text-3xl font-bold md:text-4xl">
-                            Chúc bạn có trải nghiệm học tập hiệu quả với LingGo.
+                <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+                    <div className="text-center">
+                        <h1 className="text-5xl font-black tracking-tight text-slate-900 sm:text-7xl leading-tight">
+                            Chinh phục ngoại ngữ <br />
+                            <span className="text-blue-600">Dễ dàng hơn bao giờ hết</span>
                         </h1>
-                        <p className="mt-3 text-lg font-semibold">
-                            Hãy bắt đầu học tập ngay hôm nay.
+                        <p className="mt-8 text-lg font-medium text-slate-600 sm:text-xl leading-relaxed">
+                            Hệ thống luyện thi và học tập ngoại ngữ theo chuẩn khung tham chiếu CEFR.
+                            Lộ trình bài bản, đánh giá chi tiết và kho đề thi phong phú.
                         </p>
-
                         <div className="mt-10 flex flex-wrap justify-center gap-4">
-                            <Link href="/select-level" className="rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700">
-                                Bắt đầu học
+                            <Link href="/path/level" className="rounded-full bg-blue-600 px-8 py-3 text-sm font-bold text-white hover:bg-blue-700 shadow-lg transition-transform hover:scale-105">
+                                Bắt đầu ngay
                             </Link>
-                            <Link href="/path" className="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white hover:bg-green-700">
-                                Xem lộ trình
-                            </Link>
-                            <Link href="/tests" className="rounded-full bg-gray-700 px-8 py-3 text-sm font-semibold text-white hover:bg-gray-800">
-                                Đề thi online
+                            <Link href="/progress/dashboard" className="rounded-full bg-indigo-600 px-8 py-3 text-sm font-bold text-white hover:bg-indigo-700 shadow-lg transition-transform hover:scale-105">
+                                Xem tiến độ
                             </Link>
                         </div>
                     </div>
-                </section>
+                </div>
 
                 <section className="py-16">
                     <div className="mx-auto max-w-5xl px-6 text-center">

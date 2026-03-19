@@ -1,245 +1,304 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ArrowLeft, Clock, BarChart2, Check, X, Minus, ChevronRight, MessageSquare } from 'lucide-react';
+import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
 
 export default function ResultsShow({ result }) {
-    const { test, answers, score } = result;
+    const { 
+        test, 
+        answers, 
+        score, 
+        correct_count, 
+        wrong_count, 
+        skipped_count, 
+        total_count, 
+        accuracy,
+        pass_threshold,
+        is_passed_requirement
+    } = result;
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    const formatTimeSpent = (seconds) => {
+        if (!seconds) return 'N/A';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return [
+            h > 0 ? h : null,
+            m.toString().padStart(2, '0'),
+            s.toString().padStart(2, '0')
+        ].filter(Boolean).join(':');
+    };
 
     return (
-        <>
-            <Head title={`Kết quả - ${test.title}`} />
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
-                <Link
-                    href={route('results.index')}
-                    className="btn btn-ghost font-normal text-lg btn-sm gap-2 mb-6"
-                >
-                    <ArrowLeft size={18} />
-                    Quay lại lịch sử
-                </Link>
-
-                <div className="card bg-base-100 shadow-xl mb-6">
-                    <div className="card-body text-center">
-                        <h1 className="text-2xl font-bold mb-2">
-                            {test.title}
-                        </h1>
-                        <div className="mb-2">
-                            <div className="flex items-center gap-2 justify-center">
-                                {score >= 70 ? (
-                                    <CheckCircle2
-                                        size={40}
-                                        className="text-success"
-                                    />
+        <AuthenticatedLayout>
+            <Head title={`Kết quả: ${test.title}`} />
+            
+            <div className="min-h-screen bg-gray-50/50 py-10">
+                <div className="max-w-5xl mx-auto px-4">
+                    {/* Header Action */}
+                    <div className="flex justify-between items-center mb-8">
+                        <Link
+                            href={route('results.index')}
+                            className="flex items-center text-gray-500 hover:text-indigo-600 transition-colors font-medium"
+                        >
+                            <ArrowLeft className="w-5 h-5 mr-2" />
+                            Quay lại lịch sử
+                        </Link>
+                        
+                        <div className="flex items-center gap-6">
+                            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${
+                                is_passed_requirement 
+                                ? 'bg-green-50 border-green-200 text-green-700' 
+                                : 'bg-red-50 border-red-200 text-red-700'
+                            }`}>
+                                {is_passed_requirement ? (
+                                    <>
+                                        <CheckCircle2 className="w-5 h-5" />
+                                        <span>ĐÃ ĐẠT (Yêu cầu: {pass_threshold}%)</span>
+                                    </>
                                 ) : (
-                                    <AlertCircle
-                                        size={40}
-                                        className="text-warning"
-                                    />
+                                    <>
+                                        <AlertCircle className="w-5 h-5" />
+                                        <span>CHƯA ĐẠT (Yêu cầu: {pass_threshold}%)</span>
+                                    </>
                                 )}
-                                <h2 className="text-4xl font-bold">
-                                    {score}%
-                                </h2>
                             </div>
-                            <p className="mt-3 text-lg text-base-content/70">
-                                Bạn đã trả lời đúng {result.correct || 0}/
-                                {result.total || test.questions?.length || 0} câu hỏi
-                            </p>
-                            <p className="text-sm text-base-content/60 mt-2">
-                                Hoàn thành lúc:{" "}
-                                {new Date(result.completed_at).toLocaleDateString('en-GB')}
-                            </p>
+                            
+                            <div className="flex gap-3">
+                                <Link
+                                    href={route('path.test.take', { level: test.level, test: test.id })}
+                                    className="btn btn-outline btn-sm rounded-lg"
+                                >
+                                    Làm lại bài này
+                                </Link>
+                                <Link
+                                    href={route('path.levels')}
+                                    className="btn btn-primary btn-sm rounded-lg"
+                                >
+                                    Làm bài khác
+                                </Link>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Chua bai */}
-                <div className="card bg-base-100 shadow-xl">
-                    <div className="card-body">
-                        <h3 className="card-title mb-4">Chữa bài chi tiết</h3>
-                        <div className="space-y-4">
+                    {/* Main Title */}
+                    <div className="mb-8">
+                        <h1 className="text-3xl font-black text-gray-900 leading-tight">
+                            Kết quả luyện tập: {test.title}
+                        </h1>
+                        <div className="flex gap-2 mt-3">
+                            <span className="badge badge-warning text-white font-bold py-3 px-4 rounded-lg">Level {test.level}</span>
+                            <span className="badge badge-warning text-white font-bold py-3 px-4 rounded-lg">Part {test.part}</span>
+                        </div>
+                    </div>
+
+                    {/* Result Summary Cards */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
+                        {/* Summary Column */}
+                        <div className="lg:col-span-1 space-y-4">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-indigo-50 p-3 rounded-xl">
+                                    <BarChart2 className="w-6 h-6 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Kết quả</p>
+                                    <p className="text-xl font-black text-gray-900">{correct_count}/{total_count}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-purple-50 p-3 rounded-xl">
+                                    <Clock className="w-6 h-6 text-purple-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Thời gian làm</p>
+                                    <p className="text-xl font-black text-gray-900">{formatTimeSpent(result.time_spent)}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-amber-50 p-3 rounded-xl">
+                                    <BarChart2 className="w-6 h-6 text-amber-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Độ chính xác</p>
+                                    <p className="text-xl font-black text-gray-900">{accuracy}%</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-blue-50 p-3 rounded-xl">
+                                    <Clock className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Ngày hoàn thành</p>
+                                    <p className="text-[11px] font-bold text-gray-900">{formatDate(result.completed_at)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Status Grid */}
+                        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                                    <BarChart2 className="w-8 h-8 text-blue-500" />
+                                </div>
+                                <p className="text-blue-600 font-bold text-lg">Điểm số</p>
+                                <p className="text-4xl font-black text-gray-900 mt-2">{score}%</p>
+                                <p className="text-gray-400 text-sm mt-1">trên 100%</p>
+                            </div>
+
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+                                    <Check className="w-8 h-8 text-green-500" />
+                                </div>
+                                <p className="text-green-600 font-bold text-lg">Trả lời đúng</p>
+                                <p className="text-4xl font-black text-gray-900 mt-2">{correct_count}</p>
+                                <p className="text-gray-400 text-sm mt-1">câu hỏi</p>
+                            </div>
+
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                                    <X className="w-8 h-8 text-red-500" />
+                                </div>
+                                <p className="text-red-600 font-bold text-lg">Trả lời sai</p>
+                                <p className="text-4xl font-black text-gray-900 mt-2">{wrong_count}</p>
+                                <p className="text-gray-400 text-sm mt-1">câu hỏi</p>
+                            </div>
+
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                    <Minus className="w-8 h-8 text-gray-500" />
+                                </div>
+                                <p className="text-gray-500 font-bold text-lg">Bỏ qua</p>
+                                <p className="text-4xl font-black text-gray-900 mt-2">{skipped_count}</p>
+                                <p className="text-gray-400 text-sm mt-1">câu hỏi</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Detailed Review Section */}
+                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                        <div className="bg-gray-50 px-8 py-6 border-b border-gray-100">
+                            <h2 className="text-xl font-black text-gray-900 flex items-center">
+                                <ChevronRight className="w-6 h-6 text-indigo-600 mr-2" />
+                                Phân tích chi tiết bài làm
+                            </h2>
+                        </div>
+                        
+                        <div className="p-8 space-y-10">
                             {test.questions?.map((question, index) => {
                                 const userAnswerId = answers[question.id];
-
-                                // Guard clause - kiểm tra answers có tồn tại không
-                                if (!question.answers || !Array.isArray(question.answers)) {
-                                    console.warn('Question answers is undefined:', question);
-                                    return null;
-                                }
-
-                                const userOption = question.answers.find((opt) => opt.id === userAnswerId);
                                 const correctOption = question.answers.find((opt) => opt.is_correct);
                                 const isCorrect = userAnswerId === correctOption?.id;
                                 const hasUserAnswer = userAnswerId !== undefined && userAnswerId !== null;
 
                                 return (
-                                    <div
-                                        key={question.id}
-                                        className={`p-4 rounded-lg border-2 ${!hasUserAnswer
-                                            ? "border-gray-200 bg-gray-50"
-                                            : isCorrect
-                                                ? "border-green-200 bg-success/10"
-                                                : "border-red-200 bg-error/10"
-                                            }`}
-                                    >
-                                        <div className="flex items-start gap-2 mb-2">
-                                            <span
-                                                className={`text-white rounded-md badge ${!hasUserAnswer
-                                                    ? "badge-neutral"
-                                                    : isCorrect
-                                                        ? "badge-success"
-                                                        : "badge-error"
-                                                    }`}
-                                            >
-                                                Câu {index + 1}
+                                    <div key={question.id} className="relative">
+                                        {/* Question Header */}
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <span className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
+                                                !hasUserAnswer ? 'bg-gray-400' : (isCorrect ? 'bg-green-500' : 'bg-red-500')
+                                            }`}>
+                                                {index + 1}
                                             </span>
-                                            <div className="flex justify-center items-center gap-1 mb-1">
-                                                {!hasUserAnswer ? (
-                                                    <>
-                                                        <span className="text-lg mb-1 ml-2">
-                                                            Chưa chọn
-                                                        </span>
-                                                        <AlertCircle
-                                                            size={20}
-                                                            className="text-gray-500 mb-1"
-                                                        />
-                                                    </>
-                                                ) : isCorrect ? (
-                                                    <>
-                                                        <span className="text-lg mb-1 ml-2">
-                                                            Đúng
-                                                        </span>
-                                                        <CheckCircle2
-                                                            size={20}
-                                                            className="text-success mb-1"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className="text-lg mb-1 ml-2">
-                                                            Sai
-                                                        </span>
-                                                        <AlertCircle
-                                                            size={20}
-                                                            className="text-error mb-1"
-                                                        />
-                                                    </>
-                                                )}
+                                            
+                                            <div className="flex-1 pt-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className={`text-xs font-bold uppercase tracking-widest ${
+                                                        !hasUserAnswer ? 'text-gray-400' : (isCorrect ? 'text-green-600' : 'text-red-600')
+                                                    }`}>
+                                                        {!hasUserAnswer ? 'Bỏ qua' : (isCorrect ? 'Đúng' : 'Sai')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-lg font-bold text-gray-900 leading-relaxed">
+                                                    {question.question_text}
+                                                </p>
                                             </div>
                                         </div>
-                                        <p className="font-semibold mb-3">
-                                            {question.question_text}
-                                        </p>
 
-                                        <div className="space-y-2 mb-3">
+                                        {/* Options Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-14 mb-6">
                                             {question.answers?.map((answer, optIndex) => {
                                                 const isUserAnswer = answer.id === userAnswerId;
                                                 const isCorrectAnswer = answer.is_correct;
+                                                
+                                                let stateClass = "bg-gray-50 border-gray-100 text-gray-600";
+                                                if (isCorrectAnswer) stateClass = "bg-green-50 border-green-200 text-green-700 font-bold ring-2 ring-green-500 ring-offset-1";
+                                                else if (isUserAnswer) stateClass = "bg-red-50 border-red-200 text-red-700 font-bold";
 
                                                 return (
-                                                    <div
+                                                    <div 
                                                         key={answer.id}
-                                                        className={`p-2 rounded ${isCorrectAnswer
-                                                            ? "bg-success/15 border border-success/50"
-                                                            : isUserAnswer
-                                                                ? "bg-error/15 border border-error/50"
-                                                                : "bg-base-200"
-                                                            }`}
+                                                        className={`p-4 rounded-xl border-2 transition-all flex items-center justify-between ${stateClass}`}
                                                     >
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="opacity-50 text-sm">{String.fromCharCode(65 + optIndex)}.</span>
+                                                            <span>{answer.answer_text}</span>
+                                                        </div>
                                                         <div className="flex items-center gap-2">
-                                                            {isCorrectAnswer && (
-                                                                <CheckCircle2
-                                                                    size={16}
-                                                                    className="text-success"
-                                                                />
-                                                            )}
-                                                            {isUserAnswer && !isCorrectAnswer && (
-                                                                <AlertCircle
-                                                                    size={16}
-                                                                    className="text-error"
-                                                                />
-                                                            )}
-                                                            <span className={isCorrectAnswer ? "font-semibold text-green-500" : ""}>
-                                                                {String.fromCharCode(65 + optIndex)}.{" "}
-                                                                {answer.answer_text}
-                                                            </span>
-                                                            {isUserAnswer && (
-                                                                <span className="badge badge-sm">
-                                                                    Bạn chọn
-                                                                </span>
-                                                            )}
-                                                            {isCorrectAnswer && (
-                                                                <span className="badge badge-success badge-sm text-[15px]">
-                                                                    Đáp án đúng
-                                                                </span>
-                                                            )}
-                                                            {!hasUserAnswer && !isCorrectAnswer && optIndex === 0 && (
-                                                                <span className="badge badge-neutral badge-sm">
-                                                                    Bạn chưa chọn
-                                                                </span>
-                                                            )}
+                                                            {isCorrectAnswer && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                                                            {isUserAnswer && !isCorrectAnswer && <AlertCircle className="w-5 h-5 text-red-500" />}
+                                                            {isUserAnswer && <span className="text-[10px] uppercase font-black bg-white/50 px-2 py-0.5 rounded-full">Bạn chọn</span>}
                                                         </div>
                                                     </div>
                                                 );
                                             })}
                                         </div>
 
-                                        <div className="mt-3 space-y-2 text-left">
+                                        {/* Explanation Area */}
+                                        <div className="ml-14 space-y-3">
                                             {question.translation && (
-                                                <div className="p-3 bg-base-200 rounded border border-red-400">
-                                                    <p className="text-sm italic text-base-content/80">
-                                                        <span className="font-semibold text-secondary not-italic">
-                                                            Dịch câu hỏi:
-                                                        </span>{" "}
+                                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                                                    <p className="text-sm text-indigo-900">
+                                                        <span className="font-black uppercase text-[10px] tracking-widest mr-2 opacity-50">Dịch câu:</span>
                                                         {question.translation}
                                                     </p>
                                                 </div>
                                             )}
-
-                                            {question.explanation && (
-                                                <div className="p-3 bg-success/5 rounded border border-success/70">
-                                                    <p className="text-sm">
-                                                        <span className="font-semibold text-success">
-                                                            Đáp án đúng:
-                                                        </span>{" "}
-                                                        {question.explanation}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {question.detailed_explanation && (
-                                                <div className="p-3 bg-info/5 rounded border border-info/80">
-                                                    <p className="text-sm">
-                                                        <span className="font-semibold text-info">
-                                                            Giải thích ngữ pháp:
-                                                        </span>{" "}
-                                                        {question.detailed_explanation}
-                                                    </p>
+                                            
+                                            {(question.explanation || question.detailed_explanation) && (
+                                                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                                                    <div className="flex items-start gap-2">
+                                                        <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                                        <div>
+                                                            <p className="text-xs font-black uppercase text-amber-800 tracking-widest mb-1">Giải thích & Ngữ pháp:</p>
+                                                            <p className="text-sm text-amber-900 leading-relaxed">
+                                                                {question.explanation}
+                                                                {question.detailed_explanation && (
+                                                                    <span className="block mt-2 pt-2 border-t border-amber-200/50">
+                                                                        {question.detailed_explanation}
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
+                                        
+                                        {index < test.questions.length - 1 && (
+                                            <div className="h-px bg-gray-100 my-10 ml-14"></div>
+                                        )}
                                     </div>
                                 );
                             })}
                         </div>
-
-                        <div className="card-actions justify-center mt-6">
-                            <Link
-                                href={route('path.levels')}
-                                className="btn btn-primary rounded-xl btn-sm"
-                            >
-                                Làm bài khác
-                            </Link>
-                            {test?.level ? (
-                                <Link
-                                    href={route('path.test.take', { level: test.level, test: test.id })}
-                                    className="btn btn-outline rounded-xl btn-sm"
-                                >
-                                    Làm lại bài này
-                                </Link>
-                            ) : null}
-                        </div>
                     </div>
                 </div>
             </div>
-        </>
+        </AuthenticatedLayout>
     );
 }

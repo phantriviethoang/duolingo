@@ -21,7 +21,7 @@ class TestManageController extends Controller
                     'id' => $test->id,
                     'title' => $test->title,
                     'description' => $test->description,
-                    'duration' => $test->duration,
+                    'duration' => $test->configuredDuration(),
                     'total_questions' => $test->total_questions,
                     'created_at' => optional($test->created_at)->format('d/m/Y'),
                 ];

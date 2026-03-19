@@ -29,23 +29,26 @@ class TestFactory extends Factory
             'Grammar & Reading Practice',
         ];
 
+        $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
         $testType = fake()->randomElement($testTypes);
         $testNumber = fake()->numberBetween(1, 50);
+        $level = fake()->randomElement($levels);
+        $part = fake()->numberBetween(1, 3);
 
-        // Tạo số câu hỏi hợp lý theo loại bài luyện tập
-        $totalQuestions = match ($testType) {
-            'Grammar & Reading Practice' => fake()->numberBetween(40, 60),
-            default => fake()->numberBetween(25, 45),
-        };
+        // Lấy cấu hình mặc định từ Model Test theo Part
+        $totalQuestions = \App\Models\Test::PART_QUESTION_COUNTS[$part] ?? 10;
+        $duration = \App\Models\Test::PART_DURATION_MINUTES[$part] ?? 15;
 
         return [
-            'title' => $testType . ' ' . $testNumber,
+            'title' => $level . ' - Part ' . $part . ' - ' . $testType . ' ' . $testNumber,
             'description' => $this->generateDescription($testType),
-            'duration' => $this->calculateDuration($totalQuestions),
+            'duration' => $duration,
+            'level' => $level,
+            'part' => $part,
             'audio_path' => fake()->optional(0.3)->filePath(),
             'image_path' => fake()->optional(0.3)->imageUrl(640, 360, 'education', true),
             'total_questions' => $totalQuestions,
-            // 'questions' removed
             'attempts' => fake()->numberBetween(0, 50000),
             'is_active' => true,
         ];
@@ -77,7 +80,7 @@ class TestFactory extends Factory
 
     private function generatePracticeQuestion(int $number): array
     {
-        return $this->getRandomQuestion();
+        return $this->getQuestionByIndex($number - 1);
     }
 
     private function generateDescription(string $testType): string

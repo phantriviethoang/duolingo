@@ -6,10 +6,16 @@ import { useState } from 'react';
 
 export default function PathIndex({ currentLevel, levels, progressData }) {
     const { put } = useForm();
-    const [selectedLevel, setSelectedLevel] = useState(currentLevel || 'all');
+    const [selectedLevel, setSelectedLevel] = useState('all');
 
     const handleLevelChange = (level) => {
         setSelectedLevel(level);
+
+        // "all" chỉ dùng để lọc giao diện, không lưu vào current_level.
+        if (level === 'all') {
+            return;
+        }
+
         put(route('path.saveTarget'), { level });
     };
 
@@ -61,7 +67,7 @@ export default function PathIndex({ currentLevel, levels, progressData }) {
                             onClick={() => handleLevelChange('all')}
                             className="btn btn-outline btn-sm"
                         >
-                            Xóa lọc
+                            Hiển thị tất cả
                         </button>
                     </div>
                 </div>

@@ -3,10 +3,17 @@ import { useState } from "react";
 import Logo from "@/Components/Logo";
 
 const baseLinks = [
-    { label: "Chọn Lộ Trình", href: "/path", icon: "🎓" },
-    { label: "Danh Sách Level", href: "/path/level", icon: "📝" },
-    // { label: "Giới Thiệu", href: "/about", icon: "ℹ️" },
-    // { label: "Liên Hệ", href: "/contact", icon: "📞" },
+    { label: "Lộ Trình", href: "/path/level", icon: "🎓", activePrefix: "/path" },
+    { label: "Tiến Độ", href: "/progress/dashboard", icon: "📊", activePrefix: "/progress" },
+    { label: "Kết Quả", href: "/results", icon: "📝", activePrefix: "/results" },
+];
+
+const adminLinks = [
+    { label: "Dashboard quản trị", href: "/admin", activePrefix: "/admin" },
+    { label: "Quản lý đề thi", href: "/admin/tests", activePrefix: "/admin/tests" },
+    { label: "Quản lý người dùng", href: "/admin/users", activePrefix: "/admin/users" },
+    { label: "Kết quả hệ thống", href: "/admin/results", activePrefix: "/admin/results" },
+    { label: "Phân tích", href: "/admin/analytics", activePrefix: "/admin/analytics" },
 ];
 
 const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -14,14 +21,18 @@ const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 export default function AppHeader() {
     const { auth, ziggy } = usePage().props;
     const user = auth?.user;
-    const current = ziggy?.location ?? "";
+    const isAdmin = user?.role === 'admin';
+    const navLinks = isAdmin
+        ? [...baseLinks, { label: "Quản Trị", href: "/admin", activePrefix: "/admin" }]
+        : baseLinks;
+    const currentPath = new URL(ziggy?.location ?? window.location.href).pathname;
     const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false);
 
     return (
-        <header className="fixed inset-x-0 top-0 z-50 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-white shadow-sm">
+        <header className="fixed inset-x-0 top-0 z-50 border-b border-blue-200 bg-linear-to-r from-blue-50 to-white shadow-sm">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-3 flex-shrink-0">
+                <Link href="/" className="flex items-center gap-3 shrink-0">
                     <Logo className="h-10 w-10" />
                     <div>
                         <span className="text-lg font-bold text-blue-600">LingGo</span>
@@ -35,7 +46,8 @@ export default function AppHeader() {
                     <div className="relative">
                         <button
                             onClick={() => setIsLevelDropdownOpen(!isLevelDropdownOpen)}
-                            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                            className={`flex items-center gap-2 font-medium transition-colors ${currentPath.startsWith('/path') ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                                }`}
                         >
                             <span>Chọn Trình Độ</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,22 +62,28 @@ export default function AppHeader() {
                                         <Link
                                             key={level}
                                             href={`/path/${level}`}
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                                            onClick={() => {
-                                                setIsLevelDropdownOpen(false);
-                                                // Reset selected level when choosing
-                                            }}
+                                            className={`block px-4 py-2 text-sm ${currentPath === `/path/${level}` ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                                }`}
+                                            onClick={() => setIsLevelDropdownOpen(false)}
                                         >
                                             Level {level}
                                         </Link>
                                     ))}
+                                    <div className="border-t border-gray-100 my-1"></div>
+                                    <Link
+                                        href="/path/level"
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 italic"
+                                        onClick={() => setIsLevelDropdownOpen(false)}
+                                    >
+                                        Tất cả trình độ
+                                    </Link>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {baseLinks.map((item) => {
-                        const isActive = current.includes(item.href);
+                    {navLinks.map((item) => {
+                        const isActive = currentPath.startsWith(item.activePrefix);
                         return (
                             <Link
                                 key={item.href}
@@ -94,9 +112,9 @@ export default function AppHeader() {
                             >
                                 <div className="hidden sm:flex flex-col items-end">
                                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' ? ' Admin' : 'Học viên'}</p>
+                                    <p className="text-xs text-gray-500 capitalize">{user.role === 'admin' ? 'Quản trị viên' : 'Học viên'}</p>
                                 </div>
-                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                <div className="h-10 w-10 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
                                     {user.name.charAt(0).toUpperCase()}
                                 </div>
                             </label>
@@ -105,10 +123,15 @@ export default function AppHeader() {
                                 className="dropdown-content z-50 menu p-3 shadow-lg bg-white rounded-lg w-56 border border-gray-200"
                             >
                                 <li>
-                                    <span className="text-xs text-gray-500 px-3 py-1 font-semibold">MENU CHÍNH</span>
+                                    <span className="text-xs text-gray-500 px-3 py-1 font-semibold">DANH MỤC</span>
                                 </li>
                                 <li>
-                                    <Link href="/path" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
+                                    <Link href="/progress/dashboard" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
+                                        Tiến độ học tập
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/path/level" className="text-gray-800 hover:bg-blue-100 hover:text-blue-700 rounded-lg">
                                         Lộ trình học
                                     </Link>
                                 </li>
@@ -120,11 +143,11 @@ export default function AppHeader() {
                                 {user.role === 'admin' && (
                                     <>
                                         <li>
-                                            <span className="text-xs text-gray-500 px-3 py-1 font-semibold">QUẢN TRỊ VIÊN</span>
+                                            <span className="text-xs text-gray-500 px-3 py-1 font-semibold">QUẢN TRỊ</span>
                                         </li>
                                         <li>
                                             <Link href="/admin" className="text-gray-800 hover:bg-amber-100 hover:text-amber-700 rounded-lg">
-                                                ️ Trang quản lý
+                                                Trang quản trị
                                             </Link>
                                         </li>
                                     </>
@@ -167,7 +190,8 @@ export default function AppHeader() {
                     <div className="relative">
                         <button
                             onClick={() => setIsLevelDropdownOpen(!isLevelDropdownOpen)}
-                            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition-colors p-2 rounded"
+                            className={`flex items-center gap-2 font-medium transition-colors p-2 rounded ${currentPath.startsWith('/path') ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:text-blue-600"
+                                }`}
                         >
                             <span>Trình Độ</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +206,9 @@ export default function AppHeader() {
                                         <Link
                                             key={level}
                                             href={`/path/${level}`}
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                            className={`block px-4 py-2 text-sm ${currentPath === `/path/${level}` ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                                }`}
+                                            onClick={() => setIsLevelDropdownOpen(false)}
                                         >
                                             Level {level}
                                         </Link>
@@ -192,8 +218,8 @@ export default function AppHeader() {
                         )}
                     </div>
 
-                    {baseLinks.slice(0, 4).map((item) => {
-                        const isActive = current.includes(item.href);
+                    {navLinks.map((item) => {
+                        const isActive = currentPath.startsWith(item.activePrefix);
                         return (
                             <Link
                                 key={item.href}

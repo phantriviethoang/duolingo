@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\UserProgress;
 use App\Models\User;
+use App\Models\Result;
 use Illuminate\Support\Collection;
 
 class CEFRProgressService
@@ -201,7 +202,7 @@ class CEFRProgressService
                 'id' => $test->id,
                 'title' => $test->title,
                 'description' => $test->description,
-                'duration' => $test->duration,
+                'duration' => $test->configuredDuration(),
                 'total_questions' => $test->total_questions,
             ],
             'questions' => $questions,
@@ -224,11 +225,177 @@ class CEFRProgressService
      */
     public function getPassThreshold(int $part): int
     {
-        return match ($part) {
-            1 => 60,  // Part 1: 60%
-            2 => 75,  // Part 2: 75%
-            3 => 90,  // Part 3: 90%
-            default => 60,
-        };
+        return (int) (\App\Models\UserProgress::PASS_THRESHOLDS[$part] ?? 60);
+    }
+
+    /**
+     * Lấy thống kê chi tiết cho dashboard người dùng
+     */
+    public function getUserDetailedStats(User $user): array
+    {
+        $allResults = Result::query()
+            ->where('user_id', $user->id)
+            ->with(['test.questions.answers'])
+            ->orderByDesc('completed_at')
+            ->get();
+
+        $currentLevel = $this->getUserCurrentLevel($user);
+        $levelProgress = $this->getLevelProgressData($user, $currentLevel);
+
+        // 1. Phân tích câu hỏi hay sai
+        $wrongQuestions = $this->analyzeWrongQuestions($allResults);
+
+        // 2. Phân tích phần kém
+        $weakAreas = $this->analyzeWeakAreas($allResults);
+
+        // 3. Đề xuất trình độ
+        $recommendedLevel = $this->calculateRecommendedLevel($user, $allResults);
+
+        return [
+            'current_level' => $currentLevel,
+            'level_progress' => $levelProgress,
+            'wrong_questions' => array_slice($wrongQuestions, 0, 5), // Lấy top 5 câu sai
+            'weak_areas' => $weakAreas,
+            'recommended_level' => $recommendedLevel,
+            'recent_results' => $allResults->take(5)->map(fn ($r) => [
+                'test_title' => $r->test->title ?? 'N/A',
+                'score' => $r->score,
+                'is_passed' => $r->score >= 60, // Giả định threshold chung
+                'completed_at' => optional($r->completed_at)->format('d/m/Y H:i') ?? 'N/A',
+            ]),
+        ];
+    }
+
+    /**
+     * Phân tích các câu hỏi người dùng hay làm sai
+     */
+    private function analyzeWrongQuestions(Collection $results): array
+    {
+        $wrongCounts = [];
+        $questionDetails = [];
+
+        foreach ($results as $result) {
+            $answers = (array) ($result->answers ?? []);
+            $test = $result->test;
+            if (! $test) {
+                continue;
+            }
+
+            $questions = $test->questions ?? collect();
+            foreach ($questions as $question) {
+                $userAns = $answers[$question->id] ?? null;
+
+                if ($userAns === null) {
+                    continue;
+                }
+
+                $correctAnswerId = optional($question->answers->firstWhere('is_correct', true))->id;
+                if ($correctAnswerId === null) {
+                    continue;
+                }
+
+                if ((string) $userAns !== (string) $correctAnswerId) {
+                    $qId = $question->id;
+                    $wrongCounts[$qId] = ($wrongCounts[$qId] ?? 0) + 1;
+                    if (! isset($questionDetails[$qId])) {
+                        $questionDetails[$qId] = [
+                            'id' => $qId,
+                            'question' => $question->question_text ?? $question->question ?? 'N/A',
+                            'explanation' => $question->explanation,
+                            'test_title' => $test->title,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Sắp xếp theo số lần sai giảm dần
+        arsort($wrongCounts);
+
+        $stats = [];
+        foreach ($wrongCounts as $qId => $count) {
+            $stats[] = array_merge($questionDetails[$qId], ['wrong_count' => $count]);
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Phân tích các phần (level/part) mà người dùng đang kém
+     */
+    private function analyzeWeakAreas(Collection $results): array
+    {
+        $areaStats = [];
+
+        foreach ($results as $result) {
+            $test = $result->test;
+            if (! $test)
+                continue;
+
+            $key = $test->level . ' - Part ' . $test->part;
+            if (! isset($areaStats[$key])) {
+                $areaStats[$key] = ['total_score' => 0, 'count' => 0, 'level' => $test->level, 'part' => $test->part];
+            }
+
+            $areaStats[$key]['total_score'] += $result->score;
+            $areaStats[$key]['count']++;
+        }
+
+        $weakAreas = [];
+        foreach ($areaStats as $key => $stat) {
+            $avgScore = $stat['total_score'] / $stat['count'];
+            if ($avgScore < 60) { // Nếu trung bình < 60% thì coi là yếu
+                $weakAreas[] = [
+                    'area' => $key,
+                    'avg_score' => round($avgScore, 1),
+                    'message' => "Bạn đang gặp khó khăn ở {$key}. Hãy luyện tập thêm phần này.",
+                ];
+            }
+        }
+
+        return $weakAreas;
+    }
+
+    /**
+     * Tính toán trình độ đề xuất dựa trên kết quả thực tế
+     */
+    private function calculateRecommendedLevel(User $user, Collection $results): string
+    {
+        if ($results->isEmpty()) {
+            return $user->current_level ?? 'A1';
+        }
+
+        $levelScores = [];
+        foreach ($results as $result) {
+            $test = $result->test;
+            if (! $test)
+                continue;
+
+            if (! isset($levelScores[$test->level])) {
+                $levelScores[$test->level] = ['total' => 0, 'count' => 0];
+            }
+            $levelScores[$test->level]['total'] += $result->score;
+            $levelScores[$test->level]['count']++;
+        }
+
+        $recommended = 'A1';
+        foreach (self::CEFR_LEVELS as $level) {
+            if (isset($levelScores[$level])) {
+                $avg = $levelScores[$level]['total'] / $levelScores[$level]['count'];
+                if ($avg >= 80) {
+                    // Nếu đạt > 80% ở level này, đề xuất level tiếp theo
+                    $idx = array_search($level, self::CEFR_LEVELS);
+                    if ($idx !== false && $idx < count(self::CEFR_LEVELS) - 1) {
+                        $recommended = self::CEFR_LEVELS[$idx + 1];
+                    } else {
+                        $recommended = $level;
+                    }
+                } elseif ($avg >= 50) {
+                    $recommended = $level;
+                }
+            }
+        }
+
+        return $recommended;
     }
 }

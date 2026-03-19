@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTestRequest;
 use App\Http\Requests\UpdateTestRequest;
 use App\Models\Test;
+use App\Models\TestSession;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +25,7 @@ class TestController extends Controller
                     'id' => $test->id,
                     'title' => $test->title,
                     'description' => $test->description,
-                    'duration' => $test->duration,
+                    'duration' => $test->configuredDuration(),
                     'total_questions' => $test->total_questions,
                     'created_at' => optional($test->created_at)->format('d/m/Y'),
                 ];
@@ -57,10 +59,10 @@ class TestController extends Controller
                 'id' => $test->id,
                 'title' => $test->title,
                 'description' => $test->description,
-                'duration' => $test->duration,
+                'duration' => $test->configuredDuration(),
                 'level' => $test->level,
                 'part' => $test->part,
-                'total_questions' => $test->total_questions,
+                'total_questions' => $test->configuredQuestionCount(),
                 'is_active' => $test->is_active,
             ];
         })->values()->toArray();
@@ -168,7 +170,7 @@ class TestController extends Controller
                 'id' => $test->id,
                 'title' => $test->title,
                 'description' => $test->description,
-                'duration' => $test->duration,
+                'duration' => $test->configuredDuration(),
                 'audio_path' => $test->audio_path,
                 'image_path' => $test->image_path,
                 'questions' => $test->questions
@@ -261,22 +263,20 @@ class TestController extends Controller
                 ->with('error', 'Đề thi này không khả dụng.');
         }
 
-        // Lấy câu hỏi + đáp án từ DB
-        $questions = $test->questions()
-            ->with('answers')
-            ->orderBy('order')
-            ->get();
-
-        if ($questions->isEmpty()) {
-            return redirect()->route('path.levels')
-                ->with('error', 'Đề thi này chưa có câu hỏi.');
-        }
-
-        // Tăng số lượt làm bài
-        $test->increment('attempts');
+        $perPage = 20;
+        $page = max((int) request()->query('page', 1), 1);
+        $questionLimit = $test->configuredQuestionCount();
 
         $retakeWrong = request()->query('retake_wrong');
         $resultId = request()->query('result_id');
+
+        $paginator = null;
+
+        $allQuestions = $test->questions()
+            ->with('answers')
+            ->orderBy('order')
+            ->take($questionLimit)
+            ->get();
 
         if ($retakeWrong && $resultId) {
             $previousResult = \App\Models\Result::where('id', $resultId)
@@ -287,7 +287,7 @@ class TestController extends Controller
                 $prevAnswers = (array) $previousResult->answers;
                 $wrongQuestions = collect();
 
-                foreach ($questions as $q) {
+                foreach ($allQuestions as $q) {
                     $userAns = $prevAnswers[$q->id] ?? null;
 
                     // Ưu tiên đáp án đúng từ relation answers
@@ -300,13 +300,57 @@ class TestController extends Controller
                 }
 
                 if ($wrongQuestions->isNotEmpty()) {
-                    $questions = $wrongQuestions;
+                    $allQuestions = $wrongQuestions;
                 }
+
+                $paginator = new LengthAwarePaginator(
+                    $allQuestions->forPage($page, $perPage)->values(),
+                    $allQuestions->count(),
+                    $perPage,
+                    $page,
+                    [
+                        'path' => request()->url(),
+                        'query' => request()->query(),
+                    ]
+                );
             }
         }
 
+        if (! $paginator) {
+            $paginator = new LengthAwarePaginator(
+                $allQuestions->forPage($page, $perPage)->values(),
+                $allQuestions->count(),
+                $perPage,
+                $page,
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
+        }
+
+        if ($paginator->total() === 0) {
+            return redirect()->route('path.levels')
+                ->with('error', 'Đề thi này chưa có câu hỏi.');
+        }
+
+        // Tăng số lượt làm bài chỉ ở lần vào đầu tiên.
+        if ($page === 1) {
+            $test->increment('attempts');
+        }
+
+        $activeSession = null;
+        if (! $retakeWrong) {
+            $activeSession = TestSession::query()
+                ->where('user_id', Auth::id())
+                ->where('test_id', $test->id)
+                ->where('status', 'in_progress')
+                ->latest('updated_at')
+                ->first();
+        }
+
         // Transform questions for frontend (map to expected structure)
-        $mappedQuestions = $questions->map(function ($q) {
+        $mappedQuestions = $paginator->getCollection()->map(function ($q) {
             $optionsFromAnswers = $q->answers
                 ->map(function ($answer) {
                     return [
@@ -329,19 +373,29 @@ class TestController extends Controller
             ];
         })->values();
 
+        $paginator->setCollection($mappedQuestions);
+
         return Inertia::render('Tests/Take', [
             'test' => [
                 'id' => $test->id,
                 'title' => $test->title ?? 'Untitled Test',
                 'description' => $test->description ?? '',
-                'duration' => $test->duration ?? 40,
+                'duration' => $test->configuredDuration(),
                 'level' => $test->level,
                 'part' => $test->part,
-                'total_questions' => $questions->count(),
-                'questions' => $mappedQuestions,
+                'total_questions' => $paginator->total(),
                 'retake_wrong' => (bool) $retakeWrong,
                 'previous_result_id' => $resultId ? (int) $resultId : null,
             ],
+            'questionsFeed' => Inertia::scroll(fn () => $paginator),
+            'testSession' => $activeSession ? [
+                'id' => $activeSession->id,
+                'answers' => $activeSession->answers ?? [],
+                'flagged' => $activeSession->flagged ?? [],
+                'current_question' => (int) $activeSession->current_question,
+                'time_left' => (int) $activeSession->time_left,
+                'last_synced_at' => optional($activeSession->last_synced_at)->toISOString(),
+            ] : null,
         ]);
     }
 }

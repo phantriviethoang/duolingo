@@ -4,11 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Result;
 use App\Models\Progress;
+use App\Services\CEFRProgressService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ProgressController extends Controller
 {
+    protected $cefrService;
+
+    public function __construct(CEFRProgressService $cefrService)
+    {
+        $this->cefrService = $cefrService;
+    }
+
     /**
      * Display user's overall progress
      */
@@ -33,6 +41,19 @@ class ProgressController extends Controller
             'progressData' => $progressData,
             'recentResults' => $recentResults,
             'currentLevel' => $user->current_level ?? 'A1',
+        ]);
+    }
+
+    /**
+     * Dashboard tiến độ học tập chi tiết
+     */
+    public function dashboard()
+    {
+        $user = Auth::user();
+        $stats = $this->cefrService->getUserDetailedStats($user);
+
+        return Inertia::render('Progress/Dashboard', [
+            'stats' => $stats,
         ]);
     }
 

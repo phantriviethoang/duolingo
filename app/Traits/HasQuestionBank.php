@@ -104,8 +104,24 @@ trait HasQuestionBank
     public function getRandomQuestion(): array
     {
         $bank = $this->getQuestionBank();
-        $selected = $bank[array_rand($bank)];
+        return $this->formatQuestionData($bank[array_rand($bank)]);
+    }
 
+    /**
+     * Lấy câu hỏi theo index (vòng lặp nếu vượt quá độ dài bank)
+     */
+    public function getQuestionByIndex(int $index): array
+    {
+        $bank = $this->getQuestionBank();
+        $idx = $index % count($bank);
+        return $this->formatQuestionData($bank[$idx]);
+    }
+
+    /**
+     * Format data câu hỏi từ bank
+     */
+    private function formatQuestionData(array $selected): array
+    {
         $options = [];
         foreach ($selected['options'] as $index => $optionText) {
             $options[] = [
@@ -123,16 +139,12 @@ trait HasQuestionBank
         }, $selected['options'], array_keys($selected['options']));
 
         return [
-            // Legacy keys for existing form payloads
             'question' => $selected['question'],
             'options' => $options,
             'correct_option_id' => $selected['correct'],
-
-            // Schema-aligned keys for questions/answers tables
             'question_text' => $selected['question'],
             'question_type' => 'multiple_choice',
             'answers' => $answers,
-
             'explanation' => $selected['explanation'] ?? null,
             'translation' => $selected['translation'] ?? null,
             'detailed_explanation' => $selected['detailed_explanation'] ?? null,
