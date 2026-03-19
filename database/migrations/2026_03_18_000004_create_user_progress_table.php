@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('exam_id')->constrained('tests')->cascadeOnDelete();
-            $table->integer('last_completed_section_order')->default(1)->comment('Part cuối cùng đã hoàn thành');
+            $table->integer('last_completed_section_order')->default(0)->comment('Section cuối cùng đã hoàn thành (0 = chưa hoàn thành)');
             $table->boolean('is_completed')->default(false);
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();

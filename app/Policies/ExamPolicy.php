@@ -32,14 +32,17 @@ class ExamPolicy
 
     /**
      * Người dùng có thể vào phòng thi không?
+     *
+     * Authorization check:
+     * - User phải có user_progress (tức là đã bắt đầu)
+     * - Section phải accessible (checked in controller)
+     * - Exam chưa hoàn thành (hoặc có thể làm lại nếu cho phép)
      */
     public function take(User $user, Exam $exam): bool
     {
-        // Tất cả users có thể vào làm bài
-        // Nhưng BE sẽ kiểm tra:
-        // - User progress có unlock section đó không
-        // - User không cheat (verify answers)
-        return true;
+        // Chỉ authenticated users
+        return $user !== null;
+        // Controller sẽ xử lý logic section unlock
     }
 
     /**

@@ -130,32 +130,38 @@ export default function Show({ exam, userProgress }) {
                         </div>
 
                         <div className="divide-y">
-                            {exam.sections.map((section, index) => {
-                                const isCompleted = userProgress && index < userProgress.last_completed_section_order;
-                                const isCurrentSection = userProgress && index === userProgress.last_completed_section_order;
-                                const isLocked = userProgress && index > userProgress.last_completed_section_order;
-                                const isNotStarted = !userProgress && index > 0;
+                            {exam.sections.map((section) => {
+                                // Determine section status based on user progress
+                                const lastCompletedOrder = userProgress?.last_completed_section_order || 0;
+                                const isCompleted = userProgress && section.order <= lastCompletedOrder;
+                                const isCurrentOrAvailable = !userProgress || section.order === lastCompletedOrder + 1;
+                                const isLocked = userProgress && section.order > lastCompletedOrder + 1;
 
+                                // Determine UI state
                                 let bgColor = 'bg-slate-50';
                                 let iconColor = 'text-gray-400';
                                 let statusText = 'Chưa mở khóa';
                                 let statusColor = 'text-gray-600';
+                                let isAccessible = false;
 
                                 if (isCompleted) {
                                     bgColor = 'bg-green-50';
                                     iconColor = 'text-green-500';
-                                    statusText = 'Hoàn thành';
+                                    statusText = 'Hoàn thành ✓';
                                     statusColor = 'text-green-600';
-                                } else if (isCurrentSection) {
+                                    isAccessible = true;
+                                } else if (isCurrentOrAvailable) {
                                     bgColor = 'bg-blue-50';
                                     iconColor = 'text-blue-500';
-                                    statusText = 'Đang làm';
+                                    statusText = !userProgress ? 'Sẵn sàng' : 'Đang làm';
                                     statusColor = 'text-blue-600';
-                                } else if (isLocked || isNotStarted) {
+                                    isAccessible = true;
+                                } else if (isLocked) {
                                     bgColor = 'bg-slate-50';
                                     iconColor = 'text-gray-400';
                                     statusText = 'Chưa mở khóa';
                                     statusColor = 'text-gray-600';
+                                    isAccessible = false;
                                 }
 
                                 return (
@@ -166,7 +172,7 @@ export default function Show({ exam, userProgress }) {
                                                 <div className={`${iconColor}`}>
                                                     {isCompleted ? (
                                                         <CheckCircle2 className="w-8 h-8" />
-                                                    ) : isLocked || isNotStarted ? (
+                                                    ) : isLocked ? (
                                                         <Lock className="w-8 h-8" />
                                                     ) : (
                                                         <Zap className="w-8 h-8" />
@@ -188,19 +194,23 @@ export default function Show({ exam, userProgress }) {
                                             </div>
 
                                             {/* Action Button */}
-                                            {(isCurrentSection || (isNotStarted && index === 0) || isCompleted) && (
+                                            {isAccessible ? (
                                                 <Link
                                                     href={route('exams.take', {
                                                         exam: exam.id,
                                                         section: section.order,
                                                     })}
                                                     className={`btn btn-sm ${isCompleted
-                                                            ? 'btn-outline'
-                                                            : 'btn-primary'
+                                                        ? 'btn-outline'
+                                                        : 'btn-primary'
                                                         }`}
                                                 >
-                                                    {isCompleted ? 'Làm lại' : 'Bắt đầu'}
+                                                    {isCompleted ? 'Làm lại' : isCurrentOrAvailable && !userProgress ? 'Bắt đầu' : 'Tiếp tục'}
                                                 </Link>
+                                            ) : (
+                                                <div className="text-gray-400 text-sm font-semibold">
+                                                    Đã khóa
+                                                </div>
                                             )}
                                         </div>
                                     </div>

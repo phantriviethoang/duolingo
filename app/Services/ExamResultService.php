@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Test as Exam;
+use App\Models\TestResult;
 use App\Models\UserProgress;
 use Illuminate\Contracts\Auth\Authenticatable;
 
@@ -72,6 +73,16 @@ class ExamResultService
 
         // Kiểm tra đạt hay không
         $passed = $percentage >= $passThreshold;
+
+        // Lưu TestResult (section-level result)
+        TestResult::create([
+            'user_id' => $user->id,
+            'test_id' => $exam->id,
+            'section_id' => $section->id,
+            'total_questions' => $totalQuestions,
+            'correct_answers' => $correctCount,
+            'time_spent' => 0, // Will be set by frontend if needed
+        ]);
 
         // Chuẩn bị kết quả
         $result = [

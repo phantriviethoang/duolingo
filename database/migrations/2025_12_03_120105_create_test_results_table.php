@@ -14,10 +14,14 @@ return new class extends Migration
         Schema::create('test_results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('test_id')->constrained()->cascadeOnDelete()->unique();
-            $table->float('score');
-            $table->json('user_answer');
-            $table->timestamp('completed_at');
+            $table->foreignId('test_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('section_id')->nullable()->constrained('sections')->cascadeOnDelete();
+            $table->integer('total_questions')->default(0);
+            $table->integer('correct_answers')->default(0);
+            $table->integer('time_spent')->default(0);
+            $table->float('score')->nullable();
+            $table->json('user_answer')->nullable();
+            $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });
     }

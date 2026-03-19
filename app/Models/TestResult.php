@@ -13,6 +13,7 @@ class TestResult extends Model
     protected $fillable = [
         'user_id',
         'test_id',
+        'section_id',
         'score',
         'total_questions',
         'correct_answers',
@@ -40,6 +41,17 @@ class TestResult extends Model
         return $this->belongsTo(Test::class);
     }
 
+    /**
+     * Quan hệ: Kết quả bài thi thuộc về một Section
+     */
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    /**
+     * Accessor: Tính phần trăm đạt được
+     */
     public function getPercentageAttribute()
     {
         if ($this->total_questions == 0)
@@ -47,8 +59,49 @@ class TestResult extends Model
         return ($this->correct_answers / $this->total_questions) * 100;
     }
 
+    /**
+     * Accessor: Kiểm tra pass section (user đã đạt pass_threshold của section này)
+     *
+     * Xem xét:
+     * - Nếu là section result: so sánh với section->pass_threshold
+     * - Nếu là exam result (no section_id): so sánh với test->pass_score
+     */
+    public function isSectionPassedAttribute()
+    {
+        if (! $this->section_id || ! $this->section) {
+            return null;
+        }
+
+        // Lấy pass_threshold của section
+        $threshold = $this->section->pass_threshold;
+
+        // Nếu exam là high-quality: nhân threshold với 1.2 (20% cao hơn)
+        if ($this->test->is_high_quality) {
+            $threshold = min($threshold * 1.2, 1.0);
+        }
+
+        return $this->percentage >= ($threshold * 100);
+    }
+
+    /**
+     * Accessor: Kiểm tra pass exam (toàn bộ exam đạt pass_score)
+     *
+     * Dùng khi không có section_id (test result toàn exam)
+     */
+    public function isExamPassedAttribute()
+    {
+        return $this->percentage >= $this->test->pass_score;
+    }
+
+    /**
+     * Accessor cũ để backward compatibility
+     */
     public function isPassedAttribute()
     {
-        return $this->score >= $this->test->pass_score;
+        // Ưu tiên section pass, nếu không có thì dùng exam pass
+        if ($this->section_id) {
+            return $this->isSectionPassed;
+        }
+        return $this->isExamPassed;
     }
 }

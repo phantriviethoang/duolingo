@@ -82,8 +82,8 @@ class ExamController extends Controller
                 'user_progress' => $userProgress ? [
                     'last_completed_section_order' => $userProgress->last_completed_section_order,
                     'is_completed' => $userProgress->is_completed,
-                    'started_at' => $userProgress->started_at->format('d/m/Y H:i'),
-                    'completed_at' => $userProgress->completed_at?->format('d/m/Y H:i'),
+                    'started_at' => $userProgress->started_at?->format('d/m/Y H:i') ?? null,
+                    'completed_at' => $userProgress->completed_at?->format('d/m/Y H:i') ?? null,
                 ] : null,
             ];
         });
@@ -133,26 +133,45 @@ class ExamController extends Controller
 
     /**
      * Vào phòng thi - hiển thị các câu hỏi của một section
+     *
+     * Authorization:
+     * - User phải bắt đầu exam (create UserProgress)
+     * - User chỉ được truy cập sections đã unlock
+     * - Sections unlock dần theo thứ tự 1 → 2 → 3
      */
     public function take(Exam $exam, Request $request)
     {
-        $sectionOrder = $request->query('section', 1);
+        $sectionOrder = (int) $request->query('section', 1);
 
-        // Lấy hoặc tạo user progress mới
+        // Lấy hoặc tạo user progress
         $userProgress = auth()->user()
             ->userProgress()
             ->where('exam_id', $exam->id)
             ->firstOrCreate([
                 'exam_id' => $exam->id,
             ], [
-                'last_completed_section_order' => 1,
+                'last_completed_section_order' => 0, // Chưa unlock section nào
                 'is_completed' => false,
                 'started_at' => now(),
             ]);
 
-        // Nếu yêu cầu resume, lấy section cuối cùng đã làm
-        if ($request->query('resume') == 'true') {
+        // Nếu yêu cầu resume
+        if ($request->query('resume') === 'true') {
             $sectionOrder = $userProgress->last_completed_section_order + 1;
+        }
+
+        // ✅ AUTHORIZATION: Kiểm tra user có thể truy cập section này không
+        if (! $userProgress->canAccessSection($sectionOrder)) {
+            // Return error view hoặc redirect
+            return Inertia::render('Exams/SectionLocked', [
+                'exam' => [
+                    'id' => $exam->id,
+                    'title' => $exam->title,
+                ],
+                'requested_section' => $sectionOrder,
+                'last_completed_section' => $userProgress->last_completed_section_order,
+                'next_available_section' => $userProgress->last_completed_section_order + 1,
+            ]);
         }
 
         // Kiểm tra section có tồn tại không

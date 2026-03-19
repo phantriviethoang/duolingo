@@ -231,7 +231,10 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                         {/* Left: Title & Progress */}
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{quiz.title}</h1>
-                            <p className="text-sm text-gray-600">Câu {currentQuestion + 1}/{questions.length}</p>
+                            <p className="text-sm text-gray-600">
+                                {section ? `Phần ${section.order} - ` : ''}
+                                Câu {currentQuestion + 1}/{questions.length}
+                            </p>
                         </div>
 
                         {/* Center: Answer Count */}
@@ -363,10 +366,10 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                                             key={q.id}
                                             onClick={() => setCurrentQuestion(index)}
                                             className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition-all border-2 ${currentQuestion === index
-                                                    ? "border-blue-600 bg-blue-600 text-white"
-                                                    : selectedAnswers[q.id]
-                                                        ? "border-green-500 bg-green-50 text-green-700"
-                                                        : "border-gray-300 text-gray-700 hover:border-gray-400"
+                                                ? "border-blue-600 bg-blue-600 text-white"
+                                                : selectedAnswers[q.id]
+                                                    ? "border-green-500 bg-green-50 text-green-700"
+                                                    : "border-gray-300 text-gray-700 hover:border-gray-400"
                                                 }`}
                                         >
                                             {index + 1}

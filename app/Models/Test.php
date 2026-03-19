@@ -104,4 +104,30 @@ class Test extends Model
     {
         return $query->where('is_high_quality', $isHighQuality);
     }
+
+    /**
+     * Lấy results của một section cụ thể
+     *
+     * @param int|Section $section
+     * @return mixed TestResult collection
+     */
+    public function resultsBySection($section)
+    {
+        $sectionId = $section instanceof Section ? $section->id : $section;
+        return $this->results()->where('section_id', $sectionId);
+    }
+
+    /**
+     * Scope: Lấy results theo user
+     */
+    public function scopeUserResults($query, $userId)
+    {
+        return $query->whereHas('results', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        })->with([
+                    'results' => function ($q) use ($userId) {
+                        $q->where('user_id', $userId)->orderBy('created_at', 'desc');
+                    }
+                ]);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Section;
 use App\Models\Test;
 use App\Models\TestResult;
 use App\Models\User;
@@ -16,10 +17,17 @@ class TestResultFactory extends Factory
 
     public function definition(): array
     {
+        $totalQuestions = fake()->numberBetween(5, 20);
+        $correctAnswers = fake()->numberBetween(1, $totalQuestions);
+
         return [
             'user_id' => User::query()->inRandomOrder()->value('id'),
             'test_id' => Test::query()->inRandomOrder()->value('id'),
-            'score' => fake()->numberBetween(40, 100),
+            'section_id' => Section::query()->inRandomOrder()->value('id'),
+            'total_questions' => $totalQuestions,
+            'correct_answers' => $correctAnswers,
+            'score' => ($correctAnswers / $totalQuestions) * 100,
+            'time_spent' => fake()->numberBetween(30, 300),
             'user_answer' => [],
             'completed_at' => now(),
         ];

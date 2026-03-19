@@ -6,6 +6,7 @@ use App\Models\Level;
 use App\Models\Test;
 use App\Models\Section;
 use App\Models\TestQuestion;
+use App\Traits\HasQuestionBank;
 use Illuminate\Database\Seeder;
 
 /**
@@ -19,6 +20,7 @@ use Illuminate\Database\Seeder;
  */
 class ComprehensiveTestSeeder extends Seeder
 {
+    use HasQuestionBank;
     public function run(): void
     {
         // Lấy hoặc tạo levels
@@ -155,42 +157,21 @@ class ComprehensiveTestSeeder extends Seeder
                 'pass_threshold' => 0.7, // 70% yêu cầu
             ]);
 
-            // Tạo 10 questions per section
+            // Tạo 10 questions per section từ bộ ngân hàng câu hỏi
             for ($i = 1; $i <= $questionsPerSection; $i++) {
+                $questionData = $this->getRandomQuestion();
+
                 TestQuestion::create([
                     'test_id' => $test->id,
                     'section_id' => $section->id,
-                    'question' => "Question {$i} from Section {$sectionOrder} of {$test->title}",
-                    'translation' => "Câu {$i} từ Phần {$sectionOrder}",
-                    'options' => [
-                        'A' => 'Option A - ' . $this->randomText(),
-                        'B' => 'Option B - ' . $this->randomText(),
-                        'C' => 'Option C - ' . $this->randomText(),
-                        'D' => 'Option D - ' . $this->randomText(),
-                    ],
-                    'correct_option_id' => collect(['A', 'B', 'C', 'D'])->random(),
-                    'explanation' => 'This is the correct answer because...',
-                    'detailed_explanation' => 'Additional context and explanation for deeper understanding.',
+                    'question' => $questionData['question'],
+                    'translation' => $questionData['translation'],
+                    'options' => $questionData['options'],
+                    'correct_option_id' => $questionData['correct_option_id'],
+                    'explanation' => $questionData['explanation'],
+                    'detailed_explanation' => $questionData['detailed_explanation'],
                 ]);
             }
         }
-    }
-
-    /**
-     * Generate random text for options
-     */
-    private function randomText(): string
-    {
-        $texts = [
-            'common practice',
-            'best approach',
-            'standard method',
-            'traditional way',
-            'modern technique',
-            'advanced skill',
-            'basic understanding',
-        ];
-
-        return collect($texts)->random();
     }
 }
