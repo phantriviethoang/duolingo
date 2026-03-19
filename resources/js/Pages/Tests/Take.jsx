@@ -1029,7 +1029,7 @@ export default function Take({
                         </div>
 
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-96 space-y-6">
+                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-56 space-y-6">
                                 <h3 className="font-bold text-gray-900">
                                     Danh sách câu hỏi
                                 </h3>

@@ -125,8 +125,8 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                         <div className="flex flex-col items-end gap-1">
                                             <div className="flex items-center gap-2">
                                                 <input
-                                                    // type="number"
-                                                    className={`text-slate-700 input input-bordered input-xs w-16 font-bold ${errors[`part${part}`] ? 'border-red-500' : ''}`}
+                                                    type="number"
+                                                    className={`input input-bordered input-xs w-16 font-bold ${errors[`part${part}`] ? 'border-red-500' : ''}`}
                                                     value={formData[`part${part}`]}
                                                     onChange={e => setData(`part${part}`, e.target.value)}
                                                     min="0"

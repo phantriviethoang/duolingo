@@ -131,6 +131,17 @@ export default function Edit({ test }) {
                                     {errors.title && <p className="text-xs text-red-500 font-bold">{errors.title}</p>}
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Mô tả</label>
+                                    <textarea
+                                        className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium min-h-[100px] ${errors.description ? 'border-red-500' : ''}`}
+                                        value={data.description}
+                                        onChange={(e) => setData("description", e.target.value)}
+                                        placeholder="Nhập mô tả cho đề thi..."
+                                    />
+                                    {errors.description && <p className="text-xs text-red-500 font-bold">{errors.description}</p>}
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Trình độ</label>
