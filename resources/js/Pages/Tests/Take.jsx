@@ -365,39 +365,6 @@ export default function Take({
         [syncRoute, quiz?.id],
     );
 
-    const confirmLeaveOnce = useCallback(() => {
-        const now = Date.now();
-
-        // Avoid stacked prompts when anchor/inertia/popstate fire back-to-back.
-        if (now - lastPromptAtRef.current < 700) {
-            return lastPromptDecisionRef.current;
-        }
-
-        if (hasConfirmedLeaveRef.current) {
-            lastPromptAtRef.current = now;
-            lastPromptDecisionRef.current = true;
-            return true;
-        }
-
-        if (leavePromptOpenRef.current) {
-            lastPromptAtRef.current = now;
-            lastPromptDecisionRef.current = false;
-            return false;
-        }
-
-        leavePromptOpenRef.current = true;
-        const confirmed = window.confirm(LEAVE_WARNING_MESSAGE);
-        leavePromptOpenRef.current = false;
-        lastPromptAtRef.current = now;
-        lastPromptDecisionRef.current = confirmed;
-
-        if (confirmed) {
-            hasConfirmedLeaveRef.current = true;
-            syncSessionToServer({ keepalive: true });
-        }
-
-        return confirmed;
-    }, [LEAVE_WARNING_MESSAGE, syncSessionToServer]);
 
     useEffect(() => {
         if (!isHydrated || isSubmitting) return;
@@ -496,13 +463,9 @@ export default function Take({
     useEffect(() => {
         if (!isHydrated) return;
 
-        const handleInertiaBefore = (event) => {
-            const hasProgress =
-                Object.keys(selectedAnswers).length > 0 ||
-                currentQuestion > 0 ||
-                timeLeft < quizDurationSeconds;
-
-            if (isSubmitting || !hasProgress) {
+        // Unified navigation guard for Inertia
+        const unregisterInertiaBefore = router.on("before", (event) => {
+            if (isSubmittingRef.current || hasConfirmedLeaveRef.current) {
                 return;
             }
 
@@ -512,137 +475,61 @@ export default function Take({
             const currentUrl = new URL(window.location.href);
             const nextUrl = new URL(visitUrl, window.location.origin);
 
-            // Cùng path (ví dụ infinite scroll load page tiếp theo) thì không cảnh báo.
+            // Don't warn for same-page transitions (like scroll or partial reloads)
             if (currentUrl.pathname === nextUrl.pathname) {
                 return;
             }
 
-            const confirmed = confirmLeaveOnce();
-
-            if (!confirmed) {
+            if (!confirm(LEAVE_WARNING_MESSAGE)) {
                 event.preventDefault();
-                return;
-            }
-        };
-
-        document.addEventListener("inertia:before", handleInertiaBefore);
-
-        return () => {
-            document.removeEventListener("inertia:before", handleInertiaBefore);
-        };
-    }, [
-        isHydrated,
-        isSubmitting,
-        selectedAnswers,
-        flaggedQuestions,
-        currentQuestion,
-        timeLeft,
-        quizDurationSeconds,
-        confirmLeaveOnce,
-    ]);
-
-    useEffect(() => {
-        if (!isHydrated) return;
-
-        const handleAnchorClickCapture = (event) => {
-            if (isSubmittingRef.current || !hasProgressRef.current) {
-                return;
-            }
-
-            const target = event.target;
-            if (!(target instanceof Element)) {
-                return;
-            }
-
-            const anchor = target.closest("a[href]");
-            if (!anchor) {
-                return;
-            }
-
-            if (
-                event.defaultPrevented ||
-                event.metaKey ||
-                event.ctrlKey ||
-                event.shiftKey ||
-                event.altKey ||
-                anchor.getAttribute("target") === "_blank"
-            ) {
-                return;
-            }
-
-            const rawHref = anchor.getAttribute("href");
-            if (
-                !rawHref ||
-                rawHref.startsWith("#") ||
-                rawHref.startsWith("javascript:")
-            ) {
-                return;
-            }
-
-            const currentUrl = new URL(window.location.href);
-            const nextUrl = new URL(anchor.href, window.location.origin);
-
-            if (
-                currentUrl.pathname === nextUrl.pathname &&
-                currentUrl.search === nextUrl.search &&
-                currentUrl.hash === nextUrl.hash
-            ) {
-                return;
-            }
-
-            const confirmed = confirmLeaveOnce();
-            if (!confirmed) {
-                event.preventDefault();
-                event.stopPropagation();
-                return;
-            }
-        };
-
-        document.addEventListener("click", handleAnchorClickCapture, true);
-
-        return () => {
-            document.removeEventListener(
-                "click",
-                handleAnchorClickCapture,
-                true,
-            );
-        };
-    }, [isHydrated, confirmLeaveOnce]);
-
-    useEffect(() => {
-        if (!isHydrated || !quiz?.id) return;
-
-        const handlePopState = () => {
-            if (ignoreNextPopRef.current) {
-                ignoreNextPopRef.current = false;
-                return;
-            }
-
-            const hasProgress = hasProgressRef.current;
-            const isSubmittingNow = isSubmittingRef.current;
-
-            if (isSubmittingNow || !hasProgress) {
-                return;
-            }
-
-            const confirmed = confirmLeaveOnce();
-            if (confirmed) {
+            } else {
                 hasConfirmedLeaveRef.current = true;
+                syncSessionToServer({ keepalive: true });
+            }
+        });
+
+        // Browser level guard (tab close, reload)
+        const handleBeforeUnload = (e) => {
+            if (isSubmittingRef.current || hasConfirmedLeaveRef.current) {
                 return;
             }
 
-            // Browser has already moved back one entry; move forward again to stay.
-            ignoreNextPopRef.current = true;
-            window.history.go(1);
+            // Always sync on leave attempt
+            syncSessionToServer({ keepalive: true });
+
+            e.preventDefault();
+            e.returnValue = LEAVE_WARNING_MESSAGE;
+            return LEAVE_WARNING_MESSAGE;
         };
 
+        // Popstate guard (back/forward button)
+        const handlePopState = (event) => {
+            if (isSubmittingRef.current || hasConfirmedLeaveRef.current) {
+                return;
+            }
+
+            if (!confirm(LEAVE_WARNING_MESSAGE)) {
+                // If user cancels, push the current state back to keep them on the page
+                window.history.pushState(null, "", window.location.href);
+            } else {
+                hasConfirmedLeaveRef.current = true;
+                syncSessionToServer({ keepalive: true });
+                // Let the browser proceed with the back/forward move
+            }
+        };
+
+        // Trap the initial state to make popstate work reliably
+        window.history.pushState(null, "", window.location.href);
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
         window.addEventListener("popstate", handlePopState);
 
         return () => {
+            unregisterInertiaBefore();
+            window.removeEventListener("beforeunload", handleBeforeUnload);
             window.removeEventListener("popstate", handlePopState);
-            ignoreNextPopRef.current = false;
         };
-    }, [isHydrated, quiz?.id, confirmLeaveOnce]);
+    }, [isHydrated, syncSessionToServer, LEAVE_WARNING_MESSAGE]);
 
     useEffect(() => {
         return () => {
