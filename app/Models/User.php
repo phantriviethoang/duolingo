@@ -29,6 +29,7 @@ class User extends Authenticatable
         'role',
         'target_part_id',
         'is_high_quality',
+        'target_level',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_high_quality' => 'boolean',
+            'target_level' => 'string',
         ];
     }
 
@@ -94,6 +96,40 @@ class User extends Authenticatable
                 return $base;
             }
         );
+    }
+
+    /**
+     * Accessor: Lấy ngưỡng điểm đạt dựa vào target_level
+     *
+     * @return int (50, 70, 90) tương ứng với ('Trung bình', 'Khá', 'Tốt')
+     */
+    protected function getPassThresholdAttribute(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return match ($this->target_level ?? 'Trung bình') {
+                    'Trung bình' => 50,
+                    'Khá' => 70,
+                    'Tốt' => 90,
+                    default => 50,
+                };
+            }
+        );
+    }
+
+    /**
+     * Method: Lấy ngưỡng điểm theo target_level (dạng chuyên dụng)
+     *
+     * @return int (50, 70, 90)
+     */
+    public function getPassThreshold(): int
+    {
+        return match ($this->target_level ?? 'Trung bình') {
+            'Trung bình' => 50,
+            'Khá' => 70,
+            'Tốt' => 90,
+            default => 50,
+        };
     }
 
     /**

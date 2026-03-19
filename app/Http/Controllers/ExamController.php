@@ -237,27 +237,18 @@ class ExamController extends Controller
             ]);
         }
 
-        // Nếu pass: flash success message
-        if ($result['passed']) {
-            return redirect()->back()->with('success', [
-                'message' => $result['message'],
-                'percentage' => $result['percentage'],
-                'correct_count' => $result['correct_count'],
-                'total' => $result['total_questions'],
-                'passed' => true,
-                'exam_completed' => $result['exam_completed'],
-                'next_section_unlocked' => $result['next_section_unlocked'],
-            ]);
-        }
+        // Redirect tới trang Results với flash message
+        $flashKey = $result['passed'] ? 'success' : 'error';
 
-        // Nếu fail: flash error message
-        return redirect()->back()->with('error', [
+        return redirect()->route('exams.results')->with($flashKey, [
             'message' => $result['message'],
             'percentage' => $result['percentage'],
-            'required_percentage' => $result['required_percentage'],
             'correct_count' => $result['correct_count'],
             'total' => $result['total_questions'],
-            'passed' => false,
+            'required_percentage' => $result['required_percentage'],
+            'passed' => $result['passed'],
+            'exam_completed' => $result['exam_completed'] ?? false,
+            'next_section_unlocked' => $result['next_section_unlocked'] ?? false,
         ]);
     }
 }

@@ -48,6 +48,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/exams/{exam}/sections/submit', [ExamController::class, 'submitSection'])
         ->name('exams.sections.submit')
         ->middleware('throttle:60,1');
+
+    // Trang kết quả
+    Route::get('/exams/results', function () {
+        return inertia('Quiz/Results');
+    })->name('exams.results');
 });
 
 // =========== CỦA TESTS (cũ - giữ cho tương thích) ===========

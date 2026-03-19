@@ -21,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Unguard all models - allow mass assignment
+        \Illuminate\Database\Eloquent\Model::unguard();
+
         // Register policies
         $this->registerPolicies();
     }

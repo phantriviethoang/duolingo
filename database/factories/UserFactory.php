@@ -29,6 +29,9 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => fake()->randomElement(['admin', 'user']),
+            'target_level' => fake()->randomElement(['Trung bình', 'Khá', 'Tốt']),
+            'is_high_quality' => fake()->boolean(20), // 20% có high-quality mode
+            'target_part_id' => null, // Sẽ được set qua factory state methods
             'remember_token' => Str::random(10),
         ];
     }

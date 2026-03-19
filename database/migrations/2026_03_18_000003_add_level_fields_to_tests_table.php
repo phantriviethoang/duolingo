@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tests', function (Blueprint $table) {
-            $table->dropForeignIdFor(\App\Models\Level::class);
+            $table->dropForeign(['level_id']);
             $table->dropColumn(['level_id', 'is_high_quality', 'difficulty_score']);
         });
     }

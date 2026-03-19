@@ -18,6 +18,10 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+            $table->string('role')->default('student'); // Vai trò: student, teacher, admin
+            $table->foreignId('target_part_id')->nullable()->constrained('levels'); // Mục tiêu Part
+            $table->boolean('is_high_quality')->default(false); // Chế độ cao cấp
+            $table->enum('target_level', ['Trung bình', 'Khá', 'Tốt'])->default('Trung bình'); // Mục tiêu trình độ: 50%, 70%, 90%
             $table->timestamps();
         });
 

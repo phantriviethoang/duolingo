@@ -55,7 +55,8 @@ class ExamResultService
 
         foreach ($questions as $question) {
             $userAnswer = $answers[$question->id] ?? null;
-            if ($userAnswer == $question->correct_option_id) {
+            // Convert về integer để so sánh (frontend gửi string "0", "1", etc)
+            if ($userAnswer !== null && (int) $userAnswer === (int) $question->correct_option_id) {
                 $correctCount++;
             }
         }
@@ -63,16 +64,12 @@ class ExamResultService
         // Tính phần trăm
         $percentage = $totalQuestions > 0 ? ($correctCount / $totalQuestions) : 0;
 
-        // Lấy pass_threshold
-        $passThreshold = $section->pass_threshold;
-
-        // Nếu high-quality: nhân threshold với 1.2 (20% cao hơn)
-        if ($exam->is_high_quality) {
-            $passThreshold = $this->applyHighQualityMultiplier($passThreshold);
-        }
+        // Lấy pass_threshold từ user.target_level (50/70/90)
+        // Convert thành dạng decimal (50 → 0.5, 70 → 0.7, 90 → 0.9)
+        $passThresholdPercent = $user->getPassThreshold() / 100;
 
         // Kiểm tra đạt hay không
-        $passed = $percentage >= $passThreshold;
+        $passed = $percentage >= $passThresholdPercent;
 
         // Lưu TestResult (section-level result)
         TestResult::create([
@@ -81,6 +78,7 @@ class ExamResultService
             'section_id' => $section->id,
             'total_questions' => $totalQuestions,
             'correct_answers' => $correctCount,
+            'score' => $percentage * 100, // Điểm theo phần trăm (0-100)
             'time_spent' => 0, // Will be set by frontend if needed
         ]);
 
@@ -90,7 +88,7 @@ class ExamResultService
             'percentage' => round($percentage * 100, 2),
             'correct_count' => $correctCount,
             'total_questions' => $totalQuestions,
-            'required_percentage' => round($passThreshold * 100, 2),
+            'required_percentage' => $user->getPassThreshold(), // Display as integer (50, 70, 90)
             'message' => $passed
                 ? '🎉 Chúc mừng! Bạn đã đạt yêu cầu phần này.'
                 : '❌ Bạn chưa đạt yêu cầu. Vui lòng làm lại phần này.',

@@ -9,15 +9,35 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
 
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState({});
-    const [timeLeft, setTimeLeft] = useState((quiz?.duration || 40) * 60);
-    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const intervalRef = useRef(null);
 
-    // Storage key cho localStorage
+    // Storage keys
     const storageKey = `quiz_${quiz?.id}_answers`;
+    const storageStartTimeKey = `quiz_${quiz?.id}_startTime`;
+    const quizDurationSeconds = (quiz?.duration || 40) * 60;
 
-    // Load đáp án từ localStorage
+    // Initialize time left: tính từ startTime nếu tồn tại
+    const initializeTimeLeft = () => {
+        try {
+            const savedStartTime = localStorage.getItem(storageStartTimeKey);
+            if (savedStartTime) {
+                const startTime = parseInt(savedStartTime);
+                const now = Date.now();
+                const timeUsed = Math.floor((now - startTime) / 1000);
+                const remaining = Math.max(0, quizDurationSeconds - timeUsed);
+                return remaining;
+            }
+        } catch (error) {
+            console.error('Error calculating time left:', error);
+        }
+        return quizDurationSeconds;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(initializeTimeLeft);
+
+    // Load đáp án + startTime từ localStorage
     useEffect(() => {
         if (!quiz?.id) return;
         try {
@@ -25,25 +45,31 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
             if (saved) {
                 setSelectedAnswers(JSON.parse(saved));
             }
+
+            // Lưu startTime nếu chưa tồn tại (lần đầu vào)
+            const startTimeExists = localStorage.getItem(storageStartTimeKey);
+            if (!startTimeExists) {
+                localStorage.setItem(storageStartTimeKey, Date.now().toString());
+            }
         } catch (error) {
-            console.error('Error loading saved answers:', error);
+            console.error('Error loading saved data:', error);
         }
     }, [quiz?.id]);
 
-    // Lưu đáp án vào localStorage
+    // Auto-save đáp án khi thay đổi
     useEffect(() => {
-        if (!quiz?.id || isSubmitted || Object.keys(selectedAnswers).length === 0) return;
+        if (!quiz?.id || isSubmitting || Object.keys(selectedAnswers).length === 0) return;
         try {
             localStorage.setItem(storageKey, JSON.stringify(selectedAnswers));
         } catch (error) {
             console.error('Error saving answers:', error);
         }
-    }, [selectedAnswers, quiz?.id, isSubmitted]);
+    }, [selectedAnswers, quiz?.id, isSubmitting]);
 
     // Cảnh báo khi rời trang
     useEffect(() => {
         const handleBeforeUnload = (e) => {
-            if (isSubmitted || Object.keys(selectedAnswers).length === 0) {
+            if (isSubmitting || Object.keys(selectedAnswers).length === 0) {
                 return;
             }
             e.preventDefault();
@@ -53,7 +79,7 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [isSubmitted, selectedAnswers]);
+    }, [isSubmitting, selectedAnswers]);
 
     // Kiểm tra lỗi
     if (!quiz) {
@@ -130,7 +156,9 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
     };
 
     const handleSubmit = () => {
-        if (isSubmitted) return;
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
 
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -143,22 +171,31 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
 
         router.post(submitRoute, payload, {
             preserveScroll: true,
+            preserveState: false, // Reload to get new props with flash messages
             onSuccess: () => {
                 try {
                     localStorage.removeItem(storageKey);
+                    localStorage.removeItem(storageStartTimeKey);
                 } catch (error) {
-                    console.error('Error clearing saved answers:', error);
+                    console.error('Error clearing saved data:', error);
                 }
-                setIsSubmitted(true);
             },
             onError: (errors) => {
                 console.error("Submit error:", errors);
+                setIsSubmitting(false);
                 alert("Có lỗi xảy ra khi nộp bài. Vui lòng thử lại.");
+            },
+            onFinish: () => {
+                setIsSubmitting(false);
             },
         });
     };
 
     const autoSubmit = () => {
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
+
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
         }
@@ -170,15 +207,13 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
 
         router.post(submitRoute, payload, {
             preserveScroll: true,
-            onSuccess: () => {
-                setIsSubmitted(true);
-            },
+            preserveState: false,
         });
     };
 
     // Timer logic
     useEffect(() => {
-        if (isSubmitted) return;
+        if (isSubmitting) return;
 
         intervalRef.current = setInterval(() => {
             setTimeLeft((prev) => {
@@ -197,27 +232,10 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isSubmitted]);
+    }, [isSubmitting]);
 
     const progress = ((currentQuestion + 1) / questions.length) * 100;
     const answeredCount = Object.values(selectedAnswers).filter(v => v !== undefined && v !== null).length;
-
-    if (isSubmitted) {
-        return (
-            <Layout>
-                <Head title="Đang nộp bài..." />
-                <div className="flex items-center justify-center py-20">
-                    <div className="text-center">
-                        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-                            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">Đang nộp bài...</h2>
-                            <p className="text-gray-600">Vui lòng đợi trong giây lát</p>
-                        </div>
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
 
     const question = questions[currentQuestion];
 
@@ -346,10 +364,20 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                                     ) : (
                                         <button
                                             onClick={() => setShowSubmitConfirm(true)}
-                                            className="btn btn-success flex-1"
+                                            disabled={isSubmitting}
+                                            className="btn btn-success flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <Send className="w-4 h-4" />
-                                            Nộp bài
+                                            {isSubmitting ? (
+                                                <>
+                                                    <span className="loading loading-spinner loading-sm"></span>
+                                                    Đang nộp...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="w-4 h-4" />
+                                                    Nộp bài
+                                                </>
+                                            )}
                                         </button>
                                     )}
                                 </div>
@@ -413,16 +441,25 @@ export default function Take({ quiz, questions: initialQuestions = [], submitRou
                                 <button
                                     type="button"
                                     onClick={() => setShowSubmitConfirm(false)}
-                                    className="btn btn-outline flex-1"
+                                    disabled={isSubmitting}
+                                    className="btn btn-outline flex-1 disabled:opacity-50"
                                 >
                                     Tiếp tục làm bài
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleSubmit}
-                                    className="btn btn-success flex-1"
+                                    disabled={isSubmitting}
+                                    className="btn btn-success flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Nộp bài
+                                    {isSubmitting ? (
+                                        <>
+                                            <span className="loading loading-spinner loading-sm"></span>
+                                            Đang nộp...
+                                        </>
+                                    ) : (
+                                        'Nộp bài'
+                                    )}
                                 </button>
                             </div>
                         </div>

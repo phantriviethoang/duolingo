@@ -26,17 +26,29 @@ class ComprehensiveTestSeeder extends Seeder
         // Lấy hoặc tạo levels
         $b1 = Level::firstOrCreate(
             ['name' => 'B1'],
-            ['description' => 'Tiếng Anh cơ bản']
+            [
+                'order' => 3,
+                'pass_threshold' => 0.50,
+                'description' => 'Tiếng Anh cơ bản'
+            ]
         );
 
         $b2 = Level::firstOrCreate(
             ['name' => 'B2'],
-            ['description' => 'Tiếng Anh trung cấp']
+            [
+                'order' => 4,
+                'pass_threshold' => 0.65,
+                'description' => 'Tiếng Anh trung cấp'
+            ]
         );
 
         $c1 = Level::firstOrCreate(
             ['name' => 'C1'],
-            ['description' => 'Tiếng Anh cao cấp']
+            [
+                'order' => 6,
+                'pass_threshold' => 0.80,
+                'description' => 'Tiếng Anh cao cấp'
+            ]
         );
 
         // ============= B1 TESTS =============
