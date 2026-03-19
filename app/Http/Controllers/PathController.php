@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
-use App\Models\Progress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -19,12 +18,18 @@ class PathController extends Controller
     {
         $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
         $pathData = [];
+        $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
         foreach ($levels as $level) {
             $pathData[$level] = [
                 'part1' => Test::where('level', $level)->where('part', 1)->count(),
                 'part2' => Test::where('level', $level)->where('part', 2)->count(),
                 'part3' => Test::where('level', $level)->where('part', 3)->count(),
+                'config' => $levelConfigs[$level] ?? [
+                    'pass_threshold_part1' => 60,
+                    'pass_threshold_part2' => 75,
+                    'pass_threshold_part3' => 90,
+                ],
             ];
         }
 
@@ -32,6 +37,29 @@ class PathController extends Controller
             'pathData' => $pathData,
             'levels' => $levels,
         ]);
+    }
+
+    /**
+     * Update level threshold configuration
+     */
+    public function updateThreshold(Request $request, $level)
+    {
+        $request->validate([
+            'part1' => 'required|numeric|min:0|max:100',
+            'part2' => 'required|numeric|min:0|max:100',
+            'part3' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $config = \App\Models\Level::updateOrCreate(
+            ['name' => $level],
+            [
+                'pass_threshold_part1' => $request->part1,
+                'pass_threshold_part2' => $request->part2,
+                'pass_threshold_part3' => $request->part3,
+            ]
+        );
+
+        return back()->with('success', "Đã cập nhật ngưỡng điểm cho trình độ $level");
     }
 
     /**
@@ -50,12 +78,20 @@ class PathController extends Controller
         $user = Auth::user();
         $currentLevel = $user->current_level ?? 'A1';
         $progressData = [];
+        $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
         foreach (self::LEVELS as $level) {
+            $levelConfig = $levelConfigs[$level] ?? null;
+            $thresholds = [
+                1 => $levelConfig->pass_threshold_part1 ?? 60,
+                2 => $levelConfig->pass_threshold_part2 ?? 75,
+                3 => $levelConfig->pass_threshold_part3 ?? 90,
+            ];
+
             $progressData[$level] = [
-                'part1' => self::getPartProgress($user, $level, 1),
-                'part2' => self::getPartProgress($user, $level, 2),
-                'part3' => self::getPartProgress($user, $level, 3),
+                'part1' => array_merge(self::getPartProgress($user, $level, 1), ['unlocked' => $this->isPartUnlocked($user, $level, 1, $thresholds)]),
+                'part2' => array_merge(self::getPartProgress($user, $level, 2), ['unlocked' => $this->isPartUnlocked($user, $level, 2, $thresholds)]),
+                'part3' => array_merge(self::getPartProgress($user, $level, 3), ['unlocked' => $this->isPartUnlocked($user, $level, 3, $thresholds)]),
             ];
         }
 
@@ -145,26 +181,37 @@ class PathController extends Controller
 
     private function buildPartsData($user, string $level): array
     {
+        $levelConfig = \App\Models\Level::where('name', $level)->first();
+        
+        $thresholds = [
+            1 => $levelConfig->pass_threshold_part1 ?? 60,
+            2 => $levelConfig->pass_threshold_part2 ?? 75,
+            3 => $levelConfig->pass_threshold_part3 ?? 90,
+        ];
+
         return [
             1 => [
                 'name' => 'Part 1',
-                'pass_score' => 60,
+                'pass_score' => $thresholds[1],
                 'tests' => $this->mapTestsForPart($level, 1),
+                'first_test_id' => Test::where('level', $level)->where('part', 1)->first()?->id,
                 'unlocked' => true,
                 'progress' => $this->getPartProgress($user, $level, 1),
             ],
             2 => [
                 'name' => 'Part 2',
-                'pass_score' => 75,
+                'pass_score' => $thresholds[2],
                 'tests' => $this->mapTestsForPart($level, 2),
-                'unlocked' => $this->isPartUnlocked($user, $level, 2),
+                'first_test_id' => Test::where('level', $level)->where('part', 2)->first()?->id,
+                'unlocked' => $this->isPartUnlocked($user, $level, 2, $thresholds),
                 'progress' => $this->getPartProgress($user, $level, 2),
             ],
             3 => [
                 'name' => 'Part 3',
-                'pass_score' => 90,
+                'pass_score' => $thresholds[3],
                 'tests' => $this->mapTestsForPart($level, 3),
-                'unlocked' => $this->isPartUnlocked($user, $level, 3),
+                'first_test_id' => Test::where('level', $level)->where('part', 3)->first()?->id,
+                'unlocked' => $this->isPartUnlocked($user, $level, 3, $thresholds),
                 'progress' => $this->getPartProgress($user, $level, 3),
             ],
         ];
@@ -192,48 +239,73 @@ class PathController extends Controller
     /**
      * Get progress for specific part
      */
-    private function getPartProgress($user, $level, $part)
+    private function getPartProgress($user, string $level, int $part): array
     {
-        $progress = Progress::where('user_id', $user->id)
+        $progress = \App\Models\Progress::where('user_id', $user->id)
             ->where('level', $level)
             ->where('part', $part)
             ->first();
 
-        if (! $progress) {
-            return [
-                'completed' => false,
-                'score' => 0,
-                'attempts' => 0,
-            ];
-        }
+        $percent = $this->resolveProgressPercent($progress);
 
         return [
-            'completed' => $progress->completed,
-            'score' => $progress->score,
-            'attempts' => $progress->attempts,
+            'score' => $percent,
+            'completed' => $progress->is_passed ?? false,
         ];
     }
 
     /**
      * Check if part is unlocked
      */
-    private function isPartUnlocked($user, $level, $part)
+    private function isPartUnlocked($user, string $level, int $part, array $thresholds): bool
     {
-        if ($part === 1) {
+        // Part 1 của A1 luôn mở khóa
+        if ($level === 'A1' && $part === 1) {
             return true;
         }
 
+        if ($part === 1) {
+            // Part 1 của các level sau (A2, B1...) cần Part 3 của level trước đó đạt điểm
+            $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+            $currentIndex = array_search($level, $levels);
+            
+            if ($currentIndex === 0 || $currentIndex === false) {
+                return true; // Fallback cho A1
+            }
+
+            $previousLevel = $levels[$currentIndex - 1];
+            $prevLevelConfig = \App\Models\Level::where('name', $previousLevel)->first();
+            $prevThreshold = $prevLevelConfig->pass_threshold_part3 ?? 90;
+
+            $progress = \App\Models\Progress::where('user_id', $user->id)
+                ->where('level', $previousLevel)
+                ->where('part', 3)
+                ->first();
+
+            return $progress && $this->resolveProgressPercent($progress) >= $prevThreshold;
+        }
+
+        // Part 2 và 3 cần Part trước đó của cùng level đạt điểm
         $previousPart = $part - 1;
-        $previousProgress = Progress::where('user_id', $user->id)
+        $progress = \App\Models\Progress::where('user_id', $user->id)
             ->where('level', $level)
             ->where('part', $previousPart)
             ->first();
 
-        if (! $previousProgress) {
+        if (! $progress) {
             return false;
         }
 
-        $passScores = [1 => 60, 2 => 75, 3 => 90];
-        return $previousProgress->score >= $passScores[$previousPart];
+        return $this->resolveProgressPercent($progress) >= ($thresholds[$previousPart] ?? 60);
+    }
+
+    private function resolveProgressPercent(?\App\Models\Progress $progress): float
+    {
+        if (! $progress) {
+            return 0.0;
+        }
+
+        $raw = $progress->percentage ?? $progress->score ?? 0;
+        return (float) max(0, min(100, $raw));
     }
 }

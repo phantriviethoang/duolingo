@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
+use App\Http\Controllers\Admin\ResultManageController as AdminResultManageController;
+use App\Http\Controllers\Admin\UserManageController as AdminUserManageController;
 use App\Http\Controllers\PathController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\AuthController;
@@ -100,18 +103,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::get('/', AdminDashboardController::class)->name('admin.dashboard');
 
-    Route::get('/users', fn () => inertia('Admin/Users'))
-        ->name('admin.users');
+    Route::get('/users', [AdminUserManageController::class, 'index'])->name('admin.users');
 
     // TEST CRUD
     Route::get('/tests', [TestController::class, 'adminIndex'])->name('admin.tests');
     Route::get('/path', [PathController::class, 'adminIndex'])->name('admin.path');
+    Route::post('/path/{level}/threshold', [PathController::class, 'updateThreshold'])->name('admin.path.updateThreshold');
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
     Route::get('/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit');
     Route::put('/tests/{test}', [TestController::class, 'update'])->name('tests.update');
     Route::delete('/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
 
-    Route::get('/results', fn () => inertia('Admin/Results'))->name('admin.results');
-    Route::get('/analytics', fn () => inertia('Admin/Analytics'))->name('admin.analytics');
+    Route::get('/results', [AdminResultManageController::class, 'index'])->name('admin.results');
+    Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('admin.analytics');
 });

@@ -135,6 +135,16 @@ export default function Take({
         return decodeURIComponent(xsrfCookie.split("=").slice(1).join("="));
     };
 
+    const getXsrfTokenFromCookie = () => {
+        const xsrfCookie = document.cookie
+            .split(";")
+            .map((item) => item.trim())
+            .find((item) => item.startsWith("XSRF-TOKEN="));
+
+        if (!xsrfCookie) return "";
+        return decodeURIComponent(xsrfCookie.split("=").slice(1).join("="));
+    };
+
     const computeRemainingTime = (savedTimeLeft, savedAtMs) => {
         const safeSavedTime = Math.max(0, Number(savedTimeLeft || 0));
         const safeSavedAt = Number(savedAtMs || 0);
@@ -273,37 +283,57 @@ export default function Take({
             if (syncInFlightRef.current && !keepalive) return;
 
             const payload = {
+                _token: getCsrfToken(),
                 answers: answersRef.current,
                 flagged: flaggedRef.current,
                 current_question: currentQuestionRef.current,
                 time_left: Math.max(0, Math.floor(timeLeftRef.current)),
             };
 
+            const xsrfToken = getXsrfTokenFromCookie();
+
             const headers = {
                 "Content-Type": "application/json",
                 "X-Requested-With": "XMLHttpRequest",
                 "X-CSRF-TOKEN": getCsrfToken(),
+                "X-XSRF-TOKEN": xsrfToken,
+                Accept: "application/json",
             };
 
             if (keepalive) {
-                fetch(syncRoute, {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers,
-                    body: JSON.stringify(payload),
-                    keepalive: true,
-                }).catch(() => { });
+                // sendBeacon is more reliable during unload and does not require custom headers.
+                const formData = new FormData();
+                formData.append("_token", payload._token || "");
+                formData.append("answers", JSON.stringify(payload.answers || {}));
+                formData.append("flagged", JSON.stringify(payload.flagged || {}));
+                formData.append("current_question", String(payload.current_question ?? 0));
+                formData.append("time_left", String(payload.time_left ?? 0));
+
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(syncRoute, formData);
+                } else {
+                    fetch(syncRoute, {
+                        method: "POST",
+                        credentials: "same-origin",
+                        body: formData,
+                        keepalive: true,
+                    }).catch(() => { });
+                }
                 return;
             }
 
             syncInFlightRef.current = true;
             try {
-                await fetch(syncRoute, {
+                const response = await fetch(syncRoute, {
                     method: "POST",
                     credentials: "same-origin",
                     headers,
                     body: JSON.stringify(payload),
                 });
+
+                if (response.status === 419) {
+                    console.warn("Session sync skipped due to expired CSRF token (419).");
+                }
             } catch (error) {
                 console.error("Session sync error:", error);
             } finally {

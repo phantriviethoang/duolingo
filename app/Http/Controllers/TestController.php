@@ -107,10 +107,30 @@ class TestController extends Controller
      */
     private function canAccessTest($user, $test)
     {
-        if ($test->part === 1) {
+        // Part 1 của A1 luôn mở khóa
+        if ($test->level === 'A1' && $test->part === 1) {
             return true;
         }
 
+        if ($test->part === 1) {
+            // Part 1 của các level sau (A2, B1...) cần Part 3 của level trước đó đạt điểm
+            $previousLevel = $this->getPreviousLevel($test->level);
+            if (!$previousLevel) {
+                return true; // Không có level trước → mặc định mở (A1)
+            }
+
+            $prevLevelConfig = \App\Models\Level::where('name', $previousLevel)->first();
+            $threshold = $prevLevelConfig->pass_threshold_part3 ?? 90.0;
+
+            $progress = \App\Models\Progress::where('user_id', $user->id)
+                ->where('level', $previousLevel)
+                ->where('part', 3)
+                ->first();
+
+            return $progress && $progress->percentage >= $threshold;
+        }
+
+        // Part 2 và 3 cần Part trước đó của cùng level đạt điểm
         $previousPart = $test->part - 1;
         $previousProgress = \App\Models\Progress::where('user_id', $user->id)
             ->where('level', $test->level)
@@ -121,8 +141,26 @@ class TestController extends Controller
             return false;
         }
 
-        $passScores = [1 => 60, 2 => 75, 3 => 90];
-        return $previousProgress->score >= $passScores[$previousPart];
+        // Lấy pass threshold từ database (bảng levels)
+        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
+        
+        $threshold = 60.0; // Default
+        if ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$previousPart}";
+            $threshold = $levelConfig->$thresholdField ?? 60.0;
+        }
+
+        return $previousProgress->percentage >= $threshold;
+    }
+
+    private function getPreviousLevel($currentLevel)
+    {
+        $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        $index = array_search($currentLevel, $levels);
+        if ($index > 0) {
+            return $levels[$index - 1];
+        }
+        return null;
     }
 
     /**
@@ -266,6 +304,31 @@ class TestController extends Controller
     {
         if ($test->level !== $level) {
             abort(404);
+        }
+
+        $user = Auth::user();
+        
+        // Kiểm tra quyền truy cập chi tiết
+        if (! $this->canAccessTest($user, $test)) {
+            // Lấy thông tin về part trước đó để hiển thị lỗi
+            $prevPart = $test->part > 1 ? $test->part - 1 : 3;
+            $prevLevel = $test->part > 1 ? $test->level : $this->getPreviousLevel($test->level);
+            
+            $progress = \App\Models\Progress::where('user_id', $user->id)
+                ->where('level', $prevLevel)
+                ->where('part', $prevPart)
+                ->first();
+
+            $levelConfig = \App\Models\Level::where('name', $prevLevel)->first();
+            $thresholdField = "pass_threshold_part{$prevPart}";
+            $threshold = $levelConfig->$thresholdField ?? ($test->part === 1 ? 90 : 60);
+
+            return Inertia::render('Errors/Forbidden', [
+                'level' => $test->level,
+                'part' => $test->part,
+                'required_score' => $threshold,
+                'previous_score' => $progress->percentage ?? 0,
+            ]);
         }
 
         // Kiểm tra test có active không

@@ -33,7 +33,11 @@ export default function ProgressDashboard({ stats }) {
     // Xử lý lại level_progress dựa trên mức điểm tùy chỉnh
     const processedParts = level_progress.parts.map((part, index) => {
         const partNum = part.part;
-        const requiredScore = CUSTOM_PASS_THRESHOLDS[partNum];
+        
+        // Ưu tiên dùng điểm từ CUSTOM_PASS_THRESHOLDS nếu bạn muốn ghi đè nhanh tại UI
+        // Nếu không, mặc định sử dụng pass_threshold được gửi từ database qua props
+        const requiredScore = CUSTOM_PASS_THRESHOLDS[partNum] ?? part.pass_threshold;
+        
         const userPercentage = part.percentage || 0;
 
         // Trạng thái đạt dựa trên điểm tùy chỉnh

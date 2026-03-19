@@ -78,7 +78,14 @@ class UserProgress extends Model
      */
     public function getPassThreshold(): float
     {
-        return self::PASS_THRESHOLDS[$this->part] ?? 60.0;
+        // Ưu tiên lấy từ database (bảng levels)
+        $levelConfig = \App\Models\Level::where('name', $this->level)->first();
+        if ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$this->part}";
+            return (float) ($levelConfig->$thresholdField ?? self::PASS_THRESHOLDS[$this->part] ?? 60.0);
+        }
+
+        return (float) (self::PASS_THRESHOLDS[$this->part] ?? 60.0);
     }
 
     /**
@@ -120,8 +127,19 @@ class UserProgress extends Model
         }
 
         if ($this->isLocked()) {
-            $threshold = self::PASS_THRESHOLDS[$this->part - 1] ?? 60.0;
-            return "Bạn cần đạt ít nhất {$threshold}% ở Phần " . ($this->part - 1) . " để mở Phần {$this->part}";
+            $prevPartNum = $this->part - 1;
+            
+            // Lấy threshold của part trước đó từ DB
+            $levelConfig = \App\Models\Level::where('name', $this->level)->first();
+            $threshold = 60.0;
+            if ($levelConfig) {
+                $thresholdField = "pass_threshold_part{$prevPartNum}";
+                $threshold = $levelConfig->$thresholdField ?? self::PASS_THRESHOLDS[$prevPartNum] ?? 60.0;
+            } else {
+                $threshold = self::PASS_THRESHOLDS[$prevPartNum] ?? 60.0;
+            }
+
+            return "Bạn cần đạt ít nhất {$threshold}% ở Phần {$prevPartNum} để mở Phần {$this->part}";
         }
 
         return null;
@@ -158,7 +176,17 @@ class UserProgress extends Model
     public static function updateProgress($userId, $level, $part, $score, $totalQuestions)
     {
         $percentage = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
-        $threshold = self::PASS_THRESHOLDS[$part] ?? 60.0;
+        
+        // Lấy threshold từ DB
+        $levelConfig = \App\Models\Level::where('name', $level)->first();
+        $threshold = 60.0;
+        if ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$part}";
+            $threshold = $levelConfig->$thresholdField ?? self::PASS_THRESHOLDS[$part] ?? 60.0;
+        } else {
+            $threshold = self::PASS_THRESHOLDS[$part] ?? 60.0;
+        }
+
         $isPassed = $percentage >= $threshold;
 
         return static::updateOrCreate(

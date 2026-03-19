@@ -21,10 +21,10 @@ export default function PathIndex({ currentLevel, levels, progressData }) {
 
     const getLevelProgress = (level) => {
         const parts = progressData[level] || {};
-        // A1 chỉ có 1 part, các level còn lại có 3 parts
-        const totalParts = level === 'A1' ? 1 : 3;
-        const completed = Object.values(parts).filter(part => part.completed).length;
-        return Math.round((completed / totalParts) * 100);
+        const totalParts = 3; // Tất cả các level đều có 3 parts
+        const completedCount = [1, 2, 3]
+            .filter(num => parts[`part${num}`]?.completed).length;
+        return Math.round((completedCount / totalParts) * 100);
     };
 
     const filteredLevels = selectedLevel === 'all'
@@ -121,15 +121,21 @@ export default function PathIndex({ currentLevel, levels, progressData }) {
                                             {[1, 2, 3].map(part => {
                                                 const partData = progressData[level]?.[`part${part}`];
                                                 const completed = partData?.completed;
+                                                const unlocked = partData?.unlocked;
 
                                                 return (
-                                                    <div key={part} className={`flex items-center justify-between p-4 rounded-2xl border transition-colors ${completed ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
-                                                        <span className={`text-sm font-bold ${completed ? 'text-green-700' : 'text-gray-500'}`}>Phần {part}</span>
+                                                    <div key={part} className={`flex items-center justify-between p-4 rounded-2xl border transition-colors ${completed ? 'bg-green-50/50 border-green-100' : unlocked ? 'bg-blue-50/30 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
+                                                        <span className={`text-sm font-bold ${completed ? 'text-green-700' : unlocked ? 'text-blue-700' : 'text-gray-500'}`}>Phần {part}</span>
                                                         <div className="flex items-center gap-2">
                                                             {completed ? (
                                                                 <>
                                                                     <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">Hoàn thành</span>
                                                                     <CheckCircle className="w-4 h-4 text-green-500" />
+                                                                </>
+                                                            ) : unlocked ? (
+                                                                <>
+                                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">Đang học</span>
+                                                                    <Play className="w-4 h-4 text-blue-500 fill-blue-500" />
                                                                 </>
                                                             ) : (
                                                                 <>

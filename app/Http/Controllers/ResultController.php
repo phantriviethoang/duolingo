@@ -163,7 +163,16 @@ class ResultController extends Controller
         $result->accuracy = $total > 0 ? round(($correct / $total) * 100, 1) : 0;
         
         // Bổ sung ngưỡng đạt và trạng thái đạt của part hiện tại
-        $result->pass_threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$test->part] ?? 60.0;
+        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
+        $threshold = 60.0;
+        if ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$test->part}";
+            $threshold = $levelConfig->$thresholdField ?? \App\Models\UserProgress::PASS_THRESHOLDS[$test->part] ?? 60.0;
+        } else {
+            $threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$test->part] ?? 60.0;
+        }
+
+        $result->pass_threshold = $threshold;
         $result->is_passed_requirement = $result->accuracy >= $result->pass_threshold;
 
         return Inertia::render('Results/Show', [
@@ -190,8 +199,17 @@ class ResultController extends Controller
             return false;
         }
 
-        $passScores = \App\Models\UserProgress::PASS_THRESHOLDS;
-        return $previousProgress->score >= ($passScores[$previousPart] ?? 60);
+        // Lấy threshold từ DB
+        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
+        $threshold = 60.0;
+        if ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$previousPart}";
+            $threshold = $levelConfig->$thresholdField ?? \App\Models\UserProgress::PASS_THRESHOLDS[$previousPart] ?? 60.0;
+        } else {
+            $threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$previousPart] ?? 60.0;
+        }
+
+        return $previousProgress->score >= $threshold;
     }
 
     /**
@@ -199,27 +217,30 @@ class ResultController extends Controller
      */
     private function updateProgress($user, $test, $score)
     {
-        $progress = Progress::firstOrCreate(
+        // Lấy threshold từ DB
+        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
+        $threshold = 60.0;
+        if ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$test->part}";
+            $threshold = $levelConfig->$thresholdField ?? 60.0;
+        }
+
+        // $score đã là phần trăm (0-100), không quy đổi thêm lần nữa.
+        $percentage = max(0, min(100, (float) $score));
+        $isPassed = $percentage >= $threshold;
+
+        \App\Models\Progress::updateOrCreate(
             [
                 'user_id' => $user->id,
                 'level' => $test->level,
                 'part' => $test->part,
             ],
             [
-                'score' => 0,
-                'attempts' => 0,
-                'completed' => false,
+                'score' => $percentage,
+                'percentage' => round($percentage, 2),
+                'is_passed' => $isPassed,
+                'completed_at' => $isPassed ? now() : null,
             ]
         );
-
-        $progress->score = max($progress->score, $score);
-        $progress->attempts += 1;
-
-        $passScores = \App\Models\UserProgress::PASS_THRESHOLDS;
-        if ($score >= ($passScores[$test->part] ?? 60)) {
-            $progress->completed = true;
-        }
-
-        $progress->save();
     }
 }

@@ -9,11 +9,23 @@ class Progress extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $table = 'user_progress';
+
+    protected $fillable = [
+        'user_id',
+        'level',
+        'part',
+        'score',
+        'percentage',
+        'is_passed',
+        'completed_at',
+    ];
 
     protected $casts = [
-        'completed' => 'boolean',
+        'is_passed' => 'boolean',
         'completed_at' => 'datetime',
+        'score' => 'float',
+        'percentage' => 'float',
     ];
 
     public function user()
