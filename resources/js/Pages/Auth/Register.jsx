@@ -2,6 +2,7 @@ import { Head, Link, useForm } from "@inertiajs/react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { useState } from "react";
 import Logo from "@/Components/Logo";
+import AuthenticatedLayout from "../../Layouts/AuthenticatedLayout";
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -24,6 +25,7 @@ export default function Register() {
     return (
         <>
             <Head title="Đăng ký" />
+            <AuthenticatedLayout />
             <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
                 <div className="max-w-md w-full">
                     <div className="text-center mb-8">

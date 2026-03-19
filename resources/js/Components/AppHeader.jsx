@@ -1,18 +1,21 @@
 import { Link, usePage } from "@inertiajs/react";
+import { useState } from "react";
 import Logo from "@/Components/Logo";
 
 const baseLinks = [
-    { label: "Chọn Trình Độ", href: "/select-level", icon: "📊" },
-    { label: "Lộ Trình", href: "/path", icon: "🎓" },
-    { label: "Đề Thi", href: "/tests", icon: "📝" },
-    { label: "Giới Thiệu", href: "/about", icon: "ℹ️" },
-    { label: "Liên Hệ", href: "/contact", icon: "📞" },
+    { label: "Chọn Lộ Trình", href: "/path", icon: "🎓" },
+    { label: "Danh Sách Level", href: "/path/level", icon: "📝" },
+    // { label: "Giới Thiệu", href: "/about", icon: "ℹ️" },
+    // { label: "Liên Hệ", href: "/contact", icon: "📞" },
 ];
+
+const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 export default function AppHeader() {
     const { auth, ziggy } = usePage().props;
     const user = auth?.user;
     const current = ziggy?.location ?? "";
+    const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false);
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-white shadow-sm">
@@ -28,15 +31,46 @@ export default function AppHeader() {
 
                 {/* Navigation */}
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-                    {baseLinks.slice(0, 3).map((item) => {
+                    {/* Level Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsLevelDropdownOpen(!isLevelDropdownOpen)}
+                            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                        >
+                            <span>Chọn Trình Độ</span>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {isLevelDropdownOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                <div className="py-1">
+                                    {levels.map(level => (
+                                        <Link
+                                            key={level}
+                                            href={`/path/${level}`}
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                            onClick={() => {
+                                                setIsLevelDropdownOpen(false);
+                                                // Reset selected level when choosing
+                                            }}
+                                        >
+                                            Level {level}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {baseLinks.map((item) => {
                         const isActive = current.includes(item.href);
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`relative pb-1 transition-colors ${isActive
-                                    ? "text-blue-600 font-semibold"
-                                    : "text-gray-700 hover:text-blue-600"
+                                className={`relative pb-1 transition-colors ${isActive ? "text-blue-600 font-semibold" : "text-gray-700 hover:text-blue-600"
                                     }`}
                             >
                                 <div className="flex items-center gap-1.5">
@@ -128,16 +162,43 @@ export default function AppHeader() {
 
             {/* Mobile Navigation */}
             <div className="md:hidden border-t border-gray-200 bg-white px-4 py-3">
-                <nav className="grid grid-cols-3 gap-2 text-xs font-medium">
-                    {baseLinks.slice(0, 5).map((item) => {
+                <nav className="grid grid-cols-2 gap-2 text-xs font-medium">
+                    {/* Level Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsLevelDropdownOpen(!isLevelDropdownOpen)}
+                            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium transition-colors p-2 rounded"
+                        >
+                            <span>Trình Độ</span>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {isLevelDropdownOpen && (
+                            <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                <div className="py-1">
+                                    {levels.map(level => (
+                                        <Link
+                                            key={level}
+                                            href={`/path/${level}`}
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                        >
+                                            Level {level}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {baseLinks.slice(0, 4).map((item) => {
                         const isActive = current.includes(item.href);
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`px-3 py-2 rounded-lg text-center transition-colors ${isActive
-                                    ? "bg-blue-100 text-blue-600 font-semibold"
-                                    : "text-gray-700 hover:bg-gray-100"
+                                className={`px-3 py-2 rounded-lg text-center transition-colors ${isActive ? "bg-blue-100 text-blue-600 font-semibold" : "text-gray-700 hover:bg-gray-100"
                                     }`}
                             >
                                 <div>{item.label}</div>

@@ -10,35 +10,53 @@ use Inertia\Inertia;
 
 class PathController extends Controller
 {
+    private const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
     /**
      * Display learning path for current level
      */
+    public function target()
+    {
+        return $this->index();
+    }
+
     public function index()
     {
         $user = Auth::user();
         $currentLevel = $user->current_level ?? 'A1';
-
-        $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
         $progressData = [];
 
-        foreach ($levels as $level) {
+        foreach (self::LEVELS as $level) {
             $progressData[$level] = [
-                'part1' => $this->getPartProgress($user, $level, 1),
-                'part2' => $this->getPartProgress($user, $level, 2),
-                'part3' => $this->getPartProgress($user, $level, 3),
+                'part1' => self::getPartProgress($user, $level, 1),
+                'part2' => self::getPartProgress($user, $level, 2),
+                'part3' => self::getPartProgress($user, $level, 3),
             ];
         }
 
         return Inertia::render('Path/Index', [
             'currentLevel' => $currentLevel,
-            'levels' => $levels,
+            'levels' => self::LEVELS,
             'progressData' => $progressData,
         ]);
     }
 
     /**
+     * Alias for /path/level to display 6 CEFR levels.
+     */
+    public function levels()
+    {
+        return $this->index();
+    }
+
+    /**
      * Update user's current level
      */
+    public function saveTarget(Request $request)
+    {
+        return $this->update($request);
+    }
+
     public function update(Request $request)
     {
         $request->validate([
@@ -48,7 +66,7 @@ class PathController extends Controller
         $user = Auth::user();
         $user->update(['current_level' => $request->level]);
 
-        return redirect()->route('path.show', $request->level);
+        return redirect()->route('path.parts', $request->level);
     }
 
     /**
@@ -56,13 +74,53 @@ class PathController extends Controller
      */
     public function show($level)
     {
+        return $this->parts($level);
+    }
+
+    /**
+     * Show parts of selected level.
+     */
+    public function parts($level)
+    {
         $user = Auth::user();
 
-        if (! in_array($level, ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])) {
+        if (! in_array($level, self::LEVELS, true)) {
             abort(404);
         }
 
-        $parts = [
+        $parts = $this->buildPartsData($user, $level);
+
+        return Inertia::render('Path/Show', [
+            'level' => $level,
+            'parts' => $parts,
+            'selectedPart' => null,
+        ]);
+    }
+
+    /**
+     * Show tests list for selected part in a level.
+     */
+    public function tests($level, $part)
+    {
+        $user = Auth::user();
+        $part = (int) $part;
+
+        if (! in_array($level, self::LEVELS, true) || ! in_array($part, [1, 2, 3], true)) {
+            abort(404);
+        }
+
+        $parts = $this->buildPartsData($user, $level);
+
+        return Inertia::render('Path/Show', [
+            'level' => $level,
+            'parts' => $parts,
+            'selectedPart' => $part,
+        ]);
+    }
+
+    private function buildPartsData($user, string $level): array
+    {
+        return [
             1 => [
                 'name' => 'Part 1',
                 'pass_score' => 60,
@@ -85,11 +143,6 @@ class PathController extends Controller
                 'progress' => $this->getPartProgress($user, $level, 3),
             ],
         ];
-
-        return Inertia::render('Path/Show', [
-            'level' => $level,
-            'parts' => $parts,
-        ]);
     }
 
     /**

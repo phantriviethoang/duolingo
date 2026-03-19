@@ -6,6 +6,8 @@ use App\Http\Requests\StoreTestRequest;
 use App\Http\Requests\UpdateTestRequest;
 use App\Models\Test;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TestController extends Controller
 {
@@ -37,27 +39,35 @@ class TestController extends Controller
     /**
      * Display a listing of tests for users
      */
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
-        $tests = Test::orderBy('level')
-            ->orderBy('part')
-            ->get()
-            ->map(function ($test) use ($user) {
-                return [
-                    'id' => $test->id,
-                    'title' => $test->title,
-                    'description' => $test->description,
-                    'level' => $test->level,
-                    'part' => $test->part,
-                    'duration' => $test->duration,
-                    'total_questions' => $test->total_questions,
-                    'locked' => ! $this->canAccessTest($user, $test),
-                ];
-            });
+        $selectedLevel = $request->get('level', 'all');
+
+        $testsQuery = Test::query()
+            ->orderBy('level')
+            ->orderBy('part');
+
+        // Lọc theo level nếu được họn
+        if ($selectedLevel !== 'all') {
+            $testsQuery = $testsQuery->where('level', $selectedLevel);
+        }
+
+        $tests = $testsQuery->get(['id', 'title', 'description', 'duration', 'level', 'part', 'total_questions', 'is_active'])->map(function (Test $test) {
+            return [
+                'id' => $test->id,
+                'title' => $test->title,
+                'description' => $test->description,
+                'duration' => $test->duration,
+                'level' => $test->level,
+                'part' => $test->part,
+                'total_questions' => $test->total_questions,
+                'is_active' => $test->is_active,
+            ];
+        })->values()->toArray();
 
         return Inertia::render('Tests/Index', [
             'tests' => $tests,
+            'selectedLevel' => $selectedLevel,
         ]);
     }
 
@@ -66,7 +76,7 @@ class TestController extends Controller
      */
     public function show(Test $test)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (! $this->canAccessTest($user, $test)) {
             abort(403, 'This part is locked');
@@ -124,27 +134,22 @@ class TestController extends Controller
 
         $test = Test::create($data);
 
-        foreach ($questions as $q) {
-            // options
-            $options = collect($q['options'] ?? [])->map(function ($opt, $i) {
-                return [
-                    'id' => $opt['id'] ?? chr(65 + $i),
-                    'text' => $opt['text'] ?? '',
-                ];
-            })->toArray();
-
-            // lấy đáp án đúng
-            $correct = collect($q['options'] ?? [])
-                ->firstWhere('is_correct', true);
-
-            $test->questions()->create([
-                'question' => $q['question'],
-                'options' => $options,
-                'correct_option_id' => $correct['id'] ?? 'A',
+        foreach ($questions as $index => $q) {
+            $question = $test->questions()->create([
+                'question_text' => $q['question'],
+                'question_type' => 'multiple_choice',
+                'order' => $index + 1,
                 'explanation' => $q['explanation'] ?? null,
                 'translation' => $q['translation'] ?? null,
                 'detailed_explanation' => $q['detailed_explanation'] ?? null,
             ]);
+
+            foreach (($q['options'] ?? []) as $option) {
+                $question->answers()->create([
+                    'answer_text' => $option['text'] ?? '',
+                    'is_correct' => (bool) ($option['is_correct'] ?? false),
+                ]);
+            }
         }
 
         return redirect()->route('admin.tests')
@@ -156,6 +161,8 @@ class TestController extends Controller
      */
     public function edit(Test $test)
     {
+        $test->load('questions.answers');
+
         return Inertia::render('Tests/Edit', [
             'test' => [
                 'id' => $test->id,
@@ -164,7 +171,29 @@ class TestController extends Controller
                 'duration' => $test->duration,
                 'audio_path' => $test->audio_path,
                 'image_path' => $test->image_path,
-                'questions' => $test->questions,
+                'questions' => $test->questions
+                    ->sortBy('order')
+                    ->map(function ($question) {
+                        return [
+                            'id' => $question->id,
+                            'question' => $question->question_text ?? '',
+                            'explanation' => $question->explanation,
+                            'translation' => $question->translation,
+                            'detailed_explanation' => $question->detailed_explanation,
+                            'options' => $question->answers
+                                ->map(function ($answer, $index) {
+                                    return [
+                                        'id' => $answer->id ?? $index,
+                                        'text' => $answer->answer_text,
+                                        'is_correct' => (bool) $answer->is_correct,
+                                    ];
+                                })
+                                ->values()
+                                ->toArray(),
+                        ];
+                    })
+                    ->values()
+                    ->toArray(),
                 'is_active' => $test->is_active,
             ],
         ]);
@@ -187,26 +216,22 @@ class TestController extends Controller
 
         $test->questions()->delete();
 
-        foreach ($questions as $q) {
-
-            $options = collect($q['options'] ?? [])->map(function ($opt, $i) {
-                return [
-                    'id' => $opt['id'] ?? chr(65 + $i),
-                    'text' => $opt['text'] ?? '',
-                ];
-            })->toArray();
-
-            $correct = collect($q['options'] ?? [])
-                ->firstWhere('is_correct', true);
-
-            $test->questions()->create([
-                'question' => $q['question'],
-                'options' => $options,
-                'correct_option_id' => $correct['id'] ?? 'A',
+        foreach ($questions as $index => $q) {
+            $question = $test->questions()->create([
+                'question_text' => $q['question'],
+                'question_type' => 'multiple_choice',
+                'order' => $index + 1,
                 'explanation' => $q['explanation'] ?? null,
                 'translation' => $q['translation'] ?? null,
                 'detailed_explanation' => $q['detailed_explanation'] ?? null,
             ]);
+
+            foreach (($q['options'] ?? []) as $option) {
+                $question->answers()->create([
+                    'answer_text' => $option['text'] ?? '',
+                    'is_correct' => (bool) ($option['is_correct'] ?? false),
+                ]);
+            }
         }
 
         return redirect()->route('admin.tests')
@@ -224,25 +249,26 @@ class TestController extends Controller
             ->with('success', 'Đề thi đã được xóa thành công!');
     }
 
-    public function take(Test $test)
+    public function take(string $level, Test $test)
     {
-        // Kiểm tra test có tồn tại không
-        if (! $test) {
-            return redirect()->route('tests.index')
-                ->with('error', 'Đề thi không tồn tại.');
+        if ($test->level !== $level) {
+            abort(404);
         }
 
         // Kiểm tra test có active không
         if (! $test->is_active) {
-            return redirect()->route('tests.index')
+            return redirect()->route('path.levels')
                 ->with('error', 'Đề thi này không khả dụng.');
         }
 
-        // Lấy câu hỏi từ bảng test_questions
-        $questions = $test->questions()->get();
+        // Lấy câu hỏi + đáp án từ DB
+        $questions = $test->questions()
+            ->with('answers')
+            ->orderBy('order')
+            ->get();
 
         if ($questions->isEmpty()) {
-            return redirect()->route('tests.index')
+            return redirect()->route('path.levels')
                 ->with('error', 'Đề thi này chưa có câu hỏi.');
         }
 
@@ -254,7 +280,7 @@ class TestController extends Controller
 
         if ($retakeWrong && $resultId) {
             $previousResult = \App\Models\Result::where('id', $resultId)
-                ->where('user_id', auth()->id())
+                ->where('user_id', Auth::id())
                 ->first();
 
             if ($previousResult) {
@@ -263,7 +289,12 @@ class TestController extends Controller
 
                 foreach ($questions as $q) {
                     $userAns = $prevAnswers[$q->id] ?? null;
-                    if ($userAns != $q->correct_option_id) {
+
+                    // Ưu tiên đáp án đúng từ relation answers
+                    $correctAnswer = $q->answers->firstWhere('is_correct', true);
+                    $correctAnswerId = $correctAnswer?->id ?? ($q->correct_option_id ?? null);
+
+                    if ((string) $userAns !== (string) $correctAnswerId) {
                         $wrongQuestions->push($q);
                     }
                 }
@@ -276,10 +307,24 @@ class TestController extends Controller
 
         // Transform questions for frontend (map to expected structure)
         $mappedQuestions = $questions->map(function ($q) {
+            $optionsFromAnswers = $q->answers
+                ->map(function ($answer) {
+                    return [
+                        'id' => $answer->id,
+                        'text' => $answer->answer_text,
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            $fallbackOptions = is_array($q->options)
+                ? $q->options
+                : (is_string($q->options ?? null) ? json_decode($q->options, true) : []);
+
             return [
                 'id' => $q->id,
-                'question' => $q->question,
-                'options' => is_array($q->options) ? $q->options : (is_string($q->options) ? json_decode($q->options, true) : []),
+                'question' => $q->question_text ?? $q->question,
+                'options' => ! empty($optionsFromAnswers) ? $optionsFromAnswers : $fallbackOptions,
                 // Do not send correct_option_id, explanation, etc. to frontend during take
             ];
         })->values();
@@ -290,6 +335,8 @@ class TestController extends Controller
                 'title' => $test->title ?? 'Untitled Test',
                 'description' => $test->description ?? '',
                 'duration' => $test->duration ?? 40,
+                'level' => $test->level,
+                'part' => $test->part,
                 'total_questions' => $questions->count(),
                 'questions' => $mappedQuestions,
                 'retake_wrong' => (bool) $retakeWrong,

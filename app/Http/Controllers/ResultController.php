@@ -7,7 +7,6 @@ use App\Models\Result;
 use App\Models\Progress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class ResultController extends Controller
@@ -32,53 +31,56 @@ class ResultController extends Controller
     /**
      * Store new test result
      */
-    public function store(Request $request)
+    public function store(Request $request, string $level, Test $test)
     {
-        // Debug log để kiểm tra request data
-        Log::info('Result store request data', ['data' => $request->all()]);
-        Log::info('Answers field type', ['type' => gettype($request->answers)]);
-        Log::info('Answers field value', ['answers' => $request->answers]);
-
         $request->validate([
-            'test_id' => 'required|exists:tests,id',
-            'answers' => 'required', // Chỉ yêu cầu field tồn tại, không yêu cầu array
-            'score' => 'required|integer|min:0|max:100',
-            'correct' => 'required|integer|min:0',
-            'total' => 'required|integer|min:0',
+            'answers' => 'nullable|array',
         ]);
 
         $user = Auth::user();
-        $test = Test::findOrFail($request->test_id);
+
+        if ($test->level !== $level) {
+            abort(404);
+        }
 
         // Check if test is accessible
         if (! $this->canAccessTest($user, $test)) {
             abort(403, 'This part is locked');
         }
 
-        // Create test result
-        $answers = $request->answers;
+        $answers = (array) $request->input('answers', []);
+        $questions = $test->questions()
+            ->with('answers:id,question_id,is_correct')
+            ->get(['id', 'correct_option_id']);
 
-        // Nếu answers là { empty: true }, chuyển thành array rỗng
-        if (is_array($answers) && isset($answers['empty']) && $answers['empty'] === true) {
-            $answers = [];
+        $total = $questions->count();
+        $correct = 0;
+
+        foreach ($questions as $question) {
+            $userAnswer = $answers[$question->id] ?? null;
+
+            $correctAnswer = $question->answers->firstWhere('is_correct', true);
+            $correctAnswerId = $correctAnswer?->id ?? ($question->correct_option_id ?? null);
+
+            if ((string) $userAnswer === (string) $correctAnswerId) {
+                $correct++;
+            }
         }
 
-        Log::info('Final answers to save', ['answers' => $answers]);
+        $score = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
 
         $result = Result::create([
             'user_id' => $user->id,
             'test_id' => $test->id,
             'answers' => $answers,
-            'score' => $request->score,
-            'correct' => $request->correct,
-            'total' => $request->total,
+            'score' => $score,
+            'correct' => $correct,
+            'total' => $total,
             'completed_at' => now(),
         ]);
 
-        Log::info('Result created successfully', ['result' => $result->toArray()]);
-
         // Update progress
-        $this->updateProgress($user, $test, $request->score);
+        $this->updateProgress($user, $test, $score);
 
         return redirect()->route('results.show', $result->id);
     }

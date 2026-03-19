@@ -3,6 +3,7 @@ import { Head, Link, useForm } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import { route } from "ziggy-js";
 import Logo from "@/Components/Logo";
+import AuthenticatedLayout from "../../Layouts/AuthenticatedLayout";
 
 export default function Login({ canResetPassword = true }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -36,6 +37,7 @@ export default function Login({ canResetPassword = true }) {
     return (
         <>
             <Head title="Đăng nhập" />
+            <AuthenticatedLayout />
             <div className="flex items-center justify-center px-4 py-12">
                 <div className="w-full max-w-xl shadow-xl rounded-xl border-none bg-white p-10 text-center ">
                     <div className="mx-auto mb-6 flex justify-center">

@@ -33,7 +33,7 @@ class SubmitSectionRequest extends FormRequest
                 'max:100',
             ],
             'answers' => [
-                'required',
+                'nullable',
                 'array',
             ],
             'answers.*' => [
@@ -72,7 +72,6 @@ class SubmitSectionRequest extends FormRequest
         return [
             'section_order.required' => 'Phần thi là bắt buộc.',
             'section_order.integer' => 'Phần thi phải là một số nguyên.',
-            'answers.required' => 'Câu trả lời là bắt buộc.',
             'answers.array' => 'Câu trả lời phải là một mảng.',
             'answers.*.required' => 'Vui lòng trả lời tất cả các câu hỏi.',
             'answers.*.string' => 'Câu trả lời phải là dạng chữ.',

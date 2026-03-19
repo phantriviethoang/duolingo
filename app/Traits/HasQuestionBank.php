@@ -115,10 +115,24 @@ trait HasQuestionBank
             ];
         }
 
+        $answers = array_map(function ($option, $index) use ($selected) {
+            return [
+                'answer_text' => $option,
+                'is_correct' => $index === $selected['correct'],
+            ];
+        }, $selected['options'], array_keys($selected['options']));
+
         return [
+            // Legacy keys for existing form payloads
             'question' => $selected['question'],
             'options' => $options,
             'correct_option_id' => $selected['correct'],
+
+            // Schema-aligned keys for questions/answers tables
+            'question_text' => $selected['question'],
+            'question_type' => 'multiple_choice',
+            'answers' => $answers,
+
             'explanation' => $selected['explanation'] ?? null,
             'translation' => $selected['translation'] ?? null,
             'detailed_explanation' => $selected['detailed_explanation'] ?? null,

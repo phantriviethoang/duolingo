@@ -56,7 +56,21 @@ class TestFactory extends Factory
         return $this->afterCreating(function (\App\Models\Test $test) {
             for ($i = 1; $i <= $test->total_questions; $i++) {
                 $questionData = $this->generatePracticeQuestion($i);
-                $test->questions()->create($questionData);
+                $question = $test->questions()->create([
+                    'question_text' => $questionData['question_text'] ?? $questionData['question'] ?? '',
+                    'question_type' => $questionData['question_type'] ?? 'multiple_choice',
+                    'order' => $i,
+                    'translation' => $questionData['translation'] ?? null,
+                    'explanation' => $questionData['explanation'] ?? null,
+                    'detailed_explanation' => $questionData['detailed_explanation'] ?? null,
+                ]);
+
+                foreach (($questionData['answers'] ?? []) as $answer) {
+                    $question->answers()->create([
+                        'answer_text' => $answer['answer_text'] ?? '',
+                        'is_correct' => (bool) ($answer['is_correct'] ?? false),
+                    ]);
+                }
             }
         });
     }

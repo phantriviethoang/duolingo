@@ -58,13 +58,13 @@ export default function ResultsShow({ result }) {
                         <div className="space-y-4">
                             {test.questions?.map((question, index) => {
                                 const userAnswerId = answers[question.id];
-                                
+
                                 // Guard clause - kiểm tra answers có tồn tại không
                                 if (!question.answers || !Array.isArray(question.answers)) {
                                     console.warn('Question answers is undefined:', question);
                                     return null;
                                 }
-                                
+
                                 const userOption = question.answers.find((opt) => opt.id === userAnswerId);
                                 const correctOption = question.answers.find((opt) => opt.is_correct);
                                 const isCorrect = userAnswerId === correctOption?.id;
@@ -74,19 +74,19 @@ export default function ResultsShow({ result }) {
                                     <div
                                         key={question.id}
                                         className={`p-4 rounded-lg border-2 ${!hasUserAnswer
-                                                ? "border-gray-200 bg-gray-50"
-                                                : isCorrect
-                                                    ? "border-green-200 bg-success/10"
-                                                    : "border-red-200 bg-error/10"
+                                            ? "border-gray-200 bg-gray-50"
+                                            : isCorrect
+                                                ? "border-green-200 bg-success/10"
+                                                : "border-red-200 bg-error/10"
                                             }`}
                                     >
                                         <div className="flex items-start gap-2 mb-2">
                                             <span
                                                 className={`text-white rounded-md badge ${!hasUserAnswer
-                                                        ? "badge-neutral"
-                                                        : isCorrect
-                                                            ? "badge-success"
-                                                            : "badge-error"
+                                                    ? "badge-neutral"
+                                                    : isCorrect
+                                                        ? "badge-success"
+                                                        : "badge-error"
                                                     }`}
                                             >
                                                 Câu {index + 1}
@@ -138,10 +138,10 @@ export default function ResultsShow({ result }) {
                                                     <div
                                                         key={answer.id}
                                                         className={`p-2 rounded ${isCorrectAnswer
-                                                                ? "bg-success/15 border border-success/50"
-                                                                : isUserAnswer
-                                                                    ? "bg-error/15 border border-error/50"
-                                                                    : "bg-base-200"
+                                                            ? "bg-success/15 border border-success/50"
+                                                            : isUserAnswer
+                                                                ? "bg-error/15 border border-error/50"
+                                                                : "bg-base-200"
                                                             }`}
                                                     >
                                                         <div className="flex items-center gap-2">
@@ -223,17 +223,19 @@ export default function ResultsShow({ result }) {
 
                         <div className="card-actions justify-center mt-6">
                             <Link
-                                href={route('tests.index')}
+                                href={route('path.levels')}
                                 className="btn btn-primary rounded-xl btn-sm"
                             >
                                 Làm bài khác
                             </Link>
-                            <Link
-                                href={route('tests.show', test.id)}
-                                className="btn btn-outline rounded-xl btn-sm"
-                            >
-                                Làm lại bài này
-                            </Link>
+                            {test?.level ? (
+                                <Link
+                                    href={route('path.test.take', { level: test.level, test: test.id })}
+                                    className="btn btn-outline rounded-xl btn-sm"
+                                >
+                                    Làm lại bài này
+                                </Link>
+                            ) : null}
                         </div>
                     </div>
                 </div>

@@ -72,8 +72,8 @@ const CEFRSelectLevel = ({ levels, currentLevel }) => {
                                     <div
                                         key={level.level}
                                         className={`relative border-2 rounded-lg transition-all duration-300 ${level.can_access
-                                                ? 'cursor-pointer hover:shadow-lg'
-                                                : 'opacity-60 cursor-not-allowed'
+                                            ? 'cursor-pointer hover:shadow-lg'
+                                            : 'opacity-60 cursor-not-allowed'
                                             } ${currentLevel === level.level
                                                 ? 'ring-2 ring-blue-500'
                                                 : ''
@@ -126,12 +126,12 @@ const CEFRSelectLevel = ({ levels, currentLevel }) => {
                                             <button
                                                 disabled={!level.can_access || processing}
                                                 className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${currentLevel === level.level
-                                                        ? 'bg-green-600 text-white hover:bg-green-700'
-                                                        : level.is_completed
+                                                    ? 'bg-green-600 text-white hover:bg-green-700'
+                                                    : level.is_completed
+                                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                        : level.can_access
                                                             ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                            : level.can_access
-                                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                     }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();

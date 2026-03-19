@@ -36,9 +36,9 @@ class UserProgress extends Model
      * CEFR pass thresholds for each part
      */
     const PASS_THRESHOLDS = [
-        1 => 60.0, // Part 1: 60%
-        2 => 75.0, // Part 2: 75%
-        3 => 90.0, // Part 3: 90%
+        1 => 60.0,
+        2 => 75.0,
+        3 => 90.0,
     ];
 
     /**

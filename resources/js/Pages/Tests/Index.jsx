@@ -60,7 +60,7 @@ export default function TestsIndex({ tests }) {
                                                     Locked
                                                 </button>
                                             ) : (
-                                                <Link href={route('tests.show', test.id)}>
+                                                <Link href={route('path.test.take', { level: test.level, test: test.id })}>
                                                     <button className="btn btn-primary">
                                                         <Play className="w-4 h-4 mr-2" />
                                                         Start Test

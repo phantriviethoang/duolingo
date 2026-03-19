@@ -3,24 +3,42 @@ import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CheckCircle, Lock, Play, Clock, FileQuestion } from 'lucide-react';
 
-export default function PathShow({ level, parts }) {
+export default function PathShow({ level, parts, selectedPart = null }) {
+    const partEntries = Object.entries(parts || {});
+    const visiblePartEntries = selectedPart
+        ? partEntries.filter(([partKey]) => Number(partKey) === Number(selectedPart))
+        : partEntries;
+
+    const getPartTakeHref = (part) => {
+        if (!part?.tests?.length) {
+            return null;
+        }
+
+        return route('path.test.take', { level, test: part.tests[0].id });
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title={`${level} Learning Path`} />
 
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <Link href={route('path.index')}>
+                    <Link href={route('path.target')}>
                         <button className="btn btn-outline btn-sm mb-4">
                             ← Back to Path
                         </button>
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Level {level}</h1>
-                    <p className="text-gray-600">Complete all three parts to unlock the next level</p>
+                    <p className="text-gray-600">
+                        {level === 'A1'
+                            ? 'Complete this part to unlock the next level'
+                            : 'Complete all three parts to unlock the next level'
+                        }
+                    </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {Object.values(parts).map(part => (
+                    {partEntries.map(([partKey, part]) => (
                         <div key={part.name} className={`card bg-base-100 shadow-lg ${!part.unlocked ? 'opacity-75' : ''}`}>
                             <div className="card-body">
                                 <div className="flex items-center justify-between mb-4">
@@ -65,10 +83,10 @@ export default function PathShow({ level, parts }) {
 
                                 <div className="card-actions justify-end">
                                     {part.unlocked ? (
-                                        <Link href={route('tests.index')}>
+                                        <Link href={getPartTakeHref(part) || route('path.tests', { level, part: Number(partKey) })}>
                                             <button className="btn btn-primary">
                                                 <Play className="w-4 h-4 mr-2" />
-                                                Start Practice
+                                                Làm ngay Part này
                                             </button>
                                         </Link>
                                     ) : (
@@ -87,7 +105,7 @@ export default function PathShow({ level, parts }) {
                 <div className="mt-12">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Tests</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.values(parts).flatMap(part => 
+                        {visiblePartEntries.flatMap(([partKey, part]) =>
                             part.tests.map(test => (
                                 <div key={test.id} className={`card bg-base-100 shadow-lg ${!part.unlocked ? 'opacity-75' : ''}`}>
                                     <div className="card-body p-4">
@@ -103,17 +121,17 @@ export default function PathShow({ level, parts }) {
                                             {test.total_questions} questions
                                         </div>
                                         {part.unlocked ? (
-                                            <Link href={route('tests.show', test.id)}>
+                                            <Link href={route('path.test.take', { level, test: test.id })}>
                                                 <button className="btn btn-primary btn-sm">
                                                     <Play className="w-4 h-4 mr-2" />
-                                                    Start Test
+                                                    Bắt đầu làm
                                                 </button>
                                             </Link>
                                         ) : (
-                                            <button className="btn btn-disabled btn-sm" disabled>
+                                            <div className="text-gray-500 text-sm">
                                                 <Lock className="w-4 h-4 mr-2" />
-                                                Locked
-                                            </button>
+                                                <span>Hoàn thành phần trước để mở khóa</span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

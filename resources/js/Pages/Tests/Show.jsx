@@ -67,35 +67,44 @@ export default function TestsShow({ test }) {
     // State cho thông báo khôi phục tiến độ
     const [showRestoreNotification, setShowRestoreNotification] = useState(false);
 
+    // Lưu state ban đầu ngay khi component mount (chỉ 1 lần)
+    useEffect(() => {
+        if (!isSubmitted) {
+            const existingState = getFullState();
+            if (!existingState || existingState.testId !== test?.id) {
+                // Chỉ lưu nếu chưa có state hoặc khác testId
+                saveFullState();
+            }
+        }
+    }, [isSubmitted, saveFullState, getFullState, test?.id]);
+
     // Khôi phục toàn bộ state khi component mount
     useEffect(() => {
         const fullState = getFullState();
         if (fullState && fullState.testId === test?.id) {
-            // Tính thời gian đã trôi qua từ LẦN LƯU CUỐI CÙNG, không phải từ startTime ban đầu
-            const elapsedSinceLastSave = Math.floor((Date.now() - new Date(fullState.lastSaved || fullState.startTime).getTime()) / 1000);
-            const originalDuration = (test?.duration || 40) * 60;
+            // Tính thời gian đã trôi qua từ LẦN LƯU CUỐI CÙNG
+            const elapsedSinceLastSave = Math.floor((Date.now() - fullState.lastSaved) / 1000);
 
-            // Thời gian còn lại = thời gian còn lại lúc lưu + thời gian đã trôi qua từ lúc lưu
+            // Thời gian còn lại = thời gian còn lại lúc lưu - thời gian đã trôi qua
             const adjustedTimeLeft = Math.max(0, fullState.timeLeft - elapsedSinceLastSave);
+
+            console.log('Time calculation:', {
+                lastSaved: new Date(fullState.lastSaved),
+                now: new Date(),
+                elapsedSinceLastSave: elapsedSinceLastSave,
+                savedTimeLeft: fullState.timeLeft,
+                adjustedTimeLeft: adjustedTimeLeft
+            });
 
             setTimeLeft(adjustedTimeLeft);
             setSelectedAnswers(fullState.selectedAnswers || {});
             setCurrentQuestion(fullState.currentQuestion || 0);
 
-            // Hiển thị thông báo nếu có dữ liệu
+            // Chỉ hiển thị thông báo nếu có đáp án đã chọn
             if (Object.keys(fullState.selectedAnswers || {}).length > 0) {
                 setShowRestoreNotification(true);
                 setTimeout(() => setShowRestoreNotification(false), 5000);
             }
-
-            console.log('Restored full state with accurate timer:', {
-                elapsedSinceLastSave: elapsedSinceLastSave,
-                originalDuration: originalDuration,
-                savedTimeLeft: fullState.timeLeft,
-                adjustedTimeLeft: adjustedTimeLeft,
-                answersCount: Object.keys(fullState.selectedAnswers || {}).length,
-                currentQuestion: fullState.currentQuestion || 0
-            });
         }
     }, [getFullState, test?.id]);
 
@@ -113,18 +122,23 @@ export default function TestsShow({ test }) {
     // Cảnh báo trước khi refresh/đóng tab
     useEffect(() => {
         const handleBeforeUnload = (event) => {
-            if (!isSubmitted && Object.keys(selectedAnswers).length > 0) {
-                // Lưu state trước khi unload
+            if (!isSubmitted) {
+                // Luôn lưu state trước khi unload
                 saveFullState();
-                const message = 'Bạn có chắc muốn rời đi? Dữ liệu sẽ được lưu tự động.';
-                event.returnValue = message;
-                return message;
+
+                // Chỉ cảnh báo nếu user đã bắt đầu làm bài (có thời gian trôi qua)
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                if (elapsedSeconds > 5) { // Cảnh báo nếu làm bài hơn 5 giây
+                    const message = 'Bạn có chắc muốn rời đi? Tiến độ làm bài sẽ được lưu.';
+                    event.returnValue = message;
+                    return message;
+                }
             }
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [selectedAnswers, isSubmitted, saveFullState]);
+    }, [selectedAnswers, isSubmitted, saveFullState, startTime]);
 
     // Xóa localStorage khi nộp bài thành công
     const clearProgress = () => {
@@ -373,7 +387,7 @@ export default function TestsShow({ test }) {
                     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
                         <div className="flex items-center gap-3 text-gray-700">
                             <Link
-                                href={route('tests.index')}
+                                href={route('path.levels')}
                                 className="flex items-center gap-2 text-sm underline"
                             >
                                 <ChevronLeft className="h-4 w-4" />

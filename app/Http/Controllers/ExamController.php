@@ -194,7 +194,7 @@ class ExamController extends Controller
             exam: $exam,
             user: $user,
             sectionOrder: $validated['section_order'],
-            answers: $validated['answers']
+            answers: $validated['answers'] ?? []
         );
 
         // Nếu lỗi (section locked, etc)
