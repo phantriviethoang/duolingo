@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreTestRequest extends FormRequest
 {
@@ -44,7 +43,14 @@ class StoreTestRequest extends FormRequest
     {
         return [
             'title.required' => 'Tiêu đề đề thi là bắt buộc.',
+            'level.required' => 'Trình độ là bắt buộc.',
+            'level.in' => 'Trình độ không hợp lệ.',
+            'part.required' => 'Phần là bắt buộc.',
+            'part.integer' => 'Phần phải là số nguyên.',
+            'part.min' => 'Phần phải từ 1 đến 3.',
+            'part.max' => 'Phần phải từ 1 đến 3.',
             'duration.required' => 'Thời gian làm bài là bắt buộc.',
+            'duration.integer' => 'Thời gian làm bài phải là số nguyên.',
             'duration.min' => 'Thời gian làm bài phải ít nhất 1 phút.',
             'questions.required' => 'Đề thi phải có ít nhất 1 câu hỏi.',
             'questions.*.question.required' => 'Nội dung câu hỏi không được để trống.',
@@ -52,5 +58,24 @@ class StoreTestRequest extends FormRequest
             'questions.*.options.min' => 'Mỗi câu hỏi phải có ít nhất 2 đáp án.',
             'questions.*.options.*.text.required' => 'Nội dung đáp án không được để trống.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            foreach ((array) $this->input('questions', []) as $index => $question) {
+                $options = (array) ($question['options'] ?? []);
+                $correctCount = collect($options)->filter(function ($option) {
+                    return filter_var($option['is_correct'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                })->count();
+
+                if ($correctCount !== 1) {
+                    $validator->errors()->add(
+                        "questions.{$index}.options",
+                        'Mỗi câu hỏi phải có đúng 1 đáp án đúng.'
+                    );
+                }
+            }
+        });
     }
 }

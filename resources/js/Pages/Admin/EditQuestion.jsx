@@ -24,11 +24,6 @@ export default function EditQuestion() {
         explanation: question.explanation || "",
     });
 
-    console.log('question data:', question);
-    console.log('form data:', data);
-    console.log('correct_option_id type:', typeof data.correct_option_id, 'value:', data.correct_option_id);
-    console.log('options:', data.options);
-
     const handleOptionChange = (index, value) => {
         const newOptions = [...data.options];
         newOptions[index].text = value;
@@ -39,6 +34,8 @@ export default function EditQuestion() {
         e.preventDefault();
         put(route("questions.update", question.id));
     };
+
+    const getOptionError = (index) => errors[`options.${index}.text`];
 
     return (
         <AdminLayout current="/admin/questions">
@@ -125,12 +122,31 @@ export default function EditQuestion() {
                                         <textarea
                                             value={option.text}
                                             onChange={(e) => handleOptionChange(index, e.target.value)}
-                                            className="textarea-bordered w-full text-base-content bg-base-100 flex-1"
+                                            className={`textarea textarea-bordered w-full text-base-content bg-base-100 flex-1 ${getOptionError(index) ? "textarea-error" : ""}`}
                                             rows={1}
                                             placeholder={`Nhập lựa chọn ${option.id}`}
                                         />
                                     </div>
                                 ))}
+                                {errors.options && (
+                                    <label className="label">
+                                        <span className="label-text-alt text-error">{errors.options}</span>
+                                    </label>
+                                )}
+                                {errors.correct_option_id && (
+                                    <label className="label">
+                                        <span className="label-text-alt text-error">{errors.correct_option_id}</span>
+                                    </label>
+                                )}
+                                {data.options.map((option, index) =>
+                                    getOptionError(index) ? (
+                                        <label className="label" key={`error-${option.id}`}>
+                                            <span className="label-text-alt text-error">
+                                                Lựa chọn {option.id}: {getOptionError(index)}
+                                            </span>
+                                        </label>
+                                    ) : null,
+                                )}
                             </div>
 
                             <div className="form-control">

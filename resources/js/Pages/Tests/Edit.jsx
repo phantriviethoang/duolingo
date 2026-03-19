@@ -79,8 +79,8 @@ export default function Edit({ test }) {
     return (
         <AdminLayout current="/admin/tests">
             <Head title={`Chỉnh sửa: ${test.title}`} />
-            
-            <div className="max-w-5xl mx-auto space-y-10 pb-20">
+
+            <div className="max-w-full mx-auto space-y-10 pb-20">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
@@ -94,7 +94,7 @@ export default function Edit({ test }) {
                             <p className="text-gray-500 mt-1">ID: #{test.id} • Cập nhật nội dung và cấu hình.</p>
                         </div>
                     </div>
-                    
+
                     <button
                         onClick={submit}
                         disabled={processing}
@@ -135,7 +135,7 @@ export default function Edit({ test }) {
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Trình độ</label>
                                         <select
-                                            className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold"
+                                            className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold ${errors.level ? 'border-red-500' : ''}`}
                                             value={data.level}
                                             onChange={(e) => setData("level", e.target.value)}
                                         >
@@ -143,18 +143,20 @@ export default function Edit({ test }) {
                                                 <option key={lvl} value={lvl}>{lvl}</option>
                                             ))}
                                         </select>
+                                        {errors.level && <p className="text-xs text-red-500 font-bold">{errors.level}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Phần (Part)</label>
                                         <select
-                                            className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold"
+                                            className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold ${errors.part ? 'border-red-500' : ''}`}
                                             value={data.part}
-                                            onChange={(e) => setData("part", parseInt(e.target.value))}
+                                            onChange={(e) => setData("part", e.target.value)}
                                         >
                                             {[1, 2, 3].map(p => (
                                                 <option key={p} value={p}>Phần {p}</option>
                                             ))}
                                         </select>
+                                        {errors.part && <p className="text-xs text-red-500 font-bold">{errors.part}</p>}
                                     </div>
                                 </div>
 
@@ -162,10 +164,11 @@ export default function Edit({ test }) {
                                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Thời gian (phút)</label>
                                     <input
                                         type="number"
-                                        className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold"
+                                        className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold ${errors.duration ? 'border-red-500' : ''}`}
                                         value={data.duration}
-                                        onChange={(e) => setData("duration", parseInt(e.target.value))}
+                                        onChange={(e) => setData("duration", e.target.value)}
                                     />
+                                    {errors.duration && <p className="text-xs text-red-500 font-bold">{errors.duration}</p>}
                                 </div>
 
                                 <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
@@ -228,33 +231,44 @@ export default function Edit({ test }) {
                                                     <FileText className="w-3 h-3" /> Nội dung câu hỏi
                                                 </label>
                                                 <textarea
-                                                    className="w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium min-h-[100px]"
+                                                    className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium min-h-[100px] ${errors[`questions.${qIndex}.question`] ? 'border-red-500' : ''}`}
                                                     value={question.question}
                                                     onChange={(e) => updateQuestion(qIndex, "question", e.target.value)}
                                                 />
+                                                {errors[`questions.${qIndex}.question`] && <p className="text-[10px] text-red-500 font-bold">{errors[`questions.${qIndex}.question`]}</p>}
                                             </div>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {question.options.map((option, oIndex) => (
-                                                    <div key={oIndex} className={`relative p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${option.is_correct ? 'border-green-100 bg-green-50/30 ring-2 ring-green-500/20' : 'border-gray-50 bg-gray-50/30'}`}>
-                                                        <input
-                                                            type="radio"
-                                                            name={`correct-${qIndex}`}
-                                                            checked={option.is_correct}
-                                                            onChange={() => setCorrectAnswer(qIndex, oIndex)}
-                                                            className="radio radio-success radio-sm"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-gray-700"
-                                                            value={option.text}
-                                                            onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                                                            placeholder={`Đáp án ${String.fromCharCode(65 + oIndex)}`}
-                                                        />
-                                                        {option.is_correct && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                                                    <div key={oIndex} className="space-y-1">
+                                                        <div className={`relative p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${option.is_correct ? 'border-green-100 bg-green-50/30 ring-2 ring-green-500/20' : errors[`questions.${qIndex}.options.${oIndex}.text`] ? 'border-red-100 bg-red-50/30' : 'border-gray-50 bg-gray-50/30'}`}>
+                                                            <input
+                                                                type="radio"
+                                                                name={`correct-${qIndex}`}
+                                                                checked={option.is_correct}
+                                                                onChange={() => setCorrectAnswer(qIndex, oIndex)}
+                                                                className="radio radio-success radio-sm"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-gray-700"
+                                                                value={option.text}
+                                                                onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                                                                placeholder={`Đáp án ${String.fromCharCode(65 + oIndex)}`}
+                                                            />
+                                                            {option.is_correct && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                                                        </div>
+                                                        {errors[`questions.${qIndex}.options.${oIndex}.text`] && (
+                                                            <p className="text-[9px] text-red-500 font-bold ml-2">{errors[`questions.${qIndex}.options.${oIndex}.text`]}</p>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
+                                            {errors[`questions.${qIndex}.options`] && (
+                                                <p className="text-[10px] text-red-500 font-bold">
+                                                    {errors[`questions.${qIndex}.options`]}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-4 pt-6 border-t border-gray-50">

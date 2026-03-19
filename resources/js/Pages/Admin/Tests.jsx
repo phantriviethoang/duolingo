@@ -69,7 +69,7 @@ export default function AdminTests({ tests = [], filters = {} }) {
                                     tests.map((test) => (
                                         <tr key={test.id} className="group hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0">
                                             <td className="px-8 py-6">
-                                                <div className="max-w-md">
+                                                <div className="max-w-2xl">
                                                     <p className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{test.title}</p>
                                                     <p className="text-xs text-gray-400 mt-1 line-clamp-1 font-medium">{test.description || 'Không có mô tả.'}</p>
                                                 </div>

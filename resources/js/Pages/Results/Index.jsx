@@ -22,7 +22,7 @@ export default function ResultsIndex({ results, filters }) {
     };
 
     const SortIcon = ({ field }) => {
-        if (sort_by !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
+        if (sort_by !== field) return <ArrowUpDown className="w-4 h-4 mb-0.5 ml-1 opacity-70" />;
         return sort_order === 'asc'
             ? <ArrowUp className="w-3 h-3 ml-1 text-blue-600" />
             : <ArrowDown className="w-3 h-3 ml-1 text-blue-600" />;
@@ -64,14 +64,14 @@ export default function ResultsIndex({ results, filters }) {
                         <table className="min-w-full divide-y divide-gray-100">
                             <thead>
                                 <tr className="bg-gray-50/50">
-                                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <th className="px-8 py-5 text-left  font-black text-gray-400 uppercase tracking-widest">
                                         Bài luyện tập
                                     </th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
+                                    <th className="px-8 py-5  font-black text-gray-400 uppercase tracking-widest text-center">
                                         Trình độ
                                     </th>
                                     <th
-                                        className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                                        className="px-8 py-5 text-left  font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
                                         onClick={() => handleSort('score')}
                                     >
                                         <div className="flex items-center justify-center">
@@ -80,7 +80,7 @@ export default function ResultsIndex({ results, filters }) {
                                         </div>
                                     </th>
                                     <th
-                                        className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                                        className="px-8 py-5 text-left  font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
                                         onClick={() => handleSort('time_spent')}
                                     >
                                         <div className="flex items-center justify-center">
@@ -89,7 +89,7 @@ export default function ResultsIndex({ results, filters }) {
                                         </div>
                                     </th>
                                     <th
-                                        className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                                        className="px-8 py-5 text-left  font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
                                         onClick={() => handleSort('created_at')}
                                     >
                                         <div className="flex items-center justify-center">
@@ -97,7 +97,7 @@ export default function ResultsIndex({ results, filters }) {
                                             <SortIcon field="created_at" />
                                         </div>
                                     </th>
-                                    <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <th className="px-8 py-5 text-right  font-black text-gray-400 uppercase tracking-widest">
                                         Thao tác
                                     </th>
                                 </tr>

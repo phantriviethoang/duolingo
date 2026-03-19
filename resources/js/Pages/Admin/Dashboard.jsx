@@ -50,7 +50,7 @@ export default function AdminDashboard({ stats = [], recentResults = [] }) {
                         const Icon = item.icon;
                         const colorClass = getColorClass(item.color);
                         return (
-                            <div key={idx} className="bg-white rounded-[2rem] border-2 border-gray-50 p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                            <div key={idx} className="bg-white rounded-4xl border-2 border-gray-50 p-6 shadow-sm hover:shadow-md transition-all duration-300">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className={`p-3 rounded-2xl border ${colorClass}`}>
                                         <Icon className="h-6 w-6" />
@@ -77,7 +77,7 @@ export default function AdminDashboard({ stats = [], recentResults = [] }) {
                             Xem tất cả <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
-                    
+
                     <div className="overflow-x-auto">
                         <table className="table w-full">
                             <thead>
@@ -120,8 +120,8 @@ export default function AdminDashboard({ stats = [], recentResults = [] }) {
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-full max-w-[100px] bg-gray-100 rounded-full h-1.5">
-                                                        <div 
-                                                            className={`h-full rounded-full ${row.score >= 50 ? 'bg-green-500' : 'bg-red-500'}`} 
+                                                        <div
+                                                            className={`h-full rounded-full ${row.score >= 50 ? 'bg-green-500' : 'bg-red-500'}`}
                                                             style={{ width: `${row.score}%` }}
                                                         ></div>
                                                     </div>

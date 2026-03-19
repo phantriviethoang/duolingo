@@ -46,6 +46,7 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
         setData,
         post,
         processing,
+        errors,
     } = useForm({
         part1: data.config.pass_threshold_part1 || 60,
         part2: data.config.pass_threshold_part2 || 75,
@@ -107,11 +108,10 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                         {[1, 2, 3].map((part) => (
                             <div
                                 key={part}
-                                className={`rounded-2xl border p-5 transition-all ${
-                                    isEditing
-                                        ? "border-blue-200 bg-blue-50/30"
-                                        : "border-gray-100 bg-gray-50/30"
-                                }`}
+                                className={`rounded-2xl border p-5 transition-all ${isEditing
+                                    ? "border-blue-200 bg-blue-50/30"
+                                    : "border-gray-100 bg-gray-50/30"
+                                    }`}
                             >
                                 <div className="mb-4 flex items-center justify-between">
                                     <span className="font-bold text-gray-700">
@@ -119,32 +119,24 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                     </span>
                                     {!isEditing ? (
                                         <span className="badge badge-blue bg-blue-100 text-blue-700 border-none font-bold py-3">
-                                            Đạt{" "}
-                                            {
-                                                data.config[
-                                                    `pass_threshold_part${part}`
-                                                ]
-                                            }
-                                            %
+                                            Đạt {data.config[`pass_threshold_part${part}`]}%
                                         </span>
                                     ) : (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                className="input input-bordered input-xs w-16 font-bold"
-                                                value={formData[`part${part}`]}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        `part${part}`,
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                min="0"
-                                                max="100"
-                                            />
-                                            <span className="text-xs font-bold text-gray-500">
-                                                %
-                                            </span>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    // type="number"
+                                                    className={`text-slate-700 input input-bordered input-xs w-16 font-bold ${errors[`part${part}`] ? 'border-red-500' : ''}`}
+                                                    value={formData[`part${part}`]}
+                                                    onChange={e => setData(`part${part}`, e.target.value)}
+                                                    min="0"
+                                                    max="100"
+                                                />
+                                                <span className="text-xs font-bold text-gray-500">%</span>
+                                            </div>
+                                            {errors[`part${part}`] && (
+                                                <span className="text-[10px] text-red-500 font-bold">{errors[`part${part}`]}</span>
+                                            )}
                                         </div>
                                     )}
                                 </div>

@@ -25,12 +25,13 @@ export default function AppHeader() {
     const navLinks = isAdmin
         ? [...baseLinks, { label: "Quản Trị", href: "/admin", activePrefix: "/admin" }]
         : baseLinks;
-    const currentPath = new URL(ziggy?.location ?? window.location.href).pathname;
+    const currentPath = ziggy?.location ? new URL(ziggy.location).pathname : window.location.pathname;
     const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false);
+    const isInsideAdmin = currentPath.startsWith('/admin');
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 border-b border-blue-200 bg-linear-to-r from-blue-50 to-white shadow-sm">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <div className={`flex items-center justify-between py-4 ${isInsideAdmin ? 'w-full px-4 lg:px-6' : 'mx-auto max-w-7xl px-6'}`}>
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-3 shrink-0">
                     <Logo className="h-10 w-10" />

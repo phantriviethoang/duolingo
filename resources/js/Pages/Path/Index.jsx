@@ -123,7 +123,17 @@ export default function PathIndex({ currentLevel, levels, progressData }) {
                                                 const unlocked = partData?.unlocked;
 
                                                 return (
-                                                    <div key={part} className={`flex items-center justify-between p-4 rounded-2xl border transition-colors ${completed ? 'bg-green-50/50 border-green-100' : unlocked ? 'bg-blue-50/30 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
+                                                    <Link 
+                                                        key={part} 
+                                                        href={route('path.tests', { level, part })}
+                                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md ${
+                                                            completed 
+                                                                ? 'bg-green-50/50 border-green-100 hover:bg-green-100/50' 
+                                                                : unlocked 
+                                                                    ? 'bg-blue-50/30 border-blue-100 hover:bg-blue-100/40' 
+                                                                    : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
+                                                        }`}
+                                                    >
                                                         <span className={`text-sm font-bold ${completed ? 'text-green-700' : unlocked ? 'text-blue-700' : 'text-gray-500'}`}>Phần {part}</span>
                                                         <div className="flex items-center gap-2">
                                                             {completed ? (
@@ -143,7 +153,7 @@ export default function PathIndex({ currentLevel, levels, progressData }) {
                                                                 </>
                                                             )}
                                                         </div>
-                                                    </div>
+                                                    </Link>
                                                 );
                                             })}
                                         </div>

@@ -119,7 +119,7 @@ export default function ProgressDashboard({ stats }) {
                                 <div className="card-actions mt-6">
                                     <Link
                                         href="/path/level"
-                                        className="btn btn-neutral btn-block text-white hover:bg-indigo-700 border-none font-bold"
+                                        className="btn btn-neutral btn-block text-white border-none font-bold"
                                     >
                                         Chuyển lộ trình ngay
                                     </Link>
@@ -134,24 +134,17 @@ export default function ProgressDashboard({ stats }) {
                                     <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
                                     Phần cần cải thiện
                                 </h3>
-                                {weak_areas.length > 0 ? (
-                                    <div className="mt-4 space-y-4">
-                                        {weak_areas.map((area, idx) => (
-                                            <div key={idx} className="p-3 bg-red-50 rounded-xl border border-red-100">
-                                                <p className="font-bold text-red-800 text-sm">{area.area}</p>
-                                                <p className="text-xs text-red-600 mt-1">{area.message}</p>
-                                                <div className="mt-2 flex items-center">
-                                                    <span className="text-xs font-semibold text-red-700">Điểm TB: {area.avg_score}%</span>
-                                                </div>
+                                <div className="mt-4 space-y-4">
+                                    {weak_areas.map((area, idx) => (
+                                        <div key={idx} className="p-3 bg-red-50 rounded-xl border border-red-100">
+                                            <p className="font-bold text-red-800 text-sm">{area.area}</p>
+                                            <p className="text-xs text-red-600 mt-1">{area.message}</p>
+                                            <div className="mt-2 flex items-center">
+                                                <span className="text-xs font-semibold text-red-700">Điểm TB: {area.avg_score}%</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="mt-4 p-4 bg-green-50 rounded-xl text-center">
-                                        <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                                        <p className="text-sm text-green-700 font-medium">Tuyệt vời! Bạn đang làm rất tốt ở các phần.</p>
-                                    </div>
-                                )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>

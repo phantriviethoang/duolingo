@@ -48,6 +48,19 @@ class PathController extends Controller
             'part1' => 'required|numeric|min:0|max:100',
             'part2' => 'required|numeric|min:0|max:100',
             'part3' => 'required|numeric|min:0|max:100',
+        ], [
+            'part1.required' => 'Điểm Phần 1 là bắt buộc.',
+            'part1.numeric' => 'Điểm Phần 1 phải là số.',
+            'part1.min' => 'Điểm Phần 1 phải từ 0 đến 100.',
+            'part1.max' => 'Điểm Phần 1 phải từ 0 đến 100.',
+            'part2.required' => 'Điểm Phần 2 là bắt buộc.',
+            'part2.numeric' => 'Điểm Phần 2 phải là số.',
+            'part2.min' => 'Điểm Phần 2 phải từ 0 đến 100.',
+            'part2.max' => 'Điểm Phần 2 phải từ 0 đến 100.',
+            'part3.required' => 'Điểm Phần 3 là bắt buộc.',
+            'part3.numeric' => 'Điểm Phần 3 phải là số.',
+            'part3.min' => 'Điểm Phần 3 phải từ 0 đến 100.',
+            'part3.max' => 'Điểm Phần 3 phải từ 0 đến 100.',
         ]);
 
         $config = \App\Models\Level::updateOrCreate(

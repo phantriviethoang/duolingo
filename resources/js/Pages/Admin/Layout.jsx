@@ -17,10 +17,10 @@ export default function AdminLayout({ children, current }) {
     return (
         <div className="min-h-screen bg-gray-50">
             <AppHeader />
-            
-            <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8 pt-24">
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
-                    <aside className="space-y-4">
+
+            <div className="w-full px-2 py-4 pt-20">
+                <div className="flex flex-col lg:flex-row gap-4">
+                    <aside className="w-full lg:w-[260px] shrink-0 space-y-4">
                         <div className="card border border-gray-200 bg-white shadow-sm rounded-3xl overflow-hidden">
                             <div className="card-body p-6">
                                 <div className="mb-6 flex items-center gap-3">
@@ -45,8 +45,8 @@ export default function AdminLayout({ children, current }) {
                                                 <Link
                                                     href={item.href}
                                                     className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                                                        isActive 
-                                                            ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" 
+                                                        isActive
+                                                            ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20"
                                                             : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                                     }`}
                                                 >
@@ -64,10 +64,10 @@ export default function AdminLayout({ children, current }) {
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link 
-                                            href={route("logout")} 
-                                            method="post" 
-                                            as="button" 
+                                        <Link
+                                            href={route("logout")}
+                                            method="post"
+                                            as="button"
                                             className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                                         >
                                             <LogOut className="h-5 w-5" />
@@ -79,9 +79,9 @@ export default function AdminLayout({ children, current }) {
                         </div>
                     </aside>
 
-                    <main>
-                        <div className="card border border-gray-200 bg-white shadow-sm rounded-3xl overflow-hidden min-h-[600px]">
-                            <div className="card-body p-8">{children}</div>
+                    <main className="flex-1 min-w-0">
+                        <div className="card border border-gray-200 bg-white shadow-sm rounded-3xl overflow-hidden min-h-150">
+                            <div className="card-body p-4 lg:p-8">{children}</div>
                         </div>
                     </main>
                 </div>
