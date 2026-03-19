@@ -67,7 +67,7 @@ export default function Take({
     const lastPromptDecisionRef = useRef(false);
     const ignoreNextPopRef = useRef(false);
     const LEAVE_WARNING_MESSAGE =
-        "Leave site? Changes you made may not be saved.";
+        "Bạn có chắc muốn rời trang? Tiến trình làm bài có thể chưa được lưu.";
 
     const sectionSuffix = section ? `_sec_${section.order}` : "";
     const retakeSuffix = isRetakeWrong ? "_retake_wrong" : "";

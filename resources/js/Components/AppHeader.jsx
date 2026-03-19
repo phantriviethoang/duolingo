@@ -66,7 +66,7 @@ export default function AppHeader() {
                                                 }`}
                                             onClick={() => setIsLevelDropdownOpen(false)}
                                         >
-                                            Level {level}
+                                            Trình độ {level}
                                         </Link>
                                     ))}
                                     <div className="border-t border-gray-100 my-1"></div>
@@ -210,7 +210,7 @@ export default function AppHeader() {
                                                 }`}
                                             onClick={() => setIsLevelDropdownOpen(false)}
                                         >
-                                            Level {level}
+                                            Trình độ {level}
                                         </Link>
                                     ))}
                                 </div>

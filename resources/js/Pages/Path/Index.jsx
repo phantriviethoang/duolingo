@@ -31,10 +31,10 @@ export default function PathIndex({ currentLevel, levels, progressData }) {
         : levels.filter(level => level === selectedLevel);
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout fullWidth={true}>
             <Head title="Lộ trình học tập" />
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
+            <div className="max-w-full mx-auto px-4 py-8">
                 <div className="mb-10">
                     <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">Lộ trình học tập</h1>
                     <p className="text-gray-500 font-medium text-lg">Theo dõi tiến trình chinh phục các cấp độ CEFR của bạn</p>

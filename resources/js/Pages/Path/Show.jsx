@@ -17,10 +17,10 @@ export default function PathShow({ level, parts, selectedPart = null }) {
     const nextLevelHref = canGoNextLevel ? route('path.parts', nextLevel) : null;
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout fullWidth={true}>
             <Head title={`Lộ trình học: ${level}`} />
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
+            <div className="max-w-full mx-auto px-4 py-8">
                 <div className="mb-8">
                     <Link href="/path/level">
                         <button className="btn btn-outline btn-sm mb-4 border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl px-4">

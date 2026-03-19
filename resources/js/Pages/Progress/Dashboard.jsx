@@ -63,10 +63,10 @@ export default function ProgressDashboard({ stats }) {
     };
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout fullWidth={true}>
             <Head title="Tiến độ học tập" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div className="max-w-full mx-auto px-4 py-10">
                 <div className="mb-10">
                     <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Tiến độ học tập</h1>
                     <p className="mt-2 text-lg text-gray-600">Phân tích chi tiết quá trình rèn luyện của bạn</p>

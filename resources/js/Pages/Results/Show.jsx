@@ -89,7 +89,7 @@ export default function ResultsShow({ result }) {
     };
 
     const formatTimeSpent = (seconds) => {
-        if (!seconds) return "N/A";
+        if (!seconds) return "Chưa cập nhật";
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
@@ -128,11 +128,10 @@ export default function ResultsShow({ result }) {
                                 </div>
                             )}
                             <div
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${
-                                    is_passed_requirement
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${is_passed_requirement
                                         ? "bg-green-50 border-green-200 text-green-700 shadow-sm shadow-green-100"
                                         : "bg-red-50 border-red-200 text-red-700 shadow-sm shadow-red-100"
-                                }`}
+                                    }`}
                             >
                                 {is_passed_requirement ? (
                                     <>
@@ -192,10 +191,10 @@ export default function ResultsShow({ result }) {
                         </h1>
                         <div className="flex gap-2 mt-3">
                             <span className="badge badge-warning text-white font-bold py-3 px-4 rounded-lg">
-                                Level {test.level}
+                                Trình độ {test.level}
                             </span>
                             <span className="badge badge-warning text-white font-bold py-3 px-4 rounded-lg">
-                                Part {test.part}
+                                Phần {test.part}
                             </span>
                         </div>
                     </div>
@@ -350,13 +349,12 @@ export default function ResultsShow({ result }) {
                                         {/* Question Header */}
                                         <div className="flex items-start gap-4 mb-4">
                                             <span
-                                                className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
-                                                    !hasUserAnswer
+                                                className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${!hasUserAnswer
                                                         ? "bg-gray-400"
                                                         : isCorrect
-                                                          ? "bg-green-500"
-                                                          : "bg-red-500"
-                                                }`}
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                    }`}
                                             >
                                                 {index + 1}
                                             </span>
@@ -364,19 +362,18 @@ export default function ResultsShow({ result }) {
                                             <div className="flex-1 pt-1">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span
-                                                        className={`text-xs font-bold uppercase tracking-widest ${
-                                                            !hasUserAnswer
+                                                        className={`text-xs font-bold uppercase tracking-widest ${!hasUserAnswer
                                                                 ? "text-gray-400"
                                                                 : isCorrect
-                                                                  ? "text-green-600"
-                                                                  : "text-red-600"
-                                                        }`}
+                                                                    ? "text-green-600"
+                                                                    : "text-red-600"
+                                                            }`}
                                                     >
                                                         {!hasUserAnswer
                                                             ? "Bỏ qua"
                                                             : isCorrect
-                                                              ? "Đúng"
-                                                              : "Sai"}
+                                                                ? "Đúng"
+                                                                : "Sai"}
                                                     </span>
                                                 </div>
                                                 <p className="text-lg font-bold text-gray-900 leading-relaxed">
@@ -412,7 +409,7 @@ export default function ResultsShow({ result }) {
                                                                 <span className="opacity-50 text-sm">
                                                                     {String.fromCharCode(
                                                                         65 +
-                                                                            optIndex,
+                                                                        optIndex,
                                                                     )}
                                                                     .
                                                                 </span>
@@ -434,7 +431,7 @@ export default function ResultsShow({ result }) {
                                                                 ) : null}
 
                                                                 {isUserAnswer &&
-                                                                !isCorrectAnswer ? (
+                                                                    !isCorrectAnswer ? (
                                                                     <AlertCircle className="w-5 h-5 text-red-500" />
                                                                 ) : null}
                                                             </div>
@@ -458,30 +455,30 @@ export default function ResultsShow({ result }) {
 
                                             {(question.explanation ||
                                                 question.detailed_explanation) && (
-                                                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
-                                                    <div className="flex items-start gap-2">
-                                                        <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                                                        <div>
-                                                            <p className="text-xs font-black uppercase text-amber-800 tracking-widest mb-1">
-                                                                Giải thích & Ngữ
-                                                                pháp:
-                                                            </p>
-                                                            <p className="text-sm text-amber-900 leading-relaxed">
-                                                                {
-                                                                    question.explanation
-                                                                }
-                                                                {question.detailed_explanation && (
-                                                                    <span className="block mt-2 pt-2 border-t border-amber-200/50">
-                                                                        {
-                                                                            question.detailed_explanation
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                            </p>
+                                                    <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                                                        <div className="flex items-start gap-2">
+                                                            <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                                                            <div>
+                                                                <p className="text-xs font-black uppercase text-amber-800 tracking-widest mb-1">
+                                                                    Giải thích & Ngữ
+                                                                    pháp:
+                                                                </p>
+                                                                <p className="text-sm text-amber-900 leading-relaxed">
+                                                                    {
+                                                                        question.explanation
+                                                                    }
+                                                                    {question.detailed_explanation && (
+                                                                        <span className="block mt-2 pt-2 border-t border-amber-200/50">
+                                                                            {
+                                                                                question.detailed_explanation
+                                                                            }
+                                                                        </span>
+                                                                    )}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
                                         </div>
 
                                         {index < test.questions.length - 1 && (
