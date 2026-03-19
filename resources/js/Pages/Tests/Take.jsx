@@ -168,7 +168,10 @@ export default function Take({
         return {
             answers: toObject(payload.answers),
             flagged: toObject(payload.flagged),
-            current_question: Math.max(0, Number(payload.current_question || 0)),
+            current_question: Math.max(
+                0,
+                Number(payload.current_question || 0),
+            ),
             time_left: Math.max(0, Number(payload.time_left || 0)),
             saved_at: Number(payload.saved_at || Date.now()),
         };
@@ -187,7 +190,9 @@ export default function Take({
 
         try {
             const saved = localStorage.getItem(storageKey);
-            const localSnapshot = saved ? buildSnapshot(JSON.parse(saved)) : null;
+            const localSnapshot = saved
+                ? buildSnapshot(JSON.parse(saved))
+                : null;
             const remoteSnapshot = testSession
                 ? buildSnapshot({
                     answers: testSession.answers,
@@ -279,7 +284,13 @@ export default function Take({
 
     const syncSessionToServer = useCallback(
         async ({ keepalive = false } = {}) => {
-            if (!syncRoute || !quiz?.id || !isHydratedRef.current || isSubmittingRef.current) return;
+            if (
+                !syncRoute ||
+                !quiz?.id ||
+                !isHydratedRef.current ||
+                isSubmittingRef.current
+            )
+                return;
             if (syncInFlightRef.current && !keepalive) return;
 
             const payload = {
@@ -304,9 +315,18 @@ export default function Take({
                 // sendBeacon is more reliable during unload and does not require custom headers.
                 const formData = new FormData();
                 formData.append("_token", payload._token || "");
-                formData.append("answers", JSON.stringify(payload.answers || {}));
-                formData.append("flagged", JSON.stringify(payload.flagged || {}));
-                formData.append("current_question", String(payload.current_question ?? 0));
+                formData.append(
+                    "answers",
+                    JSON.stringify(payload.answers || {}),
+                );
+                formData.append(
+                    "flagged",
+                    JSON.stringify(payload.flagged || {}),
+                );
+                formData.append(
+                    "current_question",
+                    String(payload.current_question ?? 0),
+                );
                 formData.append("time_left", String(payload.time_left ?? 0));
 
                 if (navigator.sendBeacon) {
@@ -332,7 +352,9 @@ export default function Take({
                 });
 
                 if (response.status === 419) {
-                    console.warn("Session sync skipped due to expired CSRF token (419).");
+                    console.warn(
+                        "Session sync skipped due to expired CSRF token (419).",
+                    );
                 }
             } catch (error) {
                 console.error("Session sync error:", error);
@@ -340,10 +362,7 @@ export default function Take({
                 syncInFlightRef.current = false;
             }
         },
-        [
-            syncRoute,
-            quiz?.id,
-        ],
+        [syncRoute, quiz?.id],
     );
 
     const confirmLeaveOnce = useCallback(() => {
@@ -552,7 +571,11 @@ export default function Take({
             }
 
             const rawHref = anchor.getAttribute("href");
-            if (!rawHref || rawHref.startsWith("#") || rawHref.startsWith("javascript:")) {
+            if (
+                !rawHref ||
+                rawHref.startsWith("#") ||
+                rawHref.startsWith("javascript:")
+            ) {
                 return;
             }
 
@@ -578,7 +601,11 @@ export default function Take({
         document.addEventListener("click", handleAnchorClickCapture, true);
 
         return () => {
-            document.removeEventListener("click", handleAnchorClickCapture, true);
+            document.removeEventListener(
+                "click",
+                handleAnchorClickCapture,
+                true,
+            );
         };
     }, [isHydrated, confirmLeaveOnce]);
 
@@ -694,9 +721,22 @@ export default function Take({
     };
 
     const scrollToQuestion = (questionIndex) => {
-        const target = document.getElementById(`question-card-${questionIndex}`);
+        const target = document.getElementById(
+            `question-card-${questionIndex}`,
+        );
         if (target) {
-            target.scrollIntoView({ behavior: "smooth", block: "start" });
+            const header = document.querySelector("header");
+            const headerHeight = header?.offsetHeight ?? 80;
+            const top =
+                target.getBoundingClientRect().top +
+                window.pageYOffset -
+                headerHeight -
+                16;
+
+            window.scrollTo({
+                top: Math.max(0, top),
+                behavior: "smooth",
+            });
         }
     };
 
@@ -719,8 +759,15 @@ export default function Take({
         }
 
         const payload = section
-            ? { section_order: section.order, answers: selectedAnswers, time_spent: quizDurationSeconds - timeLeft }
-            : { answers: selectedAnswers, time_spent: quizDurationSeconds - timeLeft };
+            ? {
+                section_order: section.order,
+                answers: selectedAnswers,
+                time_spent: quizDurationSeconds - timeLeft,
+            }
+            : {
+                answers: selectedAnswers,
+                time_spent: quizDurationSeconds - timeLeft,
+            };
 
         const visit = router.post(submitRoute, payload, {
             preserveScroll: true,
@@ -775,8 +822,15 @@ export default function Take({
         }
 
         const payload = section
-            ? { section_order: section.order, answers: selectedAnswers, time_spent: quizDurationSeconds - timeLeft }
-            : { answers: selectedAnswers, time_spent: quizDurationSeconds - timeLeft };
+            ? {
+                section_order: section.order,
+                answers: selectedAnswers,
+                time_spent: quizDurationSeconds - timeLeft,
+            }
+            : {
+                answers: selectedAnswers,
+                time_spent: quizDurationSeconds - timeLeft,
+            };
 
         const visit = router.post(submitRoute, payload, {
             preserveScroll: true,
@@ -850,9 +904,10 @@ export default function Take({
         totalQuestions,
         Math.max(1, currentQuestion + 1),
     );
-    const progress = totalQuestions > 0
-        ? (currentQuestionDisplay / totalQuestions) * 100
-        : 0;
+    const progress =
+        totalQuestions > 0
+            ? (currentQuestionDisplay / totalQuestions) * 100
+            : 0;
     const answeredCount = Object.values(selectedAnswers).filter(
         (v) => v !== undefined && v !== null,
     ).length;
@@ -880,7 +935,9 @@ export default function Take({
                                             </div>
                                         )}
                                         <p className="text-gray-500 text-sm mt-1 flex items-center gap-2">
-                                            {section ? `Phần ${section.order} • ` : ""}
+                                            {section
+                                                ? `Phần ${section.order} • `
+                                                : ""}
                                             Tổng số {totalQuestions} câu hỏi
                                         </p>
                                     </div>
@@ -908,82 +965,137 @@ export default function Take({
                                 }
                             >
                                 <div className="space-y-4">
-                                    {questions.map((question, questionIndex) => (
-                                        <div
-                                            id={`question-card-${questionIndex}`}
-                                            key={question.id}
-                                            className={`bg-white rounded-lg shadow-md p-8 border-l-4 transition-all ${currentQuestion === questionIndex
-                                                ? "border-blue-500"
-                                                : "border-gray-200"
-                                                }`}
-                                        >
-                                            <div className="mb-6">
-                                                <p className="text-sm font-semibold text-blue-600 mb-3">
-                                                    Câu {questionIndex + 1}/{totalQuestions}
-                                                </p>
-                                                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                                    {question.question}
-                                                </h3>
-                                            </div>
+                                    {questions.map(
+                                        (question, questionIndex) => (
+                                            <div
+                                                id={`question-card-${questionIndex}`}
+                                                key={question.id}
+                                                className={`bg-white rounded-lg shadow-md p-6 border-l-4 transition-all ${currentQuestion ===
+                                                    questionIndex
+                                                    ? "border-blue-500"
+                                                    : "border-gray-200"
+                                                    }`}
+                                            >
+                                                <div className="mb-6">
+                                                    <p className="text-sm font-semibold text-blue-600 mb-3">
+                                                        Câu {questionIndex + 1}/
+                                                        {totalQuestions}
+                                                    </p>
+                                                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                                        {question.question}
+                                                    </h3>
+                                                </div>
 
-                                            <div className="space-y-3">
-                                                {question.options &&
-                                                    (Array.isArray(question.options)
-                                                        ? question.options.map((option, index) => (
-                                                            <label
-                                                                key={option.id}
-                                                                className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`question-${question.id}`}
-                                                                    value={option.id}
-                                                                    checked={selectedAnswers[question.id] === option.id}
-                                                                    onChange={() =>
-                                                                        handleAnswerSelect(
-                                                                            question.id,
-                                                                            option.id,
-                                                                            questionIndex,
-                                                                        )
-                                                                    }
-                                                                    className="w-4 h-4"
-                                                                />
-                                                                <div className="flex-1">
-                                                                    <p className="font-medium text-gray-900">
-                                                                        {String.fromCharCode(65 + index)}. {option.text}
-                                                                    </p>
-                                                                </div>
-                                                            </label>
-                                                        ))
-                                                        : Object.entries(question.options).map(([key, value], index) => (
-                                                            <label
-                                                                key={key}
-                                                                className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`question-${question.id}`}
-                                                                    value={key}
-                                                                    checked={selectedAnswers[question.id] === key}
-                                                                    onChange={() =>
-                                                                        handleAnswerSelect(
-                                                                            question.id,
-                                                                            key,
-                                                                            questionIndex,
-                                                                        )
-                                                                    }
-                                                                    className="w-4 h-4"
-                                                                />
-                                                                <div className="flex-1">
-                                                                    <p className="font-medium text-gray-900">
-                                                                        {String.fromCharCode(65 + index)}. {value}
-                                                                    </p>
-                                                                </div>
-                                                            </label>
-                                                        )))}
+                                                <div className="space-y-3">
+                                                    {question.options &&
+                                                        (Array.isArray(
+                                                            question.options,
+                                                        )
+                                                            ? question.options.map(
+                                                                (
+                                                                    option,
+                                                                    index,
+                                                                ) => (
+                                                                    <label
+                                                                        key={
+                                                                            option.id
+                                                                        }
+                                                                        className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`question-${question.id}`}
+                                                                            value={
+                                                                                option.id
+                                                                            }
+                                                                            checked={
+                                                                                selectedAnswers[
+                                                                                question
+                                                                                    .id
+                                                                                ] ===
+                                                                                option.id
+                                                                            }
+                                                                            onChange={() =>
+                                                                                handleAnswerSelect(
+                                                                                    question.id,
+                                                                                    option.id,
+                                                                                    questionIndex,
+                                                                                )
+                                                                            }
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        <div className="flex-1">
+                                                                            <p className="font-medium text-gray-900">
+                                                                                {String.fromCharCode(
+                                                                                    65 +
+                                                                                    index,
+                                                                                )}
+                                                                                .{" "}
+                                                                                {
+                                                                                    option.text
+                                                                                }
+                                                                            </p>
+                                                                        </div>
+                                                                    </label>
+                                                                ),
+                                                            )
+                                                            : Object.entries(
+                                                                question.options,
+                                                            ).map(
+                                                                (
+                                                                    [
+                                                                        key,
+                                                                        value,
+                                                                    ],
+                                                                    index,
+                                                                ) => (
+                                                                    <label
+                                                                        key={
+                                                                            key
+                                                                        }
+                                                                        className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`question-${question.id}`}
+                                                                            value={
+                                                                                key
+                                                                            }
+                                                                            checked={
+                                                                                selectedAnswers[
+                                                                                question
+                                                                                    .id
+                                                                                ] ===
+                                                                                key
+                                                                            }
+                                                                            onChange={() =>
+                                                                                handleAnswerSelect(
+                                                                                    question.id,
+                                                                                    key,
+                                                                                    questionIndex,
+                                                                                )
+                                                                            }
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        <div className="flex-1">
+                                                                            <p className="font-medium text-gray-900">
+                                                                                {String.fromCharCode(
+                                                                                    65 +
+                                                                                    index,
+                                                                                )}
+                                                                                .{" "}
+                                                                                {
+                                                                                    value
+                                                                                }
+                                                                            </p>
+                                                                        </div>
+                                                                    </label>
+                                                                ),
+                                                            ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ),
+                                    )}
                                 </div>
                             </InfiniteScroll>
                         </div>
@@ -992,10 +1104,16 @@ export default function Take({
                             <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
                                 {/* Timer Section moved here */}
                                 <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-100">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Thời gian còn lại</p>
-                                    <div className={`flex items-center justify-center gap-2 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-gray-900"}`}>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                        Thời gian còn lại
+                                    </p>
+                                    <div
+                                        className={`flex items-center justify-center gap-2 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-gray-900"}`}
+                                    >
                                         <Clock className="w-5 h-5" />
-                                        <span className="text-2xl font-bold tabular-nums">{formatTime(timeLeft)}</span>
+                                        <span className="text-2xl font-bold tabular-nums">
+                                            {formatTime(timeLeft)}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -1060,8 +1178,8 @@ export default function Take({
                             </p>
                             {answeredCount < totalQuestions && (
                                 <p className="text-yellow-600 text-sm mb-4">
-                                    ⚠️ Còn {totalQuestions - answeredCount}{" "}
-                                    câu chưa được trả lời
+                                    ️ Còn {totalQuestions - answeredCount} câu
+                                    chưa được trả lời
                                 </p>
                             )}
                             <p className="text-gray-600 text-sm mb-6">

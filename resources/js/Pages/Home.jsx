@@ -14,9 +14,9 @@ export default function Home({ featuredCourses = [], stats = {} }) {
         <AuthenticatedLayout>
             <Head title="Home" />
             <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-2xl mt-10">
+                <div className="mx-auto max-w-2xl mt-20">
                     <div className="text-center">
-                        <h1 className="text-5xl font-black tracking-tight text-slate-900 sm:text-7xl leading-tight">
+                        <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-6xl leading-tight">
                             Chinh phục ngoại ngữ <br />
                             <span className="text-blue-600">Dễ dàng hơn bao giờ hết</span>
                         </h1>

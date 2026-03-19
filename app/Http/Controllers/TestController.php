@@ -107,27 +107,9 @@ class TestController extends Controller
      */
     private function canAccessTest($user, $test)
     {
-        // Part 1 của A1 luôn mở khóa
-        if ($test->level === 'A1' && $test->part === 1) {
-            return true;
-        }
-
+        // Người dùng đã chọn lộ trình thì Part 1 luôn được phép vào.
         if ($test->part === 1) {
-            // Part 1 của các level sau (A2, B1...) cần Part 3 của level trước đó đạt điểm
-            $previousLevel = $this->getPreviousLevel($test->level);
-            if (!$previousLevel) {
-                return true; // Không có level trước → mặc định mở (A1)
-            }
-
-            $prevLevelConfig = \App\Models\Level::where('name', $previousLevel)->first();
-            $threshold = $prevLevelConfig->pass_threshold_part3 ?? 90.0;
-
-            $progress = \App\Models\Progress::where('user_id', $user->id)
-                ->where('level', $previousLevel)
-                ->where('part', 3)
-                ->first();
-
-            return $progress && $progress->percentage >= $threshold;
+            return true;
         }
 
         // Part 2 và 3 cần Part trước đó của cùng level đạt điểm

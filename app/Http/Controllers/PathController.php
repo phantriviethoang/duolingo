@@ -89,7 +89,6 @@ class PathController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $currentLevel = $user->current_level ?? 'A1';
         $progressData = [];
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
@@ -109,7 +108,6 @@ class PathController extends Controller
         }
 
         return Inertia::render('Path/Index', [
-            'currentLevel' => $currentLevel,
             'levels' => self::LEVELS,
             'progressData' => $progressData,
         ]);
@@ -272,30 +270,9 @@ class PathController extends Controller
      */
     private function isPartUnlocked($user, string $level, int $part, array $thresholds): bool
     {
-        // Part 1 của A1 luôn mở khóa
-        if ($level === 'A1' && $part === 1) {
-            return true;
-        }
-
+        // Người dùng đã chọn level mục tiêu thì Part 1 luôn mở.
         if ($part === 1) {
-            // Part 1 của các level sau (A2, B1...) cần Part 3 của level trước đó đạt điểm
-            $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-            $currentIndex = array_search($level, $levels);
-
-            if ($currentIndex === 0 || $currentIndex === false) {
-                return true; // Fallback cho A1
-            }
-
-            $previousLevel = $levels[$currentIndex - 1];
-            $prevLevelConfig = \App\Models\Level::where('name', $previousLevel)->first();
-            $prevThreshold = $prevLevelConfig->pass_threshold_part3 ?? 90;
-
-            $progress = \App\Models\Progress::where('user_id', $user->id)
-                ->where('level', $previousLevel)
-                ->where('part', 3)
-                ->first();
-
-            return $progress && $this->resolveProgressPercent($progress) >= $prevThreshold;
+            return true;
         }
 
         // Part 2 và 3 cần Part trước đó của cùng level đạt điểm

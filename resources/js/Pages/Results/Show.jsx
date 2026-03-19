@@ -89,7 +89,7 @@ export default function ResultsShow({ result }) {
     };
 
     const formatTimeSpent = (seconds) => {
-        if (!seconds) return "Chưa cập nhật";
+        if (!seconds) return "N/A";
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
@@ -106,8 +106,8 @@ export default function ResultsShow({ result }) {
         <AuthenticatedLayout>
             <Head title={`Kết quả: ${test.title}`} />
 
-            <div className="min-h-screen bg-gray-50/50 py-8">
-                <div className="max-w-6xl mx-auto px-4">
+            <div className="min-h-screen bg-gray-50/50 py-10">
+                <div className="max-w-5xl mx-auto px-4">
                     {/* Header Action */}
                     <div className="flex justify-between items-center mb-8">
                         <Link
@@ -128,10 +128,11 @@ export default function ResultsShow({ result }) {
                                 </div>
                             )}
                             <div
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${is_passed_requirement
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${
+                                    is_passed_requirement
                                         ? "bg-green-50 border-green-200 text-green-700 shadow-sm shadow-green-100"
                                         : "bg-red-50 border-red-200 text-red-700 shadow-sm shadow-red-100"
-                                    }`}
+                                }`}
                             >
                                 {is_passed_requirement ? (
                                     <>
@@ -191,69 +192,69 @@ export default function ResultsShow({ result }) {
                         </h1>
                         <div className="flex gap-2 mt-3">
                             <span className="badge badge-warning text-white font-bold py-3 px-4 rounded-lg">
-                                Trình độ {test.level}
+                                Level {test.level}
                             </span>
                             <span className="badge badge-warning text-white font-bold py-3 px-4 rounded-lg">
-                                Phần {test.part}
+                                Part {test.part}
                             </span>
                         </div>
                     </div>
 
                     {/* Result Summary Cards */}
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
                         {/* Summary Column */}
-                        <div className="lg:col-span-1 space-y-3">
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-                                <div className="bg-indigo-50 p-2 rounded-lg">
-                                    <BarChart2 className="w-5 h-5 text-indigo-600" />
+                        <div className="lg:col-span-1 space-y-4">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-indigo-50 p-3 rounded-xl">
+                                    <BarChart2 className="w-6 h-6 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
                                         Kết quả
                                     </p>
-                                    <p className="text-lg font-black text-gray-900">
+                                    <p className="text-xl font-black text-gray-900">
                                         {correct_count}/{total_count}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-                                <div className="bg-purple-50 p-2 rounded-lg">
-                                    <Clock className="w-5 h-5 text-purple-600" />
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-purple-50 p-3 rounded-xl">
+                                    <Clock className="w-6 h-6 text-purple-600" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
                                         Thời gian làm
                                     </p>
-                                    <p className="text-lg font-black text-gray-900">
+                                    <p className="text-xl font-black text-gray-900">
                                         {formatTimeSpent(result.time_spent)}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-                                <div className="bg-amber-50 p-2 rounded-lg">
-                                    <BarChart2 className="w-5 h-5 text-amber-600" />
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-amber-50 p-3 rounded-xl">
+                                    <BarChart2 className="w-6 h-6 text-amber-600" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
                                         Độ chính xác
                                     </p>
-                                    <p className="text-lg font-black text-gray-900">
+                                    <p className="text-xl font-black text-gray-900">
                                         {accuracy}%
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-                                <div className="bg-blue-50 p-2 rounded-lg">
-                                    <Clock className="w-5 h-5 text-blue-600" />
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-blue-50 p-3 rounded-xl">
+                                    <Clock className="w-6 h-6 text-blue-600" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
                                         Ngày hoàn thành
                                     </p>
-                                    <p className="text-[10px] font-bold text-gray-900">
+                                    <p className="text-[11px] font-bold text-gray-900">
                                         {formatDate(result.completed_at)}
                                     </p>
                                 </div>
@@ -261,78 +262,78 @@ export default function ResultsShow({ result }) {
                         </div>
 
                         {/* Status Grid */}
-                        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-3">
-                                    <BarChart2 className="w-6 h-6 text-blue-500" />
+                        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                                    <BarChart2 className="w-8 h-8 text-blue-500" />
                                 </div>
-                                <p className="text-blue-600 font-bold text-sm">
+                                <p className="text-blue-600 font-bold text-lg">
                                     Điểm số
                                 </p>
-                                <p className="text-3xl font-black text-gray-900 mt-1">
+                                <p className="text-4xl font-black text-gray-900 mt-2">
                                     {score}%
                                 </p>
-                                <p className="text-gray-400 text-[10px] mt-0.5 font-bold uppercase">
+                                <p className="text-gray-400 text-sm mt-1">
                                     trên 100%
                                 </p>
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-                                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-3">
-                                    <Check className="w-6 h-6 text-green-500" />
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+                                    <Check className="w-8 h-8 text-green-500" />
                                 </div>
-                                <p className="text-green-600 font-bold text-sm">
+                                <p className="text-green-600 font-bold text-lg">
                                     Trả lời đúng
                                 </p>
-                                <p className="text-3xl font-black text-gray-900 mt-1">
+                                <p className="text-4xl font-black text-gray-900 mt-2">
                                     {correct_count}
                                 </p>
-                                <p className="text-gray-400 text-[10px] mt-0.5 font-bold uppercase">
+                                <p className="text-gray-400 text-sm mt-1">
                                     câu hỏi
                                 </p>
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-                                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-3">
-                                    <X className="w-6 h-6 text-red-500" />
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                                    <X className="w-8 h-8 text-red-500" />
                                 </div>
-                                <p className="text-red-600 font-bold text-sm">
+                                <p className="text-red-600 font-bold text-lg">
                                     Trả lời sai
                                 </p>
-                                <p className="text-3xl font-black text-gray-900 mt-1">
+                                <p className="text-4xl font-black text-gray-900 mt-2">
                                     {wrong_count}
                                 </p>
-                                <p className="text-gray-400 text-[10px] mt-0.5 font-bold uppercase">
+                                <p className="text-gray-400 text-sm mt-1">
                                     câu hỏi
                                 </p>
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-                                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                    <Minus className="w-6 h-6 text-gray-500" />
+                            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                    <Minus className="w-8 h-8 text-gray-500" />
                                 </div>
-                                <p className="text-gray-500 font-bold text-sm">
+                                <p className="text-gray-500 font-bold text-lg">
                                     Bỏ qua
                                 </p>
-                                <p className="text-3xl font-black text-gray-900 mt-1">
+                                <p className="text-4xl font-black text-gray-900 mt-2">
                                     {skipped_count}
                                 </p>
-                                <p className="text-gray-400 text-[10px] mt-0.5 font-bold uppercase">
+                                <p className="text-gray-400 text-sm mt-1">
                                     câu hỏi
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100">
-                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-                            <h2 className="text-lg font-black text-gray-900 flex items-center">
-                                <ChevronRight className="w-5 h-5 text-indigo-600 mr-2" />
+                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                        <div className="bg-gray-50 px-8 py-6 border-b border-gray-100">
+                            <h2 className="text-xl font-black text-gray-900 flex items-center">
+                                <ChevronRight className="w-6 h-6 text-indigo-600 mr-2" />
                                 Phân tích chi tiết bài làm
                             </h2>
                         </div>
 
-                        <div className="p-6 space-y-8">
+                        <div className="p-8 space-y-10">
                             {test.questions?.map((question, index) => {
                                 const userAnswerId = answers[question.id];
                                 const correctOption = question.answers.find(
@@ -347,42 +348,44 @@ export default function ResultsShow({ result }) {
                                 return (
                                     <div key={question.id} className="relative">
                                         {/* Question Header */}
-                                        <div className="flex items-start gap-3 mb-4">
+                                        <div className="flex items-start gap-4 mb-4">
                                             <span
-                                                className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow-sm ${!hasUserAnswer
+                                                className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
+                                                    !hasUserAnswer
                                                         ? "bg-gray-400"
                                                         : isCorrect
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                    }`}
+                                                          ? "bg-green-500"
+                                                          : "bg-red-500"
+                                                }`}
                                             >
                                                 {index + 1}
                                             </span>
 
-                                            <div className="flex-1 pt-0.5">
-                                                <div className="flex items-center gap-2 mb-1">
+                                            <div className="flex-1 pt-1">
+                                                <div className="flex items-center gap-2 mb-2">
                                                     <span
-                                                        className={`text-[10px] font-bold uppercase tracking-widest ${!hasUserAnswer
+                                                        className={`text-xs font-bold uppercase tracking-widest ${
+                                                            !hasUserAnswer
                                                                 ? "text-gray-400"
                                                                 : isCorrect
-                                                                    ? "text-green-600"
-                                                                    : "text-red-600"
-                                                            }`}
+                                                                  ? "text-green-600"
+                                                                  : "text-red-600"
+                                                        }`}
                                                     >
                                                         {!hasUserAnswer
                                                             ? "Bỏ qua"
                                                             : isCorrect
-                                                                ? "Đúng"
-                                                                : "Sai"}
+                                                              ? "Đúng"
+                                                              : "Sai"}
                                                     </span>
                                                 </div>
-                                                <p className="text-base font-bold text-gray-900 leading-snug">
+                                                <p className="text-lg font-bold text-gray-900 leading-relaxed">
                                                     {question.question_text}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-11 mb-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-14 mb-6">
                                             {question.answers?.map(
                                                 (answer, optIndex) => {
                                                     const isUserAnswer =
@@ -395,7 +398,7 @@ export default function ResultsShow({ result }) {
                                                         "bg-gray-50 border-gray-100 text-gray-600";
                                                     if (isCorrectAnswer)
                                                         stateClass =
-                                                            "bg-green-50 border-green-200 text-green-700 font-bold ring-1 ring-green-500 ring-offset-1";
+                                                            "bg-green-50 border-green-200 text-green-700 font-bold ring-2 ring-green-500 ring-offset-1";
                                                     else if (isUserAnswer)
                                                         stateClass =
                                                             "bg-red-50 border-red-200 text-red-700 font-bold";
@@ -403,13 +406,13 @@ export default function ResultsShow({ result }) {
                                                     return (
                                                         <div
                                                             key={answer.id}
-                                                            className={`p-3 rounded-xl border-2 transition-all flex items-center justify-between ${stateClass}`}
+                                                            className={`p-4 rounded-xl border-2 transition-all flex items-center justify-between ${stateClass}`}
                                                         >
-                                                            <div className="flex items-center gap-2 text-sm">
-                                                                <span className="opacity-50">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="opacity-50 text-sm">
                                                                     {String.fromCharCode(
                                                                         65 +
-                                                                        optIndex,
+                                                                            optIndex,
                                                                     )}
                                                                     .
                                                                 </span>
@@ -421,18 +424,18 @@ export default function ResultsShow({ result }) {
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 {isCorrectAnswer ? (
-                                                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                                                                 ) : null}
 
                                                                 {isUserAnswer ? (
-                                                                    <span className="text-[9px] uppercase font-black bg-white/50 px-1.5 py-0.5 rounded-full">
+                                                                    <span className="text-[10px] uppercase font-black bg-white/50 px-2 py-0.5 rounded-full">
                                                                         Bạn chọn
                                                                     </span>
                                                                 ) : null}
 
                                                                 {isUserAnswer &&
-                                                                    !isCorrectAnswer ? (
-                                                                    <AlertCircle className="w-4 h-4 text-red-500" />
+                                                                !isCorrectAnswer ? (
+                                                                    <AlertCircle className="w-5 h-5 text-red-500" />
                                                                 ) : null}
                                                             </div>
                                                         </div>
@@ -441,11 +444,11 @@ export default function ResultsShow({ result }) {
                                             )}
                                         </div>
 
-                                        <div className="ml-11 space-y-2">
+                                        <div className="ml-14 space-y-3">
                                             {question.translation && (
-                                                <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
-                                                    <p className="text-xs text-indigo-900">
-                                                        <span className="font-black uppercase text-[9px] tracking-widest mr-2 opacity-50">
+                                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                                                    <p className="text-sm text-indigo-900">
+                                                        <span className="font-black uppercase text-[10px] tracking-widest mr-2 opacity-50">
                                                             Dịch câu:
                                                         </span>
                                                         {question.translation}
@@ -455,34 +458,34 @@ export default function ResultsShow({ result }) {
 
                                             {(question.explanation ||
                                                 question.detailed_explanation) && (
-                                                    <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100">
-                                                        <div className="flex items-start gap-2">
-                                                            <MessageSquare className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
-                                                            <div>
-                                                                <p className="text-[10px] font-black uppercase text-amber-800 tracking-widest mb-0.5">
-                                                                    Giải thích & Ngữ
-                                                                    pháp:
-                                                                </p>
-                                                                <p className="text-xs text-amber-900 leading-relaxed">
-                                                                    {
-                                                                        question.explanation
-                                                                    }
-                                                                    {question.detailed_explanation && (
-                                                                        <span className="block mt-1 pt-1 border-t border-amber-200/50">
-                                                                            {
-                                                                                question.detailed_explanation
-                                                                            }
-                                                                        </span>
-                                                                    )}
-                                                                </p>
-                                                            </div>
+                                                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                                                    <div className="flex items-start gap-2">
+                                                        <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                                                        <div>
+                                                            <p className="text-xs font-black uppercase text-amber-800 tracking-widest mb-1">
+                                                                Giải thích & Ngữ
+                                                                pháp:
+                                                            </p>
+                                                            <p className="text-sm text-amber-900 leading-relaxed">
+                                                                {
+                                                                    question.explanation
+                                                                }
+                                                                {question.detailed_explanation && (
+                                                                    <span className="block mt-2 pt-2 border-t border-amber-200/50">
+                                                                        {
+                                                                            question.detailed_explanation
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {index < test.questions.length - 1 && (
-                                            <div className="h-px bg-gray-100 my-8 ml-11"></div>
+                                            <div className="h-px bg-gray-100 my-10 ml-14"></div>
                                         )}
                                     </div>
                                 );
