@@ -1,5 +1,5 @@
-import { Link } from "@inertiajs/react";
-import Layout from "../Layouts/Layout";
+import { Head, Link } from "@inertiajs/react";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function Home({ featuredCourses = [], stats = {} }) {
     const fallbackCourses = featuredCourses.length
@@ -11,7 +11,8 @@ export default function Home({ featuredCourses = [], stats = {} }) {
         ];
 
     return (
-        <Layout>
+        <AuthenticatedLayout>
+            <Head title="Home" />
             <div className="min-h-screen bg-white">
                 <section className="bg-[#cfe8ff] py-16 text-center text-gray-900">
                     <div className="mx-auto max-w-4xl px-6">
@@ -60,6 +61,6 @@ export default function Home({ featuredCourses = [], stats = {} }) {
                 Footer
             </footer> */}
             </div>
-        </Layout>
+        </AuthenticatedLayout>
     );
 }

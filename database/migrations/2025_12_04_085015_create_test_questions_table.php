@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('test_questions', function (Blueprint $table) {
+        Schema::create('questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('test_id')->constrained()->cascadeOnDelete();
-            $table->text('question');
-            $table->json('options')->comment('Mảng chứa các lựa chọn');
-            $table->integer('correct_option_id');
-            $table->text('explanation')->nullable();
+            $table->text('question_text');
+            $table->string('question_type')->default('multiple_choice');
+            $table->integer('order');
             $table->text('translation')->nullable();
+            $table->text('explanation')->nullable();
             $table->text('detailed_explanation')->nullable();
             $table->timestamps();
         });
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_questions');
+        Schema::dropIfExists('questions');
     }
 };

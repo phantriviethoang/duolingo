@@ -1,27 +1,234 @@
-Các chức năng Nâng cấp với laravel backend, inertia trung gian( ko dùng api), react fe với tailwindcss, daisyui
+Bạn là một Senior Fullstack Developer (Laravel + React/Inertia).
 
-## A. Cá nhân hóa Lộ trình (Adaptive Learning)
+Tôi đã có một project luyện thi trắc nghiệm tiếng Anh **đã có sẵn code base**.
+Yêu cầu của bạn là **KHÔNG build lại từ đầu**, mà:
 
-Phân tầng trình độ: Người dùng chọn trình độ mục tiêu (B1, B2, C1).
+👉 **Refactor + chỉnh sửa trên code hiện có**
+👉 **Tận dụng tối đa file, model, controller, migration, page đang có**
+👉 Tránh tạo file mới không cần thiết
 
-Mở khóa theo điều kiện (Gatekeeping): \* Bộ đề chia thành các Part nhỏ.
+---
 
-Thiết lập pass_threshold (điểm chặn). Phải đạt mức điểm này ở Part hiện tại mới được phép làm Part tiếp theo.
+# 🎯 1. Mục tiêu
 
-Chế độ High-Quality: Người dùng có yêu cầu cao sẽ được trải nghiệm bộ đề khó hơn, thời gian khắt khe hơn và điểm chặn cao hơn.
+* Chuẩn hóa naming
+* Chuẩn hóa route prefix
+* Làm rõ logic: Path → Part → Test → Result → Progress
+* Code clean, dễ đọc
+* Không dư thừa
 
-## B. Cơ chế Chống mất dữ liệu (Reliability)
+---
 
-Auto-save (Drafting): Sử dụng useForm của Inertia để tự động gửi đáp án về server/local mỗi khi người dùng click chọn.
+# ⚠️ 2. NGUYÊN TẮC QUAN TRỌNG
 
-Resume Session: Nếu F5, sập nguồn hoặc mất mạng, hệ thống tự động khôi phục đúng câu hỏi và Section đang làm dở từ Database.
+## ❌ KHÔNG làm:
 
-## C. Dashboard Phân tích & Luyện tập lại (Analytics & Retake)
+* Không tạo lại project mới
+* Không duplicate model/controller
+* Không tạo thêm file nếu file cũ có thể sửa
+* Không over-engineering
 
-Dashboard Tiến độ: Hiển thị % hoàn thành lộ trình (ví dụ: Lộ trình B1 đạt 60%).
+---
 
-Lịch sử thông minh: Bảng lịch sử có tính năng Sắp xếp (Sort) theo số câu sai (từ nhiều đến ít) để nhận diện lỗ hổng kiến thức.
+## ✅ PHẢI làm:
 
-Chế độ "Làm lại câu sai": Một tính năng tách biệt giúp người dùng chỉ tập trung giải lại những câu đã sai trong bộ đề đó cho đến khi đúng hoàn toàn.
+* Refactor trực tiếp trên file hiện có
+* Rename hợp lý (nếu cần)
+* Xóa code thừa
+* Gộp logic nếu bị trùng
 
-## D. Thêm tính năng phân chia câu hỏi theo phần theo mục, tách nhau bởi part 1234 chẳng hạn, tiếp phần lộ trình người học, phân chia theo mục làm, độ khó, độ hoàn thành, tiếp đến bổ sung phần phân loại câu hỏi theo dạng, để người dùng dễ dàng luyện tập theo câu hỏi từng dạng đó.
+---
+
+# 🧭 3. Domain chuẩn
+
+| Concept  | Vai trò       |
+| -------- | ------------- |
+| User     | người dùng    |
+| Path     | chọn level    |
+| Part     | stage (1,2,3) |
+| Test     | bộ đề         |
+| Question | câu hỏi       |
+| Answer   | đáp án        |
+| Result   | kết quả       |
+| Progress | tiến độ       |
+
+---
+
+# 🌐 4. Route prefix (refactor lại)
+
+## User
+
+```bash
+/path
+/path/{level}
+
+/tests
+/tests/{test}
+
+/results
+/results/{result}
+
+/progress
+/profile
+```
+
+---
+
+## Admin
+
+```bash
+/admin
+/admin/users
+/admin/tests
+/admin/questions
+/admin/results
+```
+
+---
+
+# 🧠 5. Refactor Controller
+
+👉 Nếu controller đã tồn tại:
+
+* Sửa lại method cho đúng:
+
+  * index()
+  * show()
+  * store()
+
+👉 Nếu controller bị trùng logic:
+
+* Gộp lại (KHÔNG tạo controller mới)
+
+---
+
+# 🧱 6. Refactor Model & Migration
+
+## Model:
+
+* Giữ nguyên nếu đã có
+* Chỉ thêm field nếu thiếu:
+
+  * tests: level, part
+  * users: current_level, is_admin
+
+---
+
+## Migration:
+
+* Nếu chưa có:
+  → thêm field bằng migration mới (không sửa file cũ đã migrate)
+
+* Không tạo bảng mới nếu có thể reuse:
+
+  * progress (nếu có table tương tự thì tận dụng)
+
+---
+
+# 🔗 7. Quan hệ cần đảm bảo
+
+* Test → questions
+* Question → answers
+* User → results
+* User → progress
+
+---
+
+# 🔄 8. Logic cần thêm/sửa
+
+## Unlock Part
+
+* Nếu đã có logic tương tự:
+  → sửa lại cho đúng rule
+
+* Không viết lại từ đầu
+
+---
+
+## Submit bài
+
+* Dùng controller hiện có
+* Chỉ thêm:
+
+  * tính percentage
+  * update progress
+
+---
+
+# 🖥 9. Frontend (React + Inertia)
+
+## NGUYÊN TẮC
+
+* Không tạo page mới nếu đã có page tương tự
+* Rename file nếu tên sai
+* Tái sử dụng component
+
+---
+
+## Pages cần có (reuse nếu có)
+
+```bash
+Path/Index.jsx
+Path/Show.jsx
+
+Tests/Index.jsx
+Tests/Show.jsx
+
+Results/Show.jsx
+Progress/Index.jsx
+
+Admin/*
+```
+
+---
+
+## UI
+
+* Chỉ dùng Tailwind + DaisyUI
+* Không thêm lib mới
+* Không animation phức tạp
+
+---
+
+# 🛠 10. Admin Dashboard
+
+* Dùng controller/admin đã có nếu tồn tại
+* Nếu thiếu:
+  → thêm method vào controller hiện có (KHÔNG tạo controller mới nếu không cần)
+
+---
+
+# 🧹 11. Cleanup
+
+* Xóa:
+
+  * route dư
+  * controller không dùng
+  * code duplicate
+
+---
+
+# 🎯 Output mong muốn
+
+* Refactor trực tiếp code hiện có
+* Không tạo file thừa
+* Naming consistent
+* Route clean
+* Code dễ đọc
+
+---
+
+Hãy thực hiện theo thứ tự:
+
+1. Scan codebase hiện tại
+2. Refactor routes
+3. Refactor controller
+4. Refactor model/migration
+5. Refactor frontend
+6. Cleanup
+
+---
+
+Ưu tiên:
+👉 Ít thay đổi nhất nhưng hiệu quả cao nhất
+👉 Không phá vỡ structure hiện tại

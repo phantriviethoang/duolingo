@@ -30,9 +30,10 @@ class DatabaseSeeder extends Seeder
             'current_level' => 'A1',
         ]);
 
-        // Chỉ dùng CEFR seeder, tạm thời disable các seeder cũ
+        // Chỉ dùng các seeder mới cho cấu trúc refactored
         $this->call([
-            CEFRProgressSeeder::class,
+            LevelSeeder::class,
+            ComprehensiveTestSeeder::class,
         ]);
     }
 }

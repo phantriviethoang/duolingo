@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('test_results', function (Blueprint $table) {
+        Schema::create('results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('test_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('section_id')->nullable()->constrained('sections')->cascadeOnDelete();
-            $table->integer('total_questions')->default(0);
-            $table->integer('correct_answers')->default(0);
-            $table->integer('time_spent')->default(0);
-            $table->float('score')->nullable();
-            $table->json('user_answer')->nullable();
+            $table->integer('score');
+            $table->integer('correct')->default(0);
+            $table->integer('total')->default(0);
+            $table->json('answers')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_results');
+        Schema::dropIfExists('results');
     }
 };

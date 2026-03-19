@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tests', function (Blueprint $table) {
-            $table->string('audio_path')->nullable()->after('duration');
-            $table->string('image_path')->nullable()->after('audio_path');
+        Schema::create('answers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('question_id')->constrained()->onDelete('cascade');
+            $table->text('answer_text');
+            $table->boolean('is_correct')->default(false);
+            $table->timestamps();
         });
     }
 
@@ -22,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tests', function (Blueprint $table) {
-            $table->dropColumn(['audio_path', 'image_path']);
-        });
+        Schema::dropIfExists('answers');
     }
 };

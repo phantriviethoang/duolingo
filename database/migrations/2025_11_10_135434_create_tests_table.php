@@ -16,8 +16,9 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->integer('duration')->comment('Thời gian làm bài (phút)');
+            $table->string('level')->comment('CEFR level: A1, A2, B1, B2, C1, C2');
+            $table->integer('part')->comment('Part number: 1, 2, 3');
             $table->integer('total_questions')->default(0);
-            $table->json('questions')->nullable()->comment('Danh sách câu hỏi');
             $table->integer('attempts')->default(0)->comment('Số lượt làm bài');
             $table->boolean('is_active')->default(true);
             $table->timestamps();

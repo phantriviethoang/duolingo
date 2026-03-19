@@ -35,41 +35,71 @@ class TestController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of tests for users
      */
     public function index()
     {
-        try {
-            // Lấy tất cả tests
-            $tests = Test::orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($test) {
-                    return [
-                        'id' => $test->id,
-                        'title' => $test->title ?? 'Untitled',
-                        'description' => $test->description ?? '',
-                        'duration' => $test->duration ?? 40,
-                        'total_questions' => $test->total_questions ?? 0,
-                        'attempts' => $test->attempts ?? 0,
-                        'created_at' => $test->created_at ? $test->created_at->format('Y-m-d') : '',
-                    ];
-                });
+        $user = auth()->user();
+        $tests = Test::orderBy('level')
+            ->orderBy('part')
+            ->get()
+            ->map(function ($test) use ($user) {
+                return [
+                    'id' => $test->id,
+                    'title' => $test->title,
+                    'description' => $test->description,
+                    'level' => $test->level,
+                    'part' => $test->part,
+                    'duration' => $test->duration,
+                    'total_questions' => $test->total_questions,
+                    'locked' => ! $this->canAccessTest($user, $test),
+                ];
+            });
 
-            // Đảm bảo luôn trả về array, không phải null
-            $tests = $tests->toArray();
+        return Inertia::render('Tests/Index', [
+            'tests' => $tests,
+        ]);
+    }
 
-            return Inertia::render('Tests/Index', [
-                'tests' => $tests,
-            ]);
-        } catch (\Exception $e) {
-            // Nếu có lỗi, vẫn trả về trang với mảng rỗng
-            \Log::error('TestController@index error: '.$e->getMessage());
+    /**
+     * Display specific test
+     */
+    public function show(Test $test)
+    {
+        $user = auth()->user();
 
-            return Inertia::render('Tests/Index', [
-                'tests' => [],
-                'error' => 'Có lỗi xảy ra khi tải dữ liệu: '.$e->getMessage(),
-            ]);
+        if (! $this->canAccessTest($user, $test)) {
+            abort(403, 'This part is locked');
         }
+
+        $test->load('questions.answers');
+
+        return Inertia::render('Tests/Show', [
+            'test' => $test,
+        ]);
+    }
+
+    /**
+     * Check if user can access test
+     */
+    private function canAccessTest($user, $test)
+    {
+        if ($test->part === 1) {
+            return true;
+        }
+
+        $previousPart = $test->part - 1;
+        $previousProgress = \App\Models\Progress::where('user_id', $user->id)
+            ->where('level', $test->level)
+            ->where('part', $previousPart)
+            ->first();
+
+        if (! $previousProgress) {
+            return false;
+        }
+
+        $passScores = [1 => 60, 2 => 75, 3 => 90];
+        return $previousProgress->score >= $passScores[$previousPart];
     }
 
     /**
@@ -119,26 +149,6 @@ class TestController extends Controller
 
         return redirect()->route('admin.tests')
             ->with('success', 'Đề thi đã được tạo!');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Test $test)
-    {
-        return Inertia::render('Tests/Show', [
-            'test' => [
-                'id' => $test->id,
-                'title' => $test->title,
-                'description' => $test->description,
-                'duration' => $test->duration,
-                'audio_path' => $test->audio_path,
-                'image_path' => $test->image_path,
-                'total_questions' => $test->total_questions,
-                'attempts' => $test->attempts,
-                'created_at' => $test->created_at->format('Y-m-d H:i'),
-            ],
-        ]);
     }
 
     /**
@@ -243,12 +253,12 @@ class TestController extends Controller
         $resultId = request()->query('result_id');
 
         if ($retakeWrong && $resultId) {
-            $previousResult = \App\Models\TestResult::where('id', $resultId)
+            $previousResult = \App\Models\Result::where('id', $resultId)
                 ->where('user_id', auth()->id())
                 ->first();
 
             if ($previousResult) {
-                $prevAnswers = (array)$previousResult->user_answer;
+                $prevAnswers = (array) $previousResult->answers;
                 $wrongQuestions = collect();
 
                 foreach ($questions as $q) {
@@ -282,8 +292,8 @@ class TestController extends Controller
                 'duration' => $test->duration ?? 40,
                 'total_questions' => $questions->count(),
                 'questions' => $mappedQuestions,
-                'retake_wrong' => (bool)$retakeWrong,
-                'previous_result_id' => $resultId ? (int)$resultId : null,
+                'retake_wrong' => (bool) $retakeWrong,
+                'previous_result_id' => $resultId ? (int) $resultId : null,
             ],
         ]);
     }

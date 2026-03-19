@@ -13,11 +13,10 @@ return new class extends Migration
     {
         Schema::create('levels', function (Blueprint $table) {
             $table->id();
-            $table->string('target_level')->default('A1')->comment('A1, A2, B1, B2, C1, C2');
-            $table->string('name')->comment('Ví dụ: Phần 1, Phần 2');
+            $table->string('name')->unique()->comment('CEFR level: A1, A2, B1, B2, C1, C2');
             $table->text('description')->nullable();
-            $table->integer('order')->comment('Thứ tự: 1, 2, 3');
-            $table->float('pass_threshold')->default(0.5);
+            $table->integer('order')->comment('Thứ tự: 1, 2, 3, 4, 5, 6');
+            $table->integer('pass_threshold')->default(60)->comment('Điểm đạt: 60, 75, 90');
             $table->timestamps();
         });
     }

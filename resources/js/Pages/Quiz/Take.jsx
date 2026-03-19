@@ -1,28 +1,4 @@
-/**
- * ⭐ Take Component - Làm bài trắc nghiệm
- *
- * 📋 Giao diện làm bài + Quản lý trạng thái
- *
- * ⭐ FIX:
- * 1. Đổi state từ isSubmitted → isSubmitting (tránh ReferenceError)
- * 2. Xóa hiển thị translation dưới câu hỏi
- * 3. Backend không truyền explanation/translation (tránh lộ đáp án)
- *
- * Props:
- * - quiz {id, title, duration, ...}
- * - questions[] → Danh sách câu hỏi (chỉ question + options)
- * - section {order, pass_threshold}
- * - submitRoute → POST endpoint
- *
- * Chức năng:
- * ✅ localStorage: Lưu answers + startTime (ko mất khi F5)
- * ✅ Timer: Đếm ngược từ duration (tính từ startTime)
- * ✅ Auto-save: Mỗi khi chọn đáp án
- * ✅ Navigation: Câu trước/sau + Quick jump sidebar
- * ✅ Submit: Nộp bài → POST /exams/{exam}/sections/submit
- *
- * Auto-submit: Khi timer = 0, tự động nộp bài
- */
+
 
 import { Head, router, usePage } from "@inertiajs/react";
 import { Clock, AlertCircle, Send } from "lucide-react";

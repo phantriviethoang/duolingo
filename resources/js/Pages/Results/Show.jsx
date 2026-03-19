@@ -1,26 +1,16 @@
-import { Head, Link } from "@inertiajs/react";
-import { CheckCircle2, AlertCircle, ArrowLeft, BookOpen, Filter } from "lucide-react";
-import Layout from "@/Layouts/Layout";
-import { useState } from "react";
+import React from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 
-export default function Show({ test, result, questions }) {
-    const [filter, setFilter] = useState("all");
-
-    const enhancedQuestions = questions.map((q, idx) => ({ ...q, originalIndex: idx + 1 }));
-    const displayedQuestions = filter === "all" 
-        ? enhancedQuestions
-        : enhancedQuestions.filter(question => {
-            const userAnswerId = result.answers[question.id];
-            const correctOption = question.options.find((opt) => opt.is_correct);
-            return userAnswerId !== correctOption?.id;
-        });
+export default function ResultsShow({ result }) {
+    const { test, answers, score } = result;
 
     return (
-        <Layout>
+        <>
             <Head title={`Kết quả - ${test.title}`} />
-            <div className="max-w-4xl mx-auto">
+            <div className="container mx-auto px-4 py-8 max-w-4xl">
                 <Link
-                    href="/results"
+                    href={route('results.index')}
                     className="btn btn-ghost font-normal text-lg btn-sm gap-2 mb-6"
                 >
                     <ArrowLeft size={18} />
@@ -34,7 +24,7 @@ export default function Show({ test, result, questions }) {
                         </h1>
                         <div className="mb-2">
                             <div className="flex items-center gap-2 justify-center">
-                                {result.score >= 70 ? (
+                                {score >= 70 ? (
                                     <CheckCircle2
                                         size={40}
                                         className="text-success"
@@ -46,16 +36,16 @@ export default function Show({ test, result, questions }) {
                                     />
                                 )}
                                 <h2 className="text-4xl font-bold">
-                                    {result.score}%
+                                    {score}%
                                 </h2>
                             </div>
                             <p className="mt-3 text-lg text-base-content/70">
-                                Bạn đã trả lời đúng {result.correct}/
-                                {result.total} câu hỏi
+                                Bạn đã trả lời đúng {result.correct || 0}/
+                                {result.total || test.questions?.length || 0} câu hỏi
                             </p>
                             <p className="text-sm text-base-content/60 mt-2">
                                 Hoàn thành lúc:{" "}
-                                {new Date().toLocaleDateString('en-GB')}
+                                {new Date(result.completed_at).toLocaleDateString('en-GB')}
                             </p>
                         </div>
                     </div>
@@ -64,68 +54,55 @@ export default function Show({ test, result, questions }) {
                 {/* Chua bai */}
                 <div className="card bg-base-100 shadow-xl">
                     <div className="card-body">
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                            <h3 className="card-title mb-0">Chữa bài chi tiết</h3>
-                            <div className="flex gap-2">
-                                <button 
-                                    className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-outline'}`}
-                                    onClick={() => setFilter('all')}
-                                >
-                                    Tất cả ({questions.length})
-                                </button>
-                                <button 
-                                    className={`btn btn-sm ${filter === 'wrong' ? 'btn-error' : 'btn-outline'}`}
-                                    onClick={() => setFilter('wrong')}
-                                >
-                                    Câu sai ({questions.length - result.correct})
-                                </button>
-                            </div>
-                        </div>
-
-                        {filter === 'wrong' && displayedQuestions.length === 0 && (
-                            <div className="text-center py-8 text-success">
-                                <CheckCircle2 size={48} className="mx-auto mb-2 opacity-50" />
-                                <p>Tuyệt vời! Bạn không làm sai câu nào.</p>
-                            </div>
-                        )}
-
+                        <h3 className="card-title mb-4">Chữa bài chi tiết</h3>
                         <div className="space-y-4">
-                            {displayedQuestions.map((question, index) => {
-                                const userAnswerId =
-                                    result.answers[question.id];
-
-                                const userOption = question.options.find(
-                                    (opt) => opt.id === userAnswerId,
-                                );
-
-                                // lay dap an dung
-                                const correctOption = question.options.find(
-                                    (opt) => opt.is_correct,
-                                );
-
-                                // if else check
-                                const isCorrect =
-                                    userAnswerId === correctOption?.id;
+                            {test.questions?.map((question, index) => {
+                                const userAnswerId = answers[question.id];
+                                
+                                // Guard clause - kiểm tra answers có tồn tại không
+                                if (!question.answers || !Array.isArray(question.answers)) {
+                                    console.warn('Question answers is undefined:', question);
+                                    return null;
+                                }
+                                
+                                const userOption = question.answers.find((opt) => opt.id === userAnswerId);
+                                const correctOption = question.answers.find((opt) => opt.is_correct);
+                                const isCorrect = userAnswerId === correctOption?.id;
+                                const hasUserAnswer = userAnswerId !== undefined && userAnswerId !== null;
 
                                 return (
                                     <div
                                         key={question.id}
-                                        className={`p-4 rounded-lg border-2 ${isCorrect
-                                            ? "border-green-200 bg-success/10"
-                                            : "border-red-200 bg-error/10"
+                                        className={`p-4 rounded-lg border-2 ${!hasUserAnswer
+                                                ? "border-gray-200 bg-gray-50"
+                                                : isCorrect
+                                                    ? "border-green-200 bg-success/10"
+                                                    : "border-red-200 bg-error/10"
                                             }`}
                                     >
                                         <div className="flex items-start gap-2 mb-2">
                                             <span
-                                                className={`text-white rounded-md badge ${isCorrect
-                                                    ? "badge-success"
-                                                    : "badge-error"
+                                                className={`text-white rounded-md badge ${!hasUserAnswer
+                                                        ? "badge-neutral"
+                                                        : isCorrect
+                                                            ? "badge-success"
+                                                            : "badge-error"
                                                     }`}
                                             >
-                                                Câu {question.originalIndex}
+                                                Câu {index + 1}
                                             </span>
                                             <div className="flex justify-center items-center gap-1 mb-1">
-                                                {isCorrect ? (
+                                                {!hasUserAnswer ? (
+                                                    <>
+                                                        <span className="text-lg mb-1 ml-2">
+                                                            Chưa chọn
+                                                        </span>
+                                                        <AlertCircle
+                                                            size={20}
+                                                            className="text-gray-500 mb-1"
+                                                        />
+                                                    </>
+                                                ) : isCorrect ? (
                                                     <>
                                                         <span className="text-lg mb-1 ml-2">
                                                             Đúng
@@ -149,78 +126,60 @@ export default function Show({ test, result, questions }) {
                                             </div>
                                         </div>
                                         <p className="font-semibold mb-3">
-                                            {question.question}
+                                            {question.question_text}
                                         </p>
 
                                         <div className="space-y-2 mb-3">
-                                            {/* map lua chon */}
-                                            {question.options.map(
-                                                (option, optIndex) => {
-                                                    // cau tra loi cua nguoi dung
-                                                    const isUserAnswer =
-                                                        option.id ===
-                                                        userAnswerId;
+                                            {question.answers?.map((answer, optIndex) => {
+                                                const isUserAnswer = answer.id === userAnswerId;
+                                                const isCorrectAnswer = answer.is_correct;
 
-                                                    // cau tra loi dung
-                                                    const isCorrectAnswer =
-                                                        option.is_correct;
-
-                                                    return (
-                                                        <div
-                                                            key={option.id}
-                                                            className={`p-2 rounded ${isCorrectAnswer
+                                                return (
+                                                    <div
+                                                        key={answer.id}
+                                                        className={`p-2 rounded ${isCorrectAnswer
                                                                 ? "bg-success/15 border border-success/50"
                                                                 : isUserAnswer
                                                                     ? "bg-error/15 border border-error/50"
                                                                     : "bg-base-200"
-                                                                }`}
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                {isCorrectAnswer && (
-                                                                    <CheckCircle2
-                                                                        size={
-                                                                            16
-                                                                        }
-                                                                        className="text-success"
-                                                                    />
-                                                                )}
-                                                                {isUserAnswer &&
-                                                                    !isCorrectAnswer && (
-                                                                        <AlertCircle
-                                                                            size={
-                                                                                16
-                                                                            }
-                                                                            className="text-error"
-                                                                        />
-                                                                    )}
-                                                                <span
-                                                                    className={`${isCorrectAnswer ? "font-semibold text-green-500" : ""}`}
-                                                                >
-                                                                    {String.fromCharCode(
-                                                                        65 +
-                                                                        optIndex,
-                                                                    )}
-                                                                    .{" "}
-                                                                    {
-                                                                        option.text
-                                                                    }
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            {isCorrectAnswer && (
+                                                                <CheckCircle2
+                                                                    size={16}
+                                                                    className="text-success"
+                                                                />
+                                                            )}
+                                                            {isUserAnswer && !isCorrectAnswer && (
+                                                                <AlertCircle
+                                                                    size={16}
+                                                                    className="text-error"
+                                                                />
+                                                            )}
+                                                            <span className={isCorrectAnswer ? "font-semibold text-green-500" : ""}>
+                                                                {String.fromCharCode(65 + optIndex)}.{" "}
+                                                                {answer.answer_text}
+                                                            </span>
+                                                            {isUserAnswer && (
+                                                                <span className="badge badge-sm">
+                                                                    Bạn chọn
                                                                 </span>
-                                                                {isUserAnswer && (
-                                                                    <span className="badge badge-sm">
-                                                                        Bạn chọn
-                                                                    </span>
-                                                                )}
-                                                                {isCorrectAnswer && (
-                                                                    <span className="badge badge-success badge-sm text-[15px]">
-                                                                        Đáp án
-                                                                        đúng
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                                            )}
+                                                            {isCorrectAnswer && (
+                                                                <span className="badge badge-success badge-sm text-[15px]">
+                                                                    Đáp án đúng
+                                                                </span>
+                                                            )}
+                                                            {!hasUserAnswer && !isCorrectAnswer && optIndex === 0 && (
+                                                                <span className="badge badge-neutral badge-sm">
+                                                                    Bạn chưa chọn
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                    );
-                                                },
-                                            )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
 
                                         <div className="mt-3 space-y-2 text-left">
@@ -252,9 +211,7 @@ export default function Show({ test, result, questions }) {
                                                         <span className="font-semibold text-info">
                                                             Giải thích ngữ pháp:
                                                         </span>{" "}
-                                                        {
-                                                            question.detailed_explanation
-                                                        }
+                                                        {question.detailed_explanation}
                                                     </p>
                                                 </div>
                                             )}
@@ -264,65 +221,23 @@ export default function Show({ test, result, questions }) {
                             })}
                         </div>
 
-                        <div className="card-actions justify-center mt-6 gap-3 flex-wrap">
-                            {result.is_exam_section ? (
-                                <>
-                                    {result.section_order < result.total_sections ? (
-                                        <Link
-                                            href={`/tests/${test.id}/take?section=${result.section_order + 1}`}
-                                            className="btn btn-primary rounded-xl btn-sm"
-                                        >
-                                            Làm tiếp phần {result.section_order + 1}
-                                        </Link>
-                                    ) : (
-                                        <Link
-                                            href={`/tests/${test.id}`}
-                                            className="btn btn-primary rounded-xl btn-sm"
-                                        >
-                                            Hoàn thành bài thi
-                                        </Link>
-                                    )}
-                                    <Link
-                                        href={`/tests/${test.id}/take?section=${result.section_order}`}
-                                        className="btn btn-outline rounded-xl btn-sm"
-                                    >
-                                        Làm lại đoạn này
-                                    </Link>
-                                    <Link
-                                        href="/path"
-                                        className="btn btn-ghost rounded-xl btn-sm"
-                                    >
-                                        Về lộ trình
-                                    </Link>
-                                </>
-                            ) : (
-                                <>
-                                    {result.correct < result.total && (
-                                        <Link
-                                            href={`/tests/${test.id}/take?retake_wrong=1&result_id=${result.id}`}
-                                            className="btn btn-warning rounded-xl btn-sm text-warning-content font-semibold"
-                                        >
-                                            Làm lại câu sai
-                                        </Link>
-                                    )}
-                                    <Link
-                                        href={`/tests/${test.id}/take`}
-                                        className="btn btn-outline rounded-xl btn-sm"
-                                    >
-                                        Làm lại bài này
-                                    </Link>
-                                    <Link
-                                        href="/tests"
-                                        className="btn btn-primary rounded-xl btn-sm"
-                                    >
-                                        Làm bài khác
-                                    </Link>
-                                </>
-                            )}
+                        <div className="card-actions justify-center mt-6">
+                            <Link
+                                href={route('tests.index')}
+                                className="btn btn-primary rounded-xl btn-sm"
+                            >
+                                Làm bài khác
+                            </Link>
+                            <Link
+                                href={route('tests.show', test.id)}
+                                className="btn btn-outline rounded-xl btn-sm"
+                            >
+                                Làm lại bài này
+                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 }

@@ -29,12 +29,29 @@ class AuthController extends Controller
                 return redirect()->intended('/admin/tests');
             }
 
-            return redirect()->intended('/');
+            return redirect()->intended('/path');
         }
 
         return back()->withErrors([
-            'email' => 'Thông tin đăng nhập không chính xác.',
-        ])->onlyInput('email');
+            'email' => 'The provided credentials do not match our records.',
+        ]);
+    }
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($request->only(['name', 'email']));
+
+        return back()->with('success', 'Profile updated successfully');
     }
 
     public function register(Request $request)

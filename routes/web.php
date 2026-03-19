@@ -1,15 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\CEFRProgressController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PathController;
+use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ExamController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\LevelSelectionController;
 use App\Http\Controllers\TestController;
-use App\Http\Controllers\TestQuestionController;
-use App\Http\Controllers\TestResultController;
+use App\Http\Controllers\ResultController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 //
@@ -33,38 +30,28 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 
 // =========== TRANG DÀNH CHO USER ===========
 Route::middleware(['auth'])->group(function () {
-    // 1. Chọn trình độ (CŨ)
-    Route::get('/select-level', [LevelSelectionController::class, 'create'])->name('level-selection.create');
-    Route::post('/select-target-level', [LevelSelectionController::class, 'store'])->name('level-selection.store');
+    // Path (lộ trình)
+    Route::get('/path', [PathController::class, 'index'])->name('path.index');
+    Route::put('/path', [PathController::class, 'update'])->name('path.update');
+    Route::get('/path/{level}', [PathController::class, 'show'])->name('path.show');
 
-    // 2. CEFR Progress System - Đổi prefix thành /path
-    Route::get('/path', [CEFRProgressController::class, 'index'])->name('cefr.index');
-    Route::get('/path/select-level', [CEFRProgressController::class, 'selectLevel'])->name('cefr.select-level');
-    Route::post('/path/select-level', [CEFRProgressController::class, 'storeSelectedLevel'])->name('cefr.store-level');
-    Route::get('/path/{level}', [CEFRProgressController::class, 'showLevel'])->name('cefr.level');
-    Route::get('/path/{level}/part/{part}/start', [CEFRProgressController::class, 'startPart'])->name('cefr.start-part');
-    Route::post('/path/{level}/part/{part}/complete', [CEFRProgressController::class, 'completePart'])->name('cefr.complete-part');
+    // Tests
+    Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
+    Route::get('/tests/{test}', [TestController::class, 'show'])->name('tests.show');
 
-    // CẬP NHẬT TỪ /exams -> /tests
-    Route::get('/tests', [TestController::class, 'index'])->name('tests.index'); // Danh sách tất cả tests
-    Route::get('/tests/{exam}', [ExamController::class, 'show'])->name('exams.show');
-    Route::get('/tests/{exam}/take', [ExamController::class, 'take'])->name('exams.take');
-    Route::post('/tests/{exam}/sections/submit', [ExamController::class, 'submitSection'])
-        ->name('exams.sections.submit')
-        ->middleware('throttle:60,1');
+    // Results
+    Route::get('/results', [ResultController::class, 'index'])->name('results.index');
+    Route::post('/results', [ResultController::class, 'store'])->name('results.store');
+    Route::get('/results/{result}', [ResultController::class, 'show'])->name('results.show');
 
-    // CẬP NHẬT TỪ /dashboard -> /progress
-    Route::get('/progress', [DashboardController::class, 'index'])->name('dashboard');
+    // Progress
+    Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
 
-    // THÔNG TIN PROFILE
+    // Profile
     Route::get('/profile', function () {
         return inertia('Profile/Edit');
     })->name('profile.edit');
-
-    // RESULTS
-    Route::get('/results', [TestResultController::class, 'index'])->name('results.index');
-    Route::get('/results/{result}', [TestResultController::class, 'show'])->name('results.show');
-    Route::get('/results/{result}/wrong-questions', [TestResultController::class, 'getWrongQuestions'])->name('results.wrong-questions');
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
 });
 // ============================================================
 
@@ -83,13 +70,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit');
     Route::put('/admin/tests/{test}', [TestController::class, 'update'])->name('tests.update');
     Route::delete('/admin/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
-
-    Route::get('/admin/questions', [TestQuestionController::class, 'adminIndex'])->name('admin.questions');
-    Route::get('/admin/questions/create', [TestQuestionController::class, 'create'])->name('questions.create');
-    Route::post('/admin/questions', [TestQuestionController::class, 'store'])->name('questions.store');
-    Route::get('/admin/questions/{testQuestion}/edit', [TestQuestionController::class, 'edit'])->name('questions.edit');
-    Route::put('/admin/questions/{testQuestion}', [TestQuestionController::class, 'update'])->name('questions.update');
-    Route::delete('/admin/questions/{testQuestion}', [TestQuestionController::class, 'destroy'])->name('questions.destroy');
 
     // MỚI: Results & Analytics
     Route::get('/admin/results', function () {

@@ -1,171 +1,455 @@
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { Clock, Users, Calendar, Play, ArrowLeft, Edit, Trash2 } from "lucide-react";
-import Layout from "@/Layouts/Layout";
+import React, { useState, useEffect, useRef } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Clock, ChevronLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useAutoSave } from '@/Hooks/useAutoSave';
 
-export default function Show({ test }) {
-    const { auth } = usePage().props;
-    const isAdmin = auth?.user?.role === "admin";
+export default function TestsShow({ test }) {
+    const intervalRef = useRef(null);
 
-    const handleDelete = () => {
-        if (confirm("Bạn có chắc chắn muốn xóa đề thi này?")) {
-            router.delete(`/admin/tests/${test.id}`);
+    // Phần làm bài - không có result ở đây
+    const questions = Array.isArray(test?.questions) ? test.questions : [];
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [timeLeft, setTimeLeft] = useState((test?.duration || 40) * 60);
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [startTime] = useState(Date.now());
+    const [selectedAnswers, setSelectedAnswers] = useState({});
+
+    // Dùng useAutoSave hook có sẵn
+    const { isSaving, lastSavedAt, error, getStoredAnswers, clearStoredAnswers } = useAutoSave(
+        selectedAnswers,
+        test?.id,
+        1, // sectionOrder mặc định là 1
+        30000 // 30 seconds
+    );
+
+    // State cho thông báo khôi phục tiến độ
+    const [showRestoreNotification, setShowRestoreNotification] = useState(false);
+
+    // Khôi phục tiến độ khi component mount
+    useEffect(() => {
+        const stored = getStoredAnswers();
+        if (stored && stored.answers && Object.keys(stored.answers).length > 0) {
+            // Tính thời gian đã trôi qua
+            const elapsedSeconds = Math.floor((Date.now() - new Date(stored.timestamp).getTime()) / 1000);
+            const adjustedTimeLeft = Math.max(0, (test?.duration || 40) * 60 - elapsedSeconds);
+
+            setTimeLeft(adjustedTimeLeft);
+            setSelectedAnswers(stored.answers);
+
+            // Hiển thị thông báo nếu có dữ liệu
+            setShowRestoreNotification(true);
+            setTimeout(() => setShowRestoreNotification(false), 5000);
+
+            console.log('Restored progress from useAutoSave:', {
+                elapsed: elapsedSeconds,
+                adjustedTimeLeft: adjustedTimeLeft,
+                answersCount: Object.keys(stored.answers).length
+            });
+        }
+    }, [getStoredAnswers, test?.duration]);
+
+    // Cảnh báo trước khi refresh/đóng tab
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            if (!isSubmitted && Object.keys(selectedAnswers).length > 0) {
+                const message = 'Bạn có chắc muốn rời đi? Dữ liệu sẽ được lưu tự động.';
+                event.returnValue = message;
+                return message;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [selectedAnswers, isSubmitted]);
+
+    // Xóa localStorage khi nộp bài thành công
+    const clearProgress = () => {
+        clearStoredAnswers();
+        console.log('Cleared saved progress after submit');
+    };
+
+    // Utility functions
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    };
+
+    const handleAnswerSelect = (questionId, answerId) => {
+        if (isSubmitted) return;
+        setSelectedAnswers((prev) => ({
+            ...prev,
+            [questionId]: answerId,
+        }));
+    };
+
+    const handleNext = () => {
+        if (currentQuestion < questions.length - 1) {
+            setCurrentQuestion(currentQuestion + 1);
         }
     };
 
-    return (
-        <Layout>
-            <Head title={test.title} />
-            <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
-                    <Link
-                        href="/tests"
-                        className="btn btn-ghost btn-sm gap-2"
-                    >
-                        <ArrowLeft size={16} />
-                        Quay lại
-                    </Link>
-                    {isAdmin && (
-                        <div className="flex gap-2">
-                            <Link
-                                href={`/admin/tests/${test.id}/edit`}
-                                className="btn btn-ghost btn-sm gap-2"
-                            >
-                                <Edit size={16} />
-                                Sửa đề thi
-                            </Link>
-                            <button
-                                onClick={handleDelete}
-                                className="btn btn-ghost btn-sm text-error gap-2"
-                            >
-                                <Trash2 size={16} />
-                                Xóa đề thi
-                            </button>
-                        </div>
-                    )}
-                </div>
+    const handlePrevious = () => {
+        if (currentQuestion > 0) {
+            setCurrentQuestion(currentQuestion - 1);
+        }
+    };
 
-                <div className="card bg-base-100 shadow-xl">
-                    <div className="card-body">
-                        <h1 className="card-title text-2xl mb-3">
-                            {test.title}
-                        </h1>
+    const handleSubmit = () => {
+        if (isSubmitted) return;
 
-                        {test.description && (
-                            <p className="text-base-content/70 mb-6">
-                                {test.description}
+        if (!confirm("Bạn có chắc chắn muốn nộp bài không?")) {
+            return;
+        }
+
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+
+        // Tính điểm trước khi submit
+        let correctCount = 0;
+        const totalQuestions = questions.length;
+
+        questions.forEach(question => {
+            const userAnswerId = selectedAnswers[question.id];
+
+            // Guard clause - kiểm tra answers có tồn tại không
+            if (!question.answers || !Array.isArray(question.answers)) {
+                console.warn('Question answers is undefined:', question);
+                return;
+            }
+
+            const correctAnswer = question.answers.find(a => a.is_correct);
+
+            if (userAnswerId === correctAnswer?.id) {
+                correctCount++;
+            }
+        });
+
+        const score = Math.round((correctCount / totalQuestions) * 100);
+
+        // Đảm bảo answers không rỗng - nếu không có đáp án nào, gửi object có ít nhất 1 key
+        let answersToSubmit = selectedAnswers;
+        if (Object.keys(selectedAnswers).length === 0) {
+            // Nếu không có đáp án nào, tạo object với key dummy để tránh lỗi validation
+            answersToSubmit = { empty: true };
+        }
+
+        // Debug log để kiểm tra data
+        console.log('Submitting data:', {
+            test_id: test.id,
+            answers: answersToSubmit,
+            score: score,
+            correct: correctCount,
+            total: totalQuestions
+        });
+
+        router.post(
+            route('results.store'),
+            {
+                test_id: test.id,
+                answers: answersToSubmit,  // Gửi answers object
+                score: score,
+                correct: correctCount,
+                total: totalQuestions
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmitted(true);
+                    clearProgress(); // Xóa saved progress sau khi submit thành công
+                },
+                onError: (errors) => {
+                    console.error("Submit error:", errors);
+                    console.error("Selected answers:", selectedAnswers);
+                    console.error("Answers to submit:", answersToSubmit);
+                    alert("Có lỗi xảy ra khi nộp bài. Vui lòng thử lại.");
+                },
+            },
+        );
+    };
+
+    const autoSubmit = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+
+        // Tính điểm trước khi auto-submit
+        let correctCount = 0;
+        const totalQuestions = questions.length;
+
+        questions.forEach(question => {
+            const userAnswerId = selectedAnswers[question.id];
+
+            // Guard clause - kiểm tra answers có tồn tại không
+            if (!question.answers || !Array.isArray(question.answers)) {
+                console.warn('Question answers is undefined:', question);
+                return;
+            }
+
+            const correctAnswer = question.answers.find(a => a.is_correct);
+
+            if (userAnswerId === correctAnswer?.id) {
+                correctCount++;
+            }
+        });
+
+        const score = Math.round((correctCount / totalQuestions) * 100);
+
+        // Đảm bảo answers không rỗng
+        let answersToSubmit = selectedAnswers;
+        if (Object.keys(selectedAnswers).length === 0) {
+            answersToSubmit = { empty: true };
+        }
+
+        // Debug log để kiểm tra data
+        console.log('Auto-submitting data:', {
+            test_id: test.id,
+            answers: answersToSubmit,
+            score: score,
+            correct: correctCount,
+            total: totalQuestions
+        });
+
+        router.post(
+            route('results.store'),
+            {
+                test_id: test.id,
+                answers: answersToSubmit,  // Gửi answers object
+                score: score,
+                correct: correctCount,
+                total: totalQuestions
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmitted(true);
+                    clearProgress(); // Xóa saved progress sau khi auto-submit thành công
+                },
+                onError: (errors) => {
+                    console.error("Auto-submit error:", errors);
+                    console.error("Selected answers:", selectedAnswers);
+                    console.error("Answers to submit:", answersToSubmit);
+                },
+            },
+        );
+    };
+
+    // Timer logic
+    useEffect(() => {
+        if (isSubmitted) return;
+
+        intervalRef.current = setInterval(() => {
+            setTimeLeft((prev) => {
+                const newValue = prev - 1;
+
+                if (newValue <= 0) {
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                    autoSubmit();
+                    return 0;
+                }
+                return newValue;
+            });
+        }, 1000);
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, [isSubmitted]);
+
+    if (isSubmitted) {
+        return (
+            <>
+                <Head title="Đang nộp bài..." />
+                <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="bg-white rounded-2xl shadow-xl p-8">
+                            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                                Đang nộp bài...
+                            </h2>
+                            <p className="text-gray-600">
+                                Vui lòng đợi trong giây lát
                             </p>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-primary/10 rounded-lg">
-                                    <Clock size={20} className="text-primary" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-base-content/70">
-                                        Thời gian làm bài
-                                    </p>
-                                    <p className="text-md font-semibold">
-                                        {test.duration} phút
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-secondary/10 rounded-lg">
-                                    <Users size={20} className="text-secondary" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-base-content/70">
-                                        Số câu hỏi
-                                    </p>
-                                    <p className="text-md font-semibold">
-                                        {test.total_questions} câu
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-accent/10 rounded-lg">
-                                    <Users size={20} className="text-accent" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-base-content/70">
-                                        Số lượt làm bài
-                                    </p>
-                                    <p className="text-md font-semibold">
-                                        {test.attempts.toLocaleString()} lượt
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-info/10 rounded-lg">
-                                    <Calendar
-                                        size={20}
-                                        className="text-info"
-                                    />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-base-content/70">
-                                        Ngày tạo
-                                    </p>
-                                    <p className="text-md font-semibold">
-                                        {test.created_at}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* <div className="divider"></div> */}
-
-                        <div className="bg-base-200 mt-3 rounded-lg p-6 mb-6">
-                            <h3 className="font-semibold text-lg mb-3">
-                                Hướng dẫn làm bài
-                            </h3>
-                            <ul className="space-y-2 text-sm">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-primary">•</span>
-                                    <span>
-                                        Bạn có {test.duration} phút để hoàn thành{" "}
-                                        {test.total_questions} câu hỏi
-                                    </span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-primary">•</span>
-                                    <span>
-                                        Mỗi câu hỏi chỉ có một đáp án đúng
-                                    </span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-primary">•</span>
-                                    <span>
-                                        Bạn có thể xem lại các câu hỏi trước khi
-                                        nộp bài
-                                    </span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-primary">•</span>
-                                    <span>
-                                        Sau khi hết thời gian, bài làm sẽ tự động
-                                        được nộp
-                                    </span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="card-actions justify-center">
-                            <Link
-                                href={`/tests/${test.id}/take`}
-                                className="btn btn-primary rounded-2xl gap-2"
-                            >
-                                <Play size={18} />
-                                Bắt đầu làm bài
-                            </Link>
                         </div>
                     </div>
                 </div>
+            </>
+        );
+    }
+
+    const question = questions[currentQuestion];
+
+    return (
+        <>
+            <Head title={`Làm đề thi: ${test.title}`} />
+
+            {/* Thông báo khôi phục tiến độ */}
+            {showRestoreNotification && (
+                <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
+                    <CheckCircle2 size={20} />
+                    <div>
+                        <p className="font-semibold">Đã khôi phục tiến độ!</p>
+                        <p className="text-sm">Tiếp tục làm bài từ nơi bạn đã dừng.</p>
+                    </div>
+                    <button
+                        onClick={() => setShowRestoreNotification(false)}
+                        className="ml-4 text-white hover:text-gray-200"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
+
+            <div className="min-h-screen bg-white">
+                <div className="border-b border-gray-200">
+                    <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+                        <div className="flex items-center gap-3 text-gray-700">
+                            <Link
+                                href={route('tests.index')}
+                                className="flex items-center gap-2 text-sm underline"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                                Thoát
+                            </Link>
+                            <span className="font-semibold">{test.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+                            <Clock className="h-5 w-5" />
+                            <span>{formatTime(timeLeft)}</span>
+
+                            {/* Auto-save indicator */}
+                            <div className="flex items-center gap-1 ml-4 text-sm">
+                                {isSaving ? (
+                                    <>
+                                        <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                                        <span className="text-yellow-600">Đang lưu...</span>
+                                    </>
+                                ) : lastSavedAt ? (
+                                    <>
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span className="text-green-600">
+                                            Đã lưu {new Date(lastSavedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        <span className="text-gray-500">Chưa lưu</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10 lg:flex-row">
+                    {/* Question panel */}
+                    <div className="flex-1 rounded-2xl border border-gray-300 bg-[#f4f4f7] p-8">
+                        <p className="text-lg font-semibold text-gray-700 mb-4">
+                            Câu {currentQuestion + 1}:
+                        </p>
+                        <p className="text-gray-800 text-lg leading-relaxed mb-6">
+                            {question.question_text}
+                        </p>
+
+                        <div className="space-y-3">
+                            {question.answers && Array.isArray(question.answers) ? (
+                                question.answers.map((answer, index) => (
+                                    <label
+                                        key={answer.id}
+                                        className="flex items-center gap-3 text-lg text-gray-800"
+                                    >
+                                        <input
+                                            type="radio"
+                                            name={`question-${question.id}`}
+                                            value={answer.id}
+                                            checked={
+                                                selectedAnswers[question.id] ===
+                                                answer.id
+                                            }
+                                            onChange={() =>
+                                                handleAnswerSelect(
+                                                    question.id,
+                                                    answer.id,
+                                                )
+                                            }
+                                            className="h-5 w-5"
+                                        />
+                                        <span>
+                                            {String.fromCharCode(65 + index)}. {" "}
+                                            {answer.answer_text}
+                                        </span>
+                                    </label>
+                                ))
+                            ) : (
+                                <p className="text-red-600">Câu hỏi này không có đáp án. Vui lòng bỏ qua.</p>
+                            )}
+                        </div>
+
+                        <div className="mt-10 flex items-center justify-between text-sm text-gray-600">
+                            <button
+                                onClick={handlePrevious}
+                                disabled={currentQuestion === 0}
+                                className="rounded-full border border-gray-400 px-6 py-2 font-semibold disabled:opacity-50"
+                            >
+                                Câu trước
+                            </button>
+                            <span>
+                                Câu {currentQuestion + 1} / {questions.length}
+                            </span>
+                            <button
+                                onClick={
+                                    currentQuestion === questions.length - 1
+                                        ? handleSubmit
+                                        : handleNext
+                                }
+                                className={`rounded-full px-6 py-2 font-semibold ${currentQuestion === questions.length - 1
+                                    ? "bg-[#f87171] text-white"
+                                    : "border border-gray-400"
+                                    }`}
+                            >
+                                {currentQuestion === questions.length - 1
+                                    ? "Nộp bài"
+                                    : "Câu tiếp theo"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="w-full max-w-sm rounded-2xl border border-gray-300 p-6 flex flex-col items-center justify-center mx-auto">
+                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+                            <Clock className="h-5 w-5" />
+                            <span>Thời gian: {formatTime(timeLeft)}</span>
+                        </div>
+
+                        <div className="mt-6 grid grid-cols-5 gap-2">
+                            {questions.map((q, index) => (
+                                <button
+                                    key={q.id}
+                                    onClick={() => setCurrentQuestion(index)}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold transition ${currentQuestion === index
+                                        ? "border-black bg-black text-white"
+                                        : selectedAnswers[q.id]
+                                            ? "border-gray-900 bg-gray-900/70 text-white"
+                                            : "border-gray-400 text-gray-700 hover:bg-gray-100"
+                                        }`}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={handleSubmit}
+                            className="btn btn-secondary rounded-full mt-4"
+                        >
+                            Nộp bài
+                        </button>
+                    </div>
+                </div>
             </div>
-        </Layout>
+        </>
     );
 }
