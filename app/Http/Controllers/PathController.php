@@ -107,7 +107,15 @@ class PathController extends Controller
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
         foreach (self::LEVELS as $level) {
-            $parts = $this->getAvailableParts($level);
+            $parts = \App\Models\Progress::where('user_id', $user->id)
+                ->where('level', $level)
+                ->select('part')
+                ->distinct()
+                ->orderBy('part')
+                ->pluck('part')
+                ->map(fn ($part) => (int) $part)
+                ->toArray();
+
             $levelConfig = $levelConfigs[$level] ?? null;
             $thresholds = $this->buildThresholds($levelConfig, $parts);
 

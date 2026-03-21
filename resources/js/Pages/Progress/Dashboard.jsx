@@ -24,25 +24,19 @@ export default function ProgressDashboard({ stats }) {
         recent_results
     } = stats;
 
-    const CUSTOM_PASS_THRESHOLDS = {
-        1: 60,
-        2: 70,
-        3: 80
-    };
-
     const processedParts = level_progress.parts.map((part, index) => {
         const partNum = part.part;
-
-        const requiredScore = CUSTOM_PASS_THRESHOLDS[partNum] ?? part.pass_threshold;
+        const requiredScore = part.pass_threshold || 60;
 
         const userPercentage = part.percentage || 0;
         const isPassed = userPercentage >= requiredScore;
 
         let isLocked = false;
+        let prevRequired = 60;
         if (partNum > 1) {
             const previousPart = level_progress.parts.find(p => p.part === partNum - 1);
             if (previousPart) {
-                const prevRequired = CUSTOM_PASS_THRESHOLDS[partNum - 1];
+                prevRequired = previousPart.pass_threshold || 60;
                 const prevPercentage = previousPart.percentage || 0;
                 isLocked = prevPercentage < prevRequired;
             }
@@ -53,7 +47,7 @@ export default function ProgressDashboard({ stats }) {
             pass_threshold: requiredScore,
             is_passed: isPassed,
             is_locked: isLocked,
-            lock_message: isLocked ? `Hoàn thành Phần ${partNum - 1} với tối thiểu ${CUSTOM_PASS_THRESHOLDS[partNum - 1]}% để mở khóa.` : ''
+            lock_message: isLocked ? `Hoàn thành Phần ${partNum - 1} với tối thiểu ${prevRequired}% để mở khóa.` : ''
         };
     });
 
@@ -61,6 +55,8 @@ export default function ProgressDashboard({ stats }) {
         ...level_progress,
         parts: processedParts
     };
+    
+    const totalParts = processedParts.length > 0 ? processedParts.length : 1;
 
     return (
         <AuthenticatedLayout fullWidth={true}>
@@ -89,12 +85,12 @@ export default function ProgressDashboard({ stats }) {
                                 <div className="mt-8 space-y-4">
                                     <div className="flex justify-between text-sm">
                                         <span>Tiến độ Level {current_level}</span>
-                                        <span>{Math.round(level_progress.parts.filter(p => p.is_passed).length / 3 * 100)}%</span>
+                                        <span>{Math.round(level_progress.parts.filter(p => p.is_passed).length / totalParts * 100)}%</span>
                                     </div>
                                     <progress
                                         className="progress progress-secondary w-full bg-white/20"
                                         value={level_progress.parts.filter(p => p.is_passed).length}
-                                        max="3"
+                                        max={totalParts}
                                     ></progress>
                                     <p className="text-xs text-indigo-100 italic">
                                         Đang ở: Phần {level_progress.current_part}

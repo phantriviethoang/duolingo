@@ -46,9 +46,7 @@ export default function PathShow({ level, parts, selectedPart = null }) {
         }, {}),
     );
 
-    const [selectedPartCount, setSelectedPartCount] = useState(() =>
-        Math.max(1, partEntries.length || 1),
-    );
+    const [selectedPartCount, setSelectedPartCount] = useState("");
 
     useEffect(() => {
         setPartConfigs((prevConfigs) =>
@@ -70,16 +68,6 @@ export default function PathShow({ level, parts, selectedPart = null }) {
         );
     }, [partEntries]);
 
-    useEffect(() => {
-        if (selectedPart) {
-            return;
-        }
-
-        const normalizedCount = Math.max(1, Number(selectedPartCount) || 1);
-
-        setSelectedPartCount(normalizedCount);
-    }, [selectedPart, selectedPartCount]);
-
     const dynamicPartEntries = useMemo(() => {
         const fallbackTestId = partEntries
             .map(([, part]) => part?.first_test_id)
@@ -95,12 +83,19 @@ export default function PathShow({ level, parts, selectedPart = null }) {
             partEntries.map(([partKey, part]) => [Number(partKey), part]),
         );
 
-        return Array.from({ length: selectedPartCount }, (_, index) => {
+        const count = selectedPartCount === "" ? 0 : Math.max(1, Math.min(50, Number(selectedPartCount) || 0));
+        let previousCompleted = true;
+
+        return Array.from({ length: count }, (_, index) => {
             const partNumber = index + 1;
             const existing = byNumber.get(partNumber);
+            const isCompleted = existing?.progress?.completed || false;
+
+            const isUnlocked = index === 0 ? true : previousCompleted;
+            previousCompleted = isCompleted;
 
             if (existing) {
-                return [String(partNumber), existing];
+                return [String(partNumber), { ...existing, unlocked: isUnlocked }];
             }
 
             return [
@@ -110,7 +105,7 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                     pass_score: 60,
                     tests: [],
                     first_test_id: fallbackTestId || null,
-                    unlocked: true,
+                    unlocked: isUnlocked,
                     progress: { score: 0, completed: false },
                     is_virtual: true,
                 },
@@ -174,6 +169,10 @@ export default function PathShow({ level, parts, selectedPart = null }) {
         : null;
 
     const handleSelectedPartCountChange = (value) => {
+        if (value === "") {
+            setSelectedPartCount("");
+            return;
+        }
         const count = Math.floor(Number(value) || 1);
         const normalized = Math.max(1, Math.min(count, 50));
 
@@ -209,16 +208,15 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                                         Chọn số phần muốn thi
                                     </p>
                                     <input
-                                        type="number"
-                                        min={1}
-                                        max={50}
+                                        type="text"
+                                        placeholder="Nhập số phần muốn thi..."
                                         value={selectedPartCount}
                                         onChange={(e) =>
                                             handleSelectedPartCountChange(
                                                 e.target.value,
                                             )
                                         }
-                                        className="input input-bordered w-full max-w-44"
+                                        className="input input-bordered w-full max-w-44 text-black placeholder-black font-bold"
                                     />
                                     <p className="text-[11px] text-gray-400 mt-2">
                                         Nhập số phần muốn thi (ví dụ: 1 hoặc 5). Hệ thống sẽ hiển thị đúng từng đó phần.
@@ -334,7 +332,7 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                                             <div className="flex justify-between items-center mt-2">
                                                 <p className="text-[10px] text-gray-400 font-bold italic uppercase">
                                                     Yêu cầu đạt:{" "}
-                                                    {part.pass_score}%
+                                                    {config.pass_threshold}%
                                                 </p>
                                                 {!isUnlocked && (
                                                     <p className="text-[9px] text-red-400 font-bold uppercase tracking-tighter">
@@ -382,7 +380,7 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="input input-bordered w-full bg-white"
+                                                    className="input input-bordered w-full bg-white text-black"
                                                 />
                                                 <div className="label pt-1">
                                                     <span className="label-text-alt text-[10px] text-gray-400">
@@ -410,7 +408,7 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="input input-bordered w-full bg-white"
+                                                    className="input input-bordered w-full bg-white text-black"
                                                 />
                                                 <div className="label pt-1">
                                                     <span className="label-text-alt text-[10px] text-gray-400">
@@ -438,7 +436,7 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="input input-bordered w-full bg-white"
+                                                    className="input input-bordered w-full bg-white text-black"
                                                 />
                                                 <div className="label pt-1">
                                                     <span className="label-text-alt text-[10px] text-gray-400">
