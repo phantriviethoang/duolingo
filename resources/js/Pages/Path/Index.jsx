@@ -12,7 +12,7 @@ export default function PathIndex({ levels, progressData }) {
 
     const getLevelProgress = (level) => {
         const parts = progressData[level] || {};
-        const totalParts = 3; // Tất cả các level đều có 3 parts
+        const totalParts = 3;
         const completedCount = [1, 2, 3]
             .filter(num => parts[`part${num}`]?.completed).length;
         return Math.round((completedCount / totalParts) * 100);
@@ -50,7 +50,7 @@ export default function PathIndex({ levels, progressData }) {
                                 <select
                                     value={selectedLevel}
                                     onChange={(e) => handleLevelChange(e.target.value)}
-                                    className="px-6 py-3 bg-gray-50 border-none rounded-2xl font-bold text-gray-700 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer min-w-[200px]"
+                                    className="px-6 py-3 bg-gray-50 border-none rounded-2xl font-bold text-gray-700 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer min-w-50"
                                 >
                                     <option value="all">Tất cả trình độ</option>
                                     {levels.map(level => (
