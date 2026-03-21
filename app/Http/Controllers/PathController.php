@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
+use App\Models\TestPart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class PathController extends Controller
 {
     private const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    private const FALLBACK_PARTS = [1];
 
     /**
      * Admin view for managing the learning path structure
@@ -21,10 +24,21 @@ class PathController extends Controller
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
         foreach ($levels as $level) {
+            $partCounts = collect();
+            if ($this->usesTestPartsTable()) {
+                $partCounts = TestPart::query()
+                    ->whereHas('test', function ($query) use ($level) {
+                        $query->where('level', $level);
+                    })
+                    ->selectRaw('part_number, COUNT(*) as total')
+                    ->groupBy('part_number')
+                    ->pluck('total', 'part_number');
+            }
+
             $pathData[$level] = [
-                'part1' => Test::where('level', $level)->where('part', 1)->count(),
-                'part2' => Test::where('level', $level)->where('part', 2)->count(),
-                'part3' => Test::where('level', $level)->where('part', 3)->count(),
+                'part1' => (int) ($partCounts[1] ?? Test::where('level', $level)->where('part', 1)->count()),
+                'part2' => (int) ($partCounts[2] ?? Test::where('level', $level)->where('part', 2)->count()),
+                'part3' => (int) ($partCounts[3] ?? Test::where('level', $level)->where('part', 3)->count()),
                 'config' => $levelConfigs[$level] ?? [
                     'pass_threshold_part1' => 60,
                     'pass_threshold_part2' => 75,
@@ -93,18 +107,20 @@ class PathController extends Controller
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
         foreach (self::LEVELS as $level) {
+            $parts = $this->getAvailableParts($level);
             $levelConfig = $levelConfigs[$level] ?? null;
-            $thresholds = [
-                1 => $levelConfig->pass_threshold_part1 ?? 60,
-                2 => $levelConfig->pass_threshold_part2 ?? 75,
-                3 => $levelConfig->pass_threshold_part3 ?? 90,
-            ];
+            $thresholds = $this->buildThresholds($levelConfig, $parts);
 
-            $progressData[$level] = [
-                'part1' => array_merge(self::getPartProgress($user, $level, 1), ['unlocked' => $this->isPartUnlocked($user, $level, 1, $thresholds)]),
-                'part2' => array_merge(self::getPartProgress($user, $level, 2), ['unlocked' => $this->isPartUnlocked($user, $level, 2, $thresholds)]),
-                'part3' => array_merge(self::getPartProgress($user, $level, 3), ['unlocked' => $this->isPartUnlocked($user, $level, 3, $thresholds)]),
-            ];
+            $progressData[$level] = collect($parts)
+                ->mapWithKeys(function (int $part) use ($user, $level, $parts, $thresholds) {
+                    return [
+                        'part' . $part => array_merge(
+                            $this->getPartProgress($user, $level, $part),
+                            ['unlocked' => $this->isPartUnlocked($user, $level, $part, $parts, $thresholds)]
+                        ),
+                    ];
+                })
+                ->toArray();
         }
 
         return Inertia::render('Path/Index', [
@@ -176,8 +192,9 @@ class PathController extends Controller
     {
         $user = Auth::user();
         $part = (int) $part;
+        $parts = $this->getAvailableParts($level);
 
-        if (! in_array($level, self::LEVELS, true) || ! in_array($part, [1, 2, 3], true)) {
+        if (! in_array($level, self::LEVELS, true) || ! in_array($part, $parts, true)) {
             abort(404);
         }
 
@@ -193,57 +210,91 @@ class PathController extends Controller
     private function buildPartsData($user, string $level): array
     {
         $levelConfig = \App\Models\Level::where('name', $level)->first();
+        $parts = $this->getAvailableParts($level);
+        $thresholds = $this->buildThresholds($levelConfig, $parts);
 
-        $thresholds = [
-            1 => $levelConfig->pass_threshold_part1 ?? 60,
-            2 => $levelConfig->pass_threshold_part2 ?? 75,
-            3 => $levelConfig->pass_threshold_part3 ?? 90,
-        ];
-
-        return [
-            1 => [
-                'name' => 'Part 1',
-                'pass_score' => $thresholds[1],
-                'tests' => $this->mapTestsForPart($level, 1),
-                'first_test_id' => Test::where('level', $level)->where('part', 1)->first()?->id,
-                'unlocked' => true,
-                'progress' => $this->getPartProgress($user, $level, 1),
-            ],
-            2 => [
-                'name' => 'Part 2',
-                'pass_score' => $thresholds[2],
-                'tests' => $this->mapTestsForPart($level, 2),
-                'first_test_id' => Test::where('level', $level)->where('part', 2)->first()?->id,
-                'unlocked' => $this->isPartUnlocked($user, $level, 2, $thresholds),
-                'progress' => $this->getPartProgress($user, $level, 2),
-            ],
-            3 => [
-                'name' => 'Part 3',
-                'pass_score' => $thresholds[3],
-                'tests' => $this->mapTestsForPart($level, 3),
-                'first_test_id' => Test::where('level', $level)->where('part', 3)->first()?->id,
-                'unlocked' => $this->isPartUnlocked($user, $level, 3, $thresholds),
-                'progress' => $this->getPartProgress($user, $level, 3),
-            ],
-        ];
+        return collect($parts)
+            ->mapWithKeys(function (int $part) use ($user, $level, $parts, $thresholds) {
+                return [
+                    $part => [
+                        'name' => 'Part ' . $part,
+                        'pass_score' => $thresholds[$part] ?? 60.0,
+                        'tests' => $this->mapTestsForPart($level, $part),
+                        'first_test_id' => $this->resolveFirstTestId($level, $part),
+                        'unlocked' => $this->isPartUnlocked($user, $level, $part, $parts, $thresholds),
+                        'progress' => $this->getPartProgress($user, $level, $part),
+                    ],
+                ];
+            })
+            ->toArray();
     }
 
     private function mapTestsForPart(string $level, int $part)
     {
-        return Test::where('level', $level)
-            ->where('part', $part)
-            ->get()
-            ->map(function (Test $test) {
+        if (! $this->usesTestPartsTable()) {
+            return Test::where('level', $level)
+                ->where('part', $part)
+                ->get()
+                ->map(function (Test $test) use ($part) {
+                    return [
+                        'id' => $test->id,
+                        'title' => $test->title,
+                        'description' => $test->description,
+                        'duration' => $test->configuredDuration($part),
+                        'level' => $test->level,
+                        'part' => $part,
+                        'total_questions' => $test->configuredQuestionCount($part),
+                    ];
+                })
+                ->values();
+        }
+
+        $testParts = TestPart::query()
+            ->with('test')
+            ->where('part_number', $part)
+            ->where('is_active', true)
+            ->whereHas('test', function ($query) use ($level) {
+                $query->where('level', $level)->where('is_active', true);
+            })
+            ->orderBy('test_id')
+            ->get();
+
+        if ($testParts->isEmpty()) {
+            return Test::where('level', $level)
+                ->where('part', $part)
+                ->get()
+                ->map(function (Test $test) use ($part) {
+                    return [
+                        'id' => $test->id,
+                        'title' => $test->title,
+                        'description' => $test->description,
+                        'duration' => $test->configuredDuration($part),
+                        'level' => $test->level,
+                        'part' => $part,
+                        'total_questions' => $test->configuredQuestionCount($part),
+                    ];
+                })
+                ->values();
+        }
+
+        return $testParts
+            ->map(function (TestPart $testPart) {
+                $test = $testPart->test;
+                if (! $test) {
+                    return null;
+                }
+
                 return [
                     'id' => $test->id,
                     'title' => $test->title,
                     'description' => $test->description,
-                    'duration' => $test->configuredDuration(),
+                    'duration' => (int) $testPart->duration,
                     'level' => $test->level,
-                    'part' => $test->part,
-                    'total_questions' => $test->configuredQuestionCount(),
+                    'part' => (int) $testPart->part_number,
+                    'total_questions' => (int) $testPart->question_count,
                 ];
             })
+            ->filter()
             ->values();
     }
 
@@ -268,15 +319,19 @@ class PathController extends Controller
     /**
      * Check if part is unlocked
      */
-    private function isPartUnlocked($user, string $level, int $part, array $thresholds): bool
+    private function isPartUnlocked($user, string $level, int $part, array $parts, array $thresholds): bool
     {
-        // Người dùng đã chọn level mục tiêu thì Part 1 luôn mở.
-        if ($part === 1) {
+        $firstPart = $parts[0] ?? 1;
+        if ($part === $firstPart) {
             return true;
         }
 
-        // Part 2 và 3 cần Part trước đó của cùng level đạt điểm
-        $previousPart = $part - 1;
+        $currentIndex = array_search($part, $parts, true);
+        if ($currentIndex === false || $currentIndex === 0) {
+            return false;
+        }
+
+        $previousPart = $parts[$currentIndex - 1];
         $progress = \App\Models\Progress::where('user_id', $user->id)
             ->where('level', $level)
             ->where('part', $previousPart)
@@ -287,6 +342,87 @@ class PathController extends Controller
         }
 
         return $this->resolveProgressPercent($progress) >= ($thresholds[$previousPart] ?? 60);
+    }
+
+    private function getAvailableParts(string $level): array
+    {
+        $parts = [];
+
+        if ($this->usesTestPartsTable()) {
+            $parts = TestPart::query()
+                ->whereHas('test', function ($query) use ($level) {
+                    $query->where('level', $level)->where('is_active', true);
+                })
+                ->where('is_active', true)
+                ->select('part_number')
+                ->distinct()
+                ->orderBy('part_number')
+                ->pluck('part_number')
+                ->map(fn ($part) => (int) $part)
+                ->filter(fn (int $part) => $part > 0)
+                ->values()
+                ->toArray();
+        }
+
+        if ($parts === []) {
+            $parts = Test::where('level', $level)
+                ->select('part')
+                ->distinct()
+                ->orderBy('part')
+                ->pluck('part')
+                ->map(fn ($part) => (int) $part)
+                ->filter(fn (int $part) => $part > 0)
+                ->values()
+                ->toArray();
+        }
+
+        return $parts !== [] ? $parts : self::FALLBACK_PARTS;
+    }
+
+    private function resolveFirstTestId(string $level, int $part): ?int
+    {
+        if ($this->usesTestPartsTable()) {
+            return TestPart::query()
+                ->where('part_number', $part)
+                ->whereHas('test', function ($query) use ($level) {
+                    $query->where('level', $level)->where('is_active', true);
+                })
+                ->orderBy('test_id')
+                ->first()?->test_id;
+        }
+
+        return Test::where('level', $level)
+            ->where('part', $part)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first()?->id;
+    }
+
+    private function usesTestPartsTable(): bool
+    {
+        static $hasTable = null;
+
+        if ($hasTable === null) {
+            $hasTable = Schema::hasTable('test_parts');
+        }
+
+        return $hasTable;
+    }
+
+    private function buildThresholds(?\App\Models\Level $levelConfig, array $parts): array
+    {
+        return collect($parts)
+            ->mapWithKeys(function (int $part) use ($levelConfig) {
+                if (! $levelConfig) {
+                    return [$part => 60.0];
+                }
+
+                $field = "pass_threshold_part{$part}";
+                $value = data_get($levelConfig, $field);
+
+                return [$part => (float) ($value ?? $levelConfig->pass_threshold ?? 60.0)];
+            })
+            ->toArray();
     }
 
     private function resolveProgressPercent(?\App\Models\Progress $progress): float

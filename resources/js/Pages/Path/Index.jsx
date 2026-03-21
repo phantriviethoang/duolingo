@@ -6,14 +6,27 @@ import { useState } from 'react';
 export default function PathIndex({ levels, progressData }) {
     const [selectedLevel, setSelectedLevel] = useState('all');
 
+    const getPartNumbers = (level) => {
+        const parts = progressData[level] || {};
+
+        return Object.keys(parts)
+            .map((key) => {
+                const matched = key.match(/^part(\d+)$/);
+                return matched ? Number(matched[1]) : null;
+            })
+            .filter((value) => Number.isInteger(value))
+            .sort((a, b) => a - b);
+    };
+
     const handleLevelChange = (level) => {
         setSelectedLevel(level);
     };
 
     const getLevelProgress = (level) => {
         const parts = progressData[level] || {};
-        const totalParts = 3;
-        const completedCount = [1, 2, 3]
+        const partNumbers = getPartNumbers(level);
+        const totalParts = partNumbers.length || 1;
+        const completedCount = partNumbers
             .filter(num => parts[`part${num}`]?.completed).length;
         return Math.round((completedCount / totalParts) * 100);
     };
@@ -75,6 +88,7 @@ export default function PathIndex({ levels, progressData }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredLevels.map(level => {
                         const progress = getLevelProgress(level);
+                        const partNumbers = getPartNumbers(level);
 
                         return (
                             <div key={level} className="card bg-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 rounded-3xl overflow-hidden group border-transparent">
@@ -103,7 +117,7 @@ export default function PathIndex({ levels, progressData }) {
                                         </div>
 
                                         <div className="space-y-3">
-                                            {[1, 2, 3].map(part => {
+                                            {partNumbers.map(part => {
                                                 const partData = progressData[level]?.[`part${part}`];
                                                 const completed = partData?.completed;
                                                 const unlocked = partData?.unlocked;
@@ -141,6 +155,12 @@ export default function PathIndex({ levels, progressData }) {
                                                     </Link>
                                                 );
                                             })}
+
+                                            {partNumbers.length === 0 && (
+                                                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm text-gray-500 font-semibold">
+                                                    Chưa có phần nào cho trình độ này.
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

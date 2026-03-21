@@ -59,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
         // /path/A1/part-1 -> xem danh sách test của part đã chọn
         Route::get('/{level}/part-{part}', [PathController::class, 'tests'])
             ->whereIn('level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
-            ->whereIn('part', ['1', '2', '3'])
+            ->whereNumber('part')
             ->name('path.tests');
 
         // /path/A1/test-1/take

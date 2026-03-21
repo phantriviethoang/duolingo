@@ -32,6 +32,12 @@ export default function Take({
         resolvedQuestionsFeed?.meta?.total ||
         questions.length,
     );
+    const selectedQuestionLimit = Number(
+        quiz?.selected_question_limit || totalQuestions,
+    );
+    const selectedPassThreshold = Number(
+        quiz?.selected_pass_threshold || 60,
+    );
     const isRetakeWrong = Boolean(_2);
 
     const levelFromUrl = url.match(/\/path\/([A-Z]\d+)\//)?.[1] || quiz?.level;
@@ -299,6 +305,7 @@ export default function Take({
                 flagged: flaggedRef.current,
                 current_question: currentQuestionRef.current,
                 time_left: Math.max(0, Math.floor(timeLeftRef.current)),
+                part_number: Number(quiz?.part) || 1,
             };
 
             const xsrfToken = getXsrfTokenFromCookie();
@@ -328,6 +335,7 @@ export default function Take({
                     String(payload.current_question ?? 0),
                 );
                 formData.append("time_left", String(payload.time_left ?? 0));
+                formData.append("part_number", String(payload.part_number ?? 1));
 
                 if (navigator.sendBeacon) {
                     navigator.sendBeacon(syncRoute, formData);
@@ -650,10 +658,18 @@ export default function Take({
                 section_order: section.order,
                 answers: selectedAnswers,
                 time_spent: quizDurationSeconds - timeLeft,
+                part_number: Number(quiz?.part) || 1,
+                question_ids: questions.map((q) => q.id),
+                custom_question_limit: selectedQuestionLimit,
+                custom_pass_threshold: selectedPassThreshold,
             }
             : {
                 answers: selectedAnswers,
                 time_spent: quizDurationSeconds - timeLeft,
+                part_number: Number(quiz?.part) || 1,
+                question_ids: questions.map((q) => q.id),
+                custom_question_limit: selectedQuestionLimit,
+                custom_pass_threshold: selectedPassThreshold,
             };
 
         const visit = router.post(submitRoute, payload, {
@@ -713,10 +729,18 @@ export default function Take({
                 section_order: section.order,
                 answers: selectedAnswers,
                 time_spent: quizDurationSeconds - timeLeft,
+                part_number: Number(quiz?.part) || 1,
+                question_ids: questions.map((q) => q.id),
+                custom_question_limit: selectedQuestionLimit,
+                custom_pass_threshold: selectedPassThreshold,
             }
             : {
                 answers: selectedAnswers,
                 time_spent: quizDurationSeconds - timeLeft,
+                part_number: Number(quiz?.part) || 1,
+                question_ids: questions.map((q) => q.id),
+                custom_question_limit: selectedQuestionLimit,
+                custom_pass_threshold: selectedPassThreshold,
             };
 
         const visit = router.post(submitRoute, payload, {

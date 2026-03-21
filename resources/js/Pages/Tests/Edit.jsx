@@ -3,12 +3,18 @@ import { ArrowLeft, Plus, Trash2, Save, FileText, Layout, Info, CheckCircle2, La
 import AdminLayout from "../Admin/Layout";
 
 export default function Edit({ test }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors, transform } = useForm({
         title: test.title || "",
         description: test.description || "",
-        duration: test.duration || 15,
         level: test.level || "A1",
-        part: test.part || 1,
+        parts: Array.isArray(test.parts) && test.parts.length > 0
+            ? test.parts.map((part) => ({
+                part_number: Number(part.part_number) || 1,
+                question_count: Number(part.question_count) || 1,
+                duration: Number(part.duration) || 1,
+                enabled: part.is_active !== false,
+            }))
+            : [{ part_number: 1, question_count: 10, duration: 15, enabled: true }],
         questions: test.questions || [
             {
                 question: "",
@@ -25,6 +31,45 @@ export default function Edit({ test }) {
         ],
         is_active: test.is_active ?? true,
     });
+
+    const activeParts = data.parts.filter((part) => part.enabled);
+
+    const updatePart = (index, field, value) => {
+        const nextParts = [...data.parts];
+        const numericFields = ["part_number", "question_count", "duration"];
+        nextParts[index] = {
+            ...nextParts[index],
+            [field]: numericFields.includes(field) ? Number(value) : value,
+        };
+        setData("parts", nextParts);
+    };
+
+    const addPart = () => {
+        const highest = data.parts.reduce((max, part) => Math.max(max, Number(part.part_number) || 0), 0);
+        setData("parts", [
+            ...data.parts,
+            {
+                part_number: highest + 1,
+                question_count: 10,
+                duration: 15,
+                enabled: true,
+            },
+        ]);
+    };
+
+    const removePart = (index) => {
+        if (data.parts.length <= 1) return;
+        setData("parts", data.parts.filter((_, i) => i !== index));
+    };
+
+    const togglePart = (index) => {
+        const nextParts = [...data.parts];
+        nextParts[index] = {
+            ...nextParts[index],
+            enabled: !nextParts[index].enabled,
+        };
+        setData("parts", nextParts);
+    };
 
     const addQuestion = () => {
         setData("questions", [
@@ -73,7 +118,16 @@ export default function Edit({ test }) {
 
     const submit = (e) => {
         e.preventDefault();
-        put(route("tests.update", test.id));
+        transform((payload) => ({
+            ...payload,
+            parts: payload.parts
+                .filter((part) => part.enabled)
+                .map((part) => ({
+                    part_number: Number(part.part_number),
+                    question_count: Number(part.question_count),
+                    duration: Number(part.duration),
+                })),
+        })).put(route("tests.update", test.id));
     };
 
     return (
@@ -156,30 +210,79 @@ export default function Edit({ test }) {
                                         </select>
                                         {errors.level && <p className="text-xs text-red-500 font-bold">{errors.level}</p>}
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Phần (Part)</label>
-                                        <select
-                                            className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold ${errors.part ? 'border-red-500' : ''}`}
-                                            value={data.part}
-                                            onChange={(e) => setData("part", e.target.value)}
-                                        >
-                                            {[1, 2, 3].map(p => (
-                                                <option key={p} value={p}>Phần {p}</option>
-                                            ))}
-                                        </select>
-                                        {errors.part && <p className="text-xs text-red-500 font-bold">{errors.part}</p>}
-                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Thời gian (phút)</label>
-                                    <input
-                                        type="number"
-                                        className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold ${errors.duration ? 'border-red-500' : ''}`}
-                                        value={data.duration}
-                                        onChange={(e) => setData("duration", e.target.value)}
-                                    />
-                                    {errors.duration && <p className="text-xs text-red-500 font-bold">{errors.duration}</p>}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Cấu hình parts</label>
+                                        <button
+                                            type="button"
+                                            onClick={addPart}
+                                            className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800"
+                                        >
+                                            + Thêm part
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {data.parts.map((part, index) => (
+                                            <div key={index} className={`p-4 rounded-2xl border ${part.enabled ? 'border-blue-100 bg-blue-50/30' : 'border-gray-100 bg-gray-50/80'}`}>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <span className="text-xs font-black text-gray-600 uppercase tracking-wider">Part #{index + 1}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="toggle toggle-primary toggle-sm"
+                                                            checked={part.enabled}
+                                                            onChange={() => togglePart(index)}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removePart(index)}
+                                                            className="p-1 text-gray-300 hover:text-red-500"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={part.part_number}
+                                                        onChange={(e) => updatePart(index, 'part_number', e.target.value)}
+                                                        className="px-3 py-2 rounded-xl border-gray-200 text-sm font-bold"
+                                                        placeholder="Part"
+                                                        disabled={!part.enabled}
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={part.question_count}
+                                                        onChange={(e) => updatePart(index, 'question_count', e.target.value)}
+                                                        className="px-3 py-2 rounded-xl border-gray-200 text-sm font-bold"
+                                                        placeholder="Số câu"
+                                                        disabled={!part.enabled}
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={part.duration}
+                                                        onChange={(e) => updatePart(index, 'duration', e.target.value)}
+                                                        className="px-3 py-2 rounded-xl border-gray-200 text-sm font-bold"
+                                                        placeholder="Phút"
+                                                        disabled={!part.enabled}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {errors.parts && <p className="text-xs text-red-500 font-bold">{errors.parts}</p>}
+                                    {activeParts.length === 0 && (
+                                        <p className="text-xs text-amber-600 font-bold">Cần bật ít nhất 1 part để cập nhật đề thi.</p>
+                                    )}
                                 </div>
 
                                 <div className="pt-4 border-t border-gray-50 flex items-center justify-between">

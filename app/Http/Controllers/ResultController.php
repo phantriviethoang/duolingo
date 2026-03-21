@@ -8,6 +8,7 @@ use App\Models\Progress;
 use App\Models\TestSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class ResultController extends Controller
@@ -54,6 +55,11 @@ class ResultController extends Controller
     {
         $request->validate([
             'answers' => 'nullable|array',
+            'question_ids' => 'nullable|array',
+            'question_ids.*' => 'integer',
+            'custom_question_limit' => 'nullable|integer|min:1',
+            'part_number' => 'nullable|integer|min:1',
+            'custom_pass_threshold' => 'nullable|numeric|min:1|max:100',
         ]);
 
         $user = Auth::user();
@@ -62,17 +68,45 @@ class ResultController extends Controller
             abort(404);
         }
 
-        if (! $this->canAccessTest($user, $test)) {
+        $partNumber = (int) $request->input('part_number', ($test->part ?: 1));
+        if ($partNumber < 1) {
+            abort(404);
+        }
+
+        $partNumbers = $this->resolveAttemptPartNumbers($test, $partNumber);
+
+        if (! $this->canAccessTest($user, $test, $partNumber, $partNumbers)) {
             abort(403);
         }
 
         $answers = (array) $request->input('answers', []);
-        $questionLimit = $test->configuredQuestionCount();
-        $questions = $test->questions()
+        $totalQuestionBank = $test->questions()->count();
+
+        $requestedQuestionIds = collect($request->input('question_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values();
+
+        $questionLimit = max(
+            1,
+            min(
+                (int) $request->input('custom_question_limit', $test->configuredQuestionCount()),
+                $totalQuestionBank
+            )
+        );
+
+        $questionsQuery = $test->questions()
             ->with('answers:id,question_id,is_correct')
-            ->orderBy('order')
-            ->take($questionLimit)
-            ->get(['id']);
+            ->orderBy('order');
+
+        if ($requestedQuestionIds->isNotEmpty()) {
+            $questionsQuery->whereIn('id', $requestedQuestionIds->all());
+        } else {
+            $questionsQuery->take($questionLimit);
+        }
+
+        $questions = $questionsQuery->get(['id']);
 
         $total = $questions->count();
         $correct = 0;
@@ -89,17 +123,27 @@ class ResultController extends Controller
         }
 
         $score = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
+        $customPassThreshold = $request->filled('custom_pass_threshold')
+            ? (float) max(1, min(100, (float) $request->input('custom_pass_threshold')))
+            : null;
 
-        $result = Result::create([
+        $resultPayload = [
             'user_id' => $user->id,
             'test_id' => $test->id,
+            'part_number' => $partNumber,
             'answers' => $answers,
             'score' => $score,
             'correct' => $correct,
             'total' => $total,
             'time_spent' => $request->input('time_spent'),
             'completed_at' => now(),
-        ]);
+        ];
+
+        if ($this->supportsCustomPassThresholdColumn()) {
+            $resultPayload['custom_pass_threshold'] = $customPassThreshold;
+        }
+
+        $result = Result::create($resultPayload);
 
         TestSession::query()
             ->where('user_id', $user->id)
@@ -114,7 +158,7 @@ class ResultController extends Controller
             ]);
 
         // Update progress
-        $this->updateProgress($user, $test, $score);
+        $this->updateProgress($user, $test, $score, $partNumber, $customPassThreshold);
 
         return redirect()->route('results.show', $result->id);
     }
@@ -135,7 +179,8 @@ class ResultController extends Controller
             abort(404, 'Test not found for this result.');
         }
 
-        $questionLimit = $test->configuredQuestionCount();
+        $reviewPartNumber = (int) ($result->part_number ?: ($test->part ?: 1));
+        $questionLimit = max(1, (int) ($result->total ?: $test->configuredQuestionCount($reviewPartNumber)));
 
         $test->load([
             'questions' => function ($query) use ($questionLimit) {
@@ -181,12 +226,18 @@ class ResultController extends Controller
 
         // Bổ sung ngưỡng đạt và trạng thái đạt của part hiện tại
         $levelConfig = \App\Models\Level::where('name', $test->level)->first();
-        $threshold = 60.0;
-        if ($levelConfig) {
-            $thresholdField = "pass_threshold_part{$test->part}";
-            $threshold = $levelConfig->$thresholdField ?? \App\Models\UserProgress::PASS_THRESHOLDS[$test->part] ?? 60.0;
-        } else {
-            $threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$test->part] ?? 60.0;
+        $threshold = null;
+        if ($this->supportsCustomPassThresholdColumn()) {
+            $threshold = $result->custom_pass_threshold;
+        }
+
+        if ($threshold === null) {
+            if ($levelConfig) {
+                $thresholdField = "pass_threshold_part{$reviewPartNumber}";
+                $threshold = $levelConfig->$thresholdField ?? \App\Models\UserProgress::PASS_THRESHOLDS[$reviewPartNumber] ?? 60.0;
+            } else {
+                $threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$reviewPartNumber] ?? 60.0;
+            }
         }
 
         $result->pass_threshold = $threshold;
@@ -200,13 +251,21 @@ class ResultController extends Controller
     /**
      * Check if user can access test
      */
-    private function canAccessTest($user, $test)
+    private function canAccessTest($user, $test, int $partNumber, ?array $partNumbers = null)
     {
-        if ($test->part === 1) {
+        $partNumbers = $partNumbers ?: $this->resolveAttemptPartNumbers($test, $partNumber);
+        $firstPart = $partNumbers[0] ?? 1;
+
+        if ($partNumber === $firstPart) {
             return true;
         }
 
-        $previousPart = $test->part - 1;
+        $index = array_search($partNumber, $partNumbers, true);
+        if ($index === false || $index === 0) {
+            return false;
+        }
+
+        $previousPart = $partNumbers[$index - 1];
         $previousProgress = Progress::where('user_id', $user->id)
             ->where('level', $test->level)
             ->where('part', $previousPart)
@@ -229,16 +288,31 @@ class ResultController extends Controller
         return $previousProgress->score >= $threshold;
     }
 
+    private function resolveAttemptPartNumbers(Test $test, int $targetPartNumber): array
+    {
+        $activeParts = $test->activePartNumbers();
+        $firstPart = $activeParts[0] ?? 1;
+        $maxConfiguredPart = max($activeParts ?: [$firstPart]);
+
+        if ($targetPartNumber > $maxConfiguredPart) {
+            return range($firstPart, $targetPartNumber);
+        }
+
+        return $activeParts;
+    }
+
     /**
      * Update user progress
      */
-    private function updateProgress($user, $test, $score)
+    private function updateProgress($user, $test, $score, int $partNumber, ?float $customPassThreshold = null)
     {
         // Lấy threshold từ DB
         $levelConfig = \App\Models\Level::where('name', $test->level)->first();
         $threshold = 60.0;
-        if ($levelConfig) {
-            $thresholdField = "pass_threshold_part{$test->part}";
+        if ($customPassThreshold !== null) {
+            $threshold = max(1, min(100, $customPassThreshold));
+        } elseif ($levelConfig) {
+            $thresholdField = "pass_threshold_part{$partNumber}";
             $threshold = $levelConfig->$thresholdField ?? 60.0;
         }
 
@@ -250,7 +324,7 @@ class ResultController extends Controller
             [
                 'user_id' => $user->id,
                 'level' => $test->level,
-                'part' => $test->part,
+                'part' => $partNumber,
             ],
             [
                 'score' => $percentage,
@@ -259,5 +333,16 @@ class ResultController extends Controller
                 'completed_at' => $isPassed ? now() : null,
             ]
         );
+    }
+
+    private function supportsCustomPassThresholdColumn(): bool
+    {
+        static $supports = null;
+
+        if ($supports === null) {
+            $supports = Schema::hasColumn('results', 'custom_pass_threshold');
+        }
+
+        return $supports;
     }
 }

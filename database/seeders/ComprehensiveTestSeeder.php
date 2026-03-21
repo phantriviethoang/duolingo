@@ -26,54 +26,53 @@ class ComprehensiveTestSeeder extends Seeder
         $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
         foreach ($levels as $level) {
-            $partsForLevel = [1, 2, 3];
+            $partsForLevel = [
+                ['part_number' => 1, 'question_count' => 10, 'duration' => 10],
+                ['part_number' => 2, 'question_count' => 15, 'duration' => 15],
+                ['part_number' => 3, 'question_count' => 20, 'duration' => 20],
+            ];
 
-            foreach ($partsForLevel as $part) {
-                $questionsPerTest = Test::configuredQuestionCountForPart($part);
-                $durationMinutes = Test::configuredDurationForPart($part);
+            $maxQuestionCount = collect($partsForLevel)->max('question_count');
 
-                // Upsert test theo level/part để chạy lại seeder không bị nhân bản dữ liệu.
-                $test = Test::firstOrCreate([
+            $test = Test::updateOrCreate(
+                [
                     'level' => $level,
-                    'part' => $part,
-                    'title' => "$level - Part $part - Test 1",
-                ], [
-                    'description' => "Assessment test for $level - Part $part",
-                    'duration' => $durationMinutes,
-                    'total_questions' => $questionsPerTest,
+                    'title' => "$level - Comprehensive Test",
+                ],
+                [
+                    'description' => "Assessment test for $level",
+                    'part' => 1,
+                    'duration' => 10,
+                    'total_questions' => $maxQuestionCount,
                     'is_active' => true,
+                ]
+            );
+
+            $test->parts()->delete();
+            $test->parts()->createMany($partsForLevel);
+
+            // Reset question bank cho test này để luôn đảm bảo đủ và đúng số lượng.
+            $test->questions()->delete();
+
+            for ($qIdx = 1; $qIdx <= $maxQuestionCount; $qIdx++) {
+                $item = $this->getRandomQuestion();
+
+                $question = Question::create([
+                    'test_id' => $test->id,
+                    'question_text' => $item['question_text'] ?? $item['question'],
+                    'question_type' => 'multiple_choice',
+                    'order' => $qIdx,
+                    'translation' => $item['translation'] ?? null,
+                    'explanation' => $item['explanation'] ?? null,
+                    'detailed_explanation' => $item['detailed_explanation'] ?? null,
                 ]);
 
-                $test->update([
-                    'description' => "Assessment test for $level - Part $part",
-                    'duration' => $durationMinutes,
-                    'total_questions' => $questionsPerTest,
-                    'is_active' => true,
-                ]);
-
-                // Reset question bank cho test này để luôn đảm bảo đủ và đúng số lượng.
-                $test->questions()->delete();
-
-                for ($qIdx = 1; $qIdx <= $questionsPerTest; $qIdx++) {
-                    $item = $this->getRandomQuestion();
-
-                    $question = Question::create([
-                        'test_id' => $test->id,
-                        'question_text' => $item['question_text'] ?? $item['question'],
-                        'question_type' => 'multiple_choice',
-                        'order' => $qIdx,
-                        'translation' => $item['translation'] ?? null,
-                        'explanation' => $item['explanation'] ?? null,
-                        'detailed_explanation' => $item['detailed_explanation'] ?? null,
+                foreach (($item['answers'] ?? []) as $answer) {
+                    Answer::create([
+                        'question_id' => $question->id,
+                        'answer_text' => $answer['answer_text'] ?? '',
+                        'is_correct' => (bool) ($answer['is_correct'] ?? false),
                     ]);
-
-                    foreach (($item['answers'] ?? []) as $answer) {
-                        Answer::create([
-                            'question_id' => $question->id,
-                            'answer_text' => $answer['answer_text'] ?? '',
-                            'is_correct' => (bool) ($answer['is_correct'] ?? false),
-                        ]);
-                    }
                 }
             }
         }

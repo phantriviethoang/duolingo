@@ -4,23 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Test extends Model
 {
     /** @use HasFactory<\Database\Factories\TestFactory> */
     use HasFactory;
-
-    public const PART_QUESTION_COUNTS = [
-        1 => 15,
-        2 => 15,
-        3 => 20,
-    ];
-
-    public const PART_DURATION_MINUTES = [
-        1 => 10,
-        2 => 15,
-        3 => 20,
-    ];
 
     protected $guarded = [];
 
@@ -44,23 +33,82 @@ class Test extends Model
         return $this->hasMany(Result::class);
     }
 
-    public static function configuredQuestionCountForPart(int $part): int
+    public function parts()
     {
-        return self::PART_QUESTION_COUNTS[$part] ?? 50;
+        return $this->hasMany(TestPart::class)->orderBy('part_number');
     }
 
-    public function configuredQuestionCount(): int
+    public function partConfig(int $partNumber): ?TestPart
     {
-        return self::configuredQuestionCountForPart((int) $this->part);
+        if (! $this->usesTestPartsTable()) {
+            return null;
+        }
+
+        return $this->parts()->where('part_number', $partNumber)->first();
+    }
+
+    public function activePartNumbers(): array
+    {
+        if (! $this->usesTestPartsTable()) {
+            return $this->part ? [(int) $this->part] : [1];
+        }
+
+        $numbers = $this->parts()
+            ->where('is_active', true)
+            ->pluck('part_number')
+            ->map(fn ($value) => (int) $value)
+            ->values()
+            ->toArray();
+
+        if ($numbers !== []) {
+            return $numbers;
+        }
+
+        return $this->part ? [(int) $this->part] : [1];
+    }
+
+    public static function configuredQuestionCountForPart(int $part): int
+    {
+        return 20;
+    }
+
+    public function configuredQuestionCount(?int $partNumber = null): int
+    {
+        $resolvedPart = $partNumber ?? (int) ($this->part ?: 1);
+        $partConfig = $this->partConfig($resolvedPart);
+
+        if ($partConfig) {
+            return max(1, (int) $partConfig->question_count);
+        }
+
+        return max(1, (int) ($this->total_questions ?: self::configuredQuestionCountForPart($resolvedPart)));
     }
 
     public static function configuredDurationForPart(int $part): int
     {
-        return self::PART_DURATION_MINUTES[$part] ?? 20;
+        return 15;
     }
 
-    public function configuredDuration(): int
+    public function configuredDuration(?int $partNumber = null): int
     {
-        return self::configuredDurationForPart((int) $this->part);
+        $resolvedPart = $partNumber ?? (int) ($this->part ?: 1);
+        $partConfig = $this->partConfig($resolvedPart);
+
+        if ($partConfig) {
+            return max(1, (int) $partConfig->duration);
+        }
+
+        return max(1, (int) ($this->duration ?: self::configuredDurationForPart($resolvedPart)));
+    }
+
+    private function usesTestPartsTable(): bool
+    {
+        static $hasTable = null;
+
+        if ($hasTable === null) {
+            $hasTable = Schema::hasTable('test_parts');
+        }
+
+        return $hasTable;
     }
 }

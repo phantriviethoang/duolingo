@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->integer('duration')->comment('Thời gian làm bài (phút)');
+            $table->integer('duration')->default(15)->comment('Legacy default duration (minutes)');
             $table->string('level')->comment('CEFR level: A1, A2, B1, B2, C1, C2');
-            $table->integer('part')->comment('Part number: 1, 2, 3');
+            $table->integer('part')->nullable()->default(1)->comment('Legacy default part number');
             $table->integer('total_questions')->default(0);
             $table->integer('attempts')->default(0)->comment('Số lượt làm bài');
             $table->boolean('is_active')->default(true);

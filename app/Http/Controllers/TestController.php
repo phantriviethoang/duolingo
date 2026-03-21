@@ -105,15 +105,22 @@ class TestController extends Controller
     /**
      * Check if user can access test
      */
-    private function canAccessTest($user, $test)
+    private function canAccessTest($user, $test, ?int $partNumber = null, ?array $partNumbers = null)
     {
-        // Người dùng đã chọn lộ trình thì Part 1 luôn được phép vào.
-        if ($test->part === 1) {
+        $partNumber = $partNumber ?: (int) ($test->part ?: 1);
+        $partNumbers = $partNumbers ?: $this->resolveAttemptPartNumbers($test, $partNumber);
+        $firstPart = $partNumbers[0] ?? 1;
+
+        if ($partNumber === $firstPart) {
             return true;
         }
 
-        // Part 2 và 3 cần Part trước đó của cùng level đạt điểm
-        $previousPart = $test->part - 1;
+        $index = array_search($partNumber, $partNumbers, true);
+        if ($index === false || $index === 0) {
+            return false;
+        }
+
+        $previousPart = $partNumbers[$index - 1];
         $previousProgress = \App\Models\Progress::where('user_id', $user->id)
             ->where('level', $test->level)
             ->where('part', $previousPart)
@@ -133,6 +140,19 @@ class TestController extends Controller
         }
 
         return $previousProgress->percentage >= $threshold;
+    }
+
+    private function resolveAttemptPartNumbers(Test $test, int $targetPartNumber): array
+    {
+        $activeParts = $test->activePartNumbers();
+        $firstPart = $activeParts[0] ?? 1;
+        $maxConfiguredPart = max($activeParts ?: [$firstPart]);
+
+        if ($targetPartNumber > $maxConfiguredPart) {
+            return range($firstPart, $targetPartNumber);
+        }
+
+        return $activeParts;
     }
 
     private function getPreviousLevel($currentLevel)
@@ -161,11 +181,28 @@ class TestController extends Controller
         $data = $request->validated();
 
         $questions = $data['questions'] ?? [];
+        $parts = collect($data['parts'] ?? [])
+            ->map(fn (array $part) => [
+                'part_number' => (int) $part['part_number'],
+                'question_count' => (int) $part['question_count'],
+                'duration' => (int) $part['duration'],
+                'is_active' => true,
+            ])
+            ->sortBy('part_number')
+            ->values();
+
         unset($data['questions']);
+        unset($data['parts']);
+
+        $primaryPart = $parts->first();
+        $data['part'] = (int) ($primaryPart['part_number'] ?? 1);
+        $data['duration'] = (int) ($primaryPart['duration'] ?? 900);
 
         $data['total_questions'] = count($questions);
 
         $test = Test::create($data);
+
+        $test->parts()->createMany($parts->all());
 
         foreach ($questions as $index => $q) {
             $question = $test->questions()->create([
@@ -194,14 +231,29 @@ class TestController extends Controller
      */
     public function edit(Test $test)
     {
-        $test->load('questions.answers');
+        $test->load('questions.answers', 'parts');
 
         return Inertia::render('Tests/Edit', [
             'test' => [
                 'id' => $test->id,
                 'title' => $test->title,
                 'description' => $test->description,
-                'duration' => $test->configuredDuration(),
+                'level' => $test->level,
+                'duration' => $test->duration,
+                'part' => $test->part,
+                'parts' => $test->parts
+                    ->sortBy('part_number')
+                    ->map(function ($part) {
+                        return [
+                            'id' => $part->id,
+                            'part_number' => (int) $part->part_number,
+                            'question_count' => (int) $part->question_count,
+                            'duration' => (int) $part->duration,
+                            'is_active' => (bool) $part->is_active,
+                        ];
+                    })
+                    ->values()
+                    ->toArray(),
                 'audio_path' => $test->audio_path,
                 'image_path' => $test->image_path,
                 'questions' => $test->questions
@@ -240,12 +292,30 @@ class TestController extends Controller
         $data = $request->validated();
 
         $questions = $data['questions'] ?? [];
+        $parts = collect($data['parts'] ?? [])
+            ->map(fn (array $part) => [
+                'part_number' => (int) $part['part_number'],
+                'question_count' => (int) $part['question_count'],
+                'duration' => (int) $part['duration'],
+                'is_active' => true,
+            ])
+            ->sortBy('part_number')
+            ->values();
+
         unset($data['questions']);
+        unset($data['parts']);
+
+        $primaryPart = $parts->first();
+        $data['part'] = (int) ($primaryPart['part_number'] ?? 1);
+        $data['duration'] = (int) ($primaryPart['duration'] ?? 900);
 
         $data['total_questions'] = count($questions);
 
         // update
         $test->update($data);
+
+        $test->parts()->delete();
+        $test->parts()->createMany($parts->all());
 
         $test->questions()->delete();
 
@@ -290,9 +360,19 @@ class TestController extends Controller
 
         $user = Auth::user();
 
-        if (! $this->canAccessTest($user, $test)) {
-            $prevPart = $test->part > 1 ? $test->part - 1 : 3;
-            $prevLevel = $test->part > 1 ? $test->level : $this->getPreviousLevel($test->level);
+        $partNumber = (int) request()->query('part_number', ($test->part ?: 1));
+        if ($partNumber < 1) {
+            abort(404);
+        }
+
+        $partNumbers = $this->resolveAttemptPartNumbers($test, $partNumber);
+
+        if (! $this->canAccessTest($user, $test, $partNumber, $partNumbers)) {
+            $index = array_search($partNumber, $partNumbers, true);
+            $prevPart = ($index !== false && $index > 0)
+                ? $partNumbers[$index - 1]
+                : ($partNumbers[0] ?? 1);
+            $prevLevel = $test->level;
 
             $progress = \App\Models\Progress::where('user_id', $user->id)
                 ->where('level', $prevLevel)
@@ -301,7 +381,7 @@ class TestController extends Controller
 
             $levelConfig = \App\Models\Level::where('name', $prevLevel)->first();
             $thresholdField = "pass_threshold_part{$prevPart}";
-            $threshold = $levelConfig->$thresholdField ?? ($test->part === 1 ? 90 : 60);
+            $threshold = $levelConfig->$thresholdField ?? 60;
 
             abort(403);
 
@@ -321,7 +401,26 @@ class TestController extends Controller
 
         $perPage = 20;
         $page = max((int) request()->query('page', 1), 1);
-        $questionLimit = $test->configuredQuestionCount();
+
+        $selectedPartConfig = $test->partConfig($partNumber);
+
+        $totalQuestionBank = $test->questions()->count();
+        $defaultQuestionLimit = max(1, min(
+            (int) ($selectedPartConfig?->question_count ?? $test->configuredQuestionCount($partNumber)),
+            $totalQuestionBank
+        ));
+        $requestedQuestionLimit = (int) request()->query('question_limit', $defaultQuestionLimit);
+        $questionLimit = max(1, min($requestedQuestionLimit > 0 ? $requestedQuestionLimit : $defaultQuestionLimit, $totalQuestionBank));
+
+        $defaultDuration = (int) ($selectedPartConfig?->duration ?? $test->configuredDuration($partNumber));
+        $requestedDuration = (int) request()->query('duration', $defaultDuration);
+        $duration = max(1, min($requestedDuration > 0 ? $requestedDuration : $defaultDuration, 240));
+
+        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
+        $thresholdField = "pass_threshold_part{$partNumber}";
+        $defaultPassThreshold = (float) ($levelConfig?->$thresholdField ?? 60.0);
+        $requestedPassThreshold = (float) request()->query('custom_pass_threshold', $defaultPassThreshold);
+        $customPassThreshold = max(1, min(100, $requestedPassThreshold));
 
         $retakeWrong = request()->query('retake_wrong');
         $resultId = request()->query('result_id');
@@ -436,10 +535,13 @@ class TestController extends Controller
                 'id' => $test->id,
                 'title' => $test->title ?? 'Untitled Test',
                 'description' => $test->description ?? '',
-                'duration' => $test->configuredDuration(),
+                'duration' => $duration,
                 'level' => $test->level,
-                'part' => $test->part,
+                'part' => $partNumber,
                 'total_questions' => $paginator->total(),
+                'selected_question_limit' => $questionLimit,
+                'selected_duration' => $duration,
+                'selected_pass_threshold' => $customPassThreshold,
             ],
             'retake_wrong' => (bool) $retakeWrong,
             'previous_result_id' => $resultId ? (int) $resultId : null,

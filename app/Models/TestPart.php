@@ -5,23 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Result extends Model
+class TestPart extends Model
 {
     use HasFactory;
 
     protected $guarded = [];
 
     protected $casts = [
-        'answers' => 'array',
         'part_number' => 'integer',
-        'custom_pass_threshold' => 'float',
-        'completed_at' => 'datetime',
+        'question_count' => 'integer',
+        'duration' => 'integer',
+        'is_active' => 'boolean',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
     public function test()
     {
