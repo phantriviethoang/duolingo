@@ -23,7 +23,7 @@ class QuestionController extends Controller
             $parts = is_array($request->part_number) ? $request->part_number : explode(',', $request->part_number);
             $query->whereIn('part_number', $parts);
         }
-        
+
         // Optional: filter by test_id (exclude questions already in this test)
         if ($request->has('exclude_test_id') && $request->exclude_test_id) {
             $query->whereDoesntHave('tests', function($q) use ($request) {
@@ -112,7 +112,7 @@ class QuestionController extends Controller
             'translation' => $data['translation'] ?? null,
             'detailed_explanation' => $data['detailed_explanation'] ?? null,
         ]);
-        
+
         $question->tests()->attach($data['test_id'], ['order' => $questionCount + 1]);
 
         foreach ($data['answers'] as $answerData) {
@@ -121,7 +121,7 @@ class QuestionController extends Controller
                 'is_correct' => $answerData['is_correct'],
             ]);
         }
-        
+
         $test = Test::find($data['test_id']);
         if ($test) {
             $test->increment('total_questions');
@@ -192,7 +192,7 @@ class QuestionController extends Controller
                 'is_correct' => $answerData['is_correct'],
             ]);
         }
-        
+
         $question->tests()->syncWithPivotValues([$data['test_id']], ['order' => $question->order ?? 1]);
 
         if ($oldTestId && $oldTestId !== (int) $data['test_id']) {
