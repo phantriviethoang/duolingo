@@ -114,8 +114,13 @@ class ResultController extends Controller
         foreach ($questions as $question) {
             $userAnswer = $answers[$question->id] ?? null;
 
+            // Get correct answer - must exist via is_correct flag
             $correctAnswer = $question->answers->firstWhere('is_correct', true);
-            $correctAnswerId = $correctAnswer?->id ?? ($question->correct_option_id ?? null);
+            if (!$correctAnswer) {
+                \Log::warning("Question {$question->id} has no correct answer marked");
+                continue; // Skip if no correct answer found
+            }
+            $correctAnswerId = $correctAnswer->id;
 
             if ((string) $userAnswer === (string) $correctAnswerId) {
                 $correct++;

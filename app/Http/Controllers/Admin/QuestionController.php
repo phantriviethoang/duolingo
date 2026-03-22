@@ -101,6 +101,15 @@ class QuestionController extends Controller
             'answers.*.is_correct' => 'required|boolean',
         ]);
 
+        // Validate exactly one correct answer
+        $correctCount = collect($data['answers'])
+            ->filter(fn ($ans) => $ans['is_correct'] ?? false)
+            ->count();
+        
+        if ($correctCount !== 1) {
+            return back()->withErrors(['answers' => 'Phải có đúng 1 đáp án đúng.'])->withInput();
+        }
+
         $questionCount = \DB::table('question_test')->where('test_id', $data['test_id'])->count();
 
         $question = Question::create([
@@ -172,6 +181,15 @@ class QuestionController extends Controller
             'answers.*.text' => 'required|string',
             'answers.*.is_correct' => 'required|boolean',
         ]);
+
+        // Validate exactly one correct answer
+        $correctCount = collect($data['answers'])
+            ->filter(fn ($ans) => $ans['is_correct'] ?? false)
+            ->count();
+        
+        if ($correctCount !== 1) {
+            return back()->withErrors(['answers' => 'Phải có đúng 1 đáp án đúng.'])->withInput();
+        }
 
         $oldTestId = $question->tests->first()?->id;
 

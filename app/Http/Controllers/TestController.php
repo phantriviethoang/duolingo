@@ -390,9 +390,13 @@ class TestController extends Controller
                 foreach ($allQuestions as $q) {
                     $userAns = $prevAnswers[$q->id] ?? null;
 
-                    // Ưu tiên đáp án đúng từ relation answers
+                    // Get correct answer - must exist via is_correct flag
                     $correctAnswer = $q->answers->firstWhere('is_correct', true);
-                    $correctAnswerId = $correctAnswer?->id ?? ($q->correct_option_id ?? null);
+                    if (!$correctAnswer) {
+                        \Log::warning("Question {$q->id} has no correct answer marked");
+                        continue; // Skip if no correct answer found
+                    }
+                    $correctAnswerId = $correctAnswer->id;
 
                     if ((string) $userAns !== (string) $correctAnswerId) {
                         $wrongQuestions->push($q);
