@@ -1013,6 +1013,19 @@ export default function Take({
 
                         <div className="lg:col-span-1 lg:sticky lg:top-24">
                             <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
+                                {/* Pass Threshold Badge */}
+                                <div className={`p-4 rounded-lg border-2 text-center ${selectedPassThreshold >= 75 ? 'bg-orange-50 border-orange-200' : selectedPassThreshold >= 60 ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                        🎯 Yêu cầu để đạt
+                                    </p>
+                                    <p className={`text-2xl font-black ${selectedPassThreshold >= 75 ? 'text-orange-600' : selectedPassThreshold >= 60 ? 'text-blue-600' : 'text-green-600'}`}>
+                                        ≥ {selectedPassThreshold}%
+                                    </p>
+                                    <p className="text-[10px] text-gray-500 mt-2 font-semibold">
+                                        Độ chính xác của bạn phải đạt {selectedPassThreshold}% để mở phần tiếp theo
+                                    </p>
+                                </div>
+
                                 {/* Timer Section moved here */}
                                 <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-100">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
@@ -1093,6 +1106,14 @@ export default function Take({
                                     chưa được trả lời
                                 </p>
                             )}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                <p className="text-blue-900 text-sm font-semibold mb-2">
+                                    🎯 Yêu cầu để đạt: ≥ {selectedPassThreshold}%
+                                </p>
+                                <p className="text-blue-700 text-xs">
+                                    Bạn cần đạt ít nhất {selectedPassThreshold}% độ chính xác để hoàn thành phần này.
+                                </p>
+                            </div>
                             <p className="text-gray-600 text-sm mb-6">
                                 Bạn không thể quay lại để sửa câu trả lời sau
                                 khi nộp bài.

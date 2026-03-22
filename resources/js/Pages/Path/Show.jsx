@@ -138,7 +138,7 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
     const updatePartConfig = (partKey, field, value) => {
         setPartConfigs((prev) => {
             const current = prev[partKey] || { question_limit: 1, duration: 20, availableQuestions: 1 };
-            
+
             if (field === "pass_threshold" && value === "") {
                 return {
                     ...prev,
@@ -334,9 +334,14 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
                                             >
                                                 {partKey}
                                             </div>
-                                            <h2 className="text-xl font-black text-gray-900">
-                                                Phần {partKey}
-                                            </h2>
+                                            <div>
+                                                <h2 className="text-xl font-black text-gray-900">
+                                                    Phần {partKey}
+                                                </h2>
+                                                <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isCompleted ? 'text-green-600' : 'text-orange-600'}`}>
+                                                    ✓ Yêu cầu: {config.pass_threshold !== "" ? `${config.pass_threshold}%` : `${Number(part?.pass_score) || 60}%`}
+                                                </p>
+                                            </div>
                                         </div>
                                         {isCompleted ? (
                                             <div className="bg-green-50 text-green-600 p-2 rounded-full border border-green-100">
@@ -374,19 +379,15 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
                                                     }}
                                                 ></div>
                                             </div>
-                                            <div className="flex justify-between items-center mt-2">
-                                                <p className="text-[10px] text-gray-400 font-bold italic uppercase">
-                                                    Yêu cầu đạt:{" "}
-                                                    {config.pass_threshold !== "" ? `${config.pass_threshold}%` : `${Number(part?.pass_score) || 60}%`}
-                                                </p>
-                                                {!isUnlocked && (
+                                            {!isUnlocked && (
+                                                <div className="mt-2">
                                                     <p className="text-[9px] text-red-400 font-bold uppercase tracking-tighter">
-                                                        {Number(partKey) === 1
+                                                        🔐 {Number(partKey) === 1
                                                             ? `Cần hoàn thành cấp độ trước`
-                                                            : `Cần hoàn thành Phần ${Number(partKey) - 1}`}
+                                                            : `Cần đạt ≥ ${config.pass_threshold !== "" ? `${config.pass_threshold}%` : `${Number(part?.pass_score) || 60}%`} ở Phần ${Number(partKey) - 1}`}
                                                     </p>
-                                                )}
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">

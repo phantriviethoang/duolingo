@@ -128,11 +128,10 @@ export default function ResultsShow({ result }) {
                                 </div>
                             )}
                             <div
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${
-                                    is_passed_requirement
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${is_passed_requirement
                                         ? "bg-green-50 border-green-200 text-green-700 shadow-sm shadow-green-100"
                                         : "bg-red-50 border-red-200 text-red-700 shadow-sm shadow-red-100"
-                                }`}
+                                    }`}
                             >
                                 {is_passed_requirement ? (
                                     <>
@@ -247,6 +246,20 @@ export default function ResultsShow({ result }) {
                             </div>
 
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                                <div className="bg-rose-50 p-3 rounded-xl">
+                                    <BarChart2 className="w-6 h-6 text-rose-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                        Ngưỡng yêu cầu
+                                    </p>
+                                    <p className="text-xl font-black text-gray-900">
+                                        ≥ {pass_threshold}%
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
                                 <div className="bg-blue-50 p-3 rounded-xl">
                                     <Clock className="w-6 h-6 text-blue-600" />
                                 </div>
@@ -350,13 +363,12 @@ export default function ResultsShow({ result }) {
                                         {/* Question Header */}
                                         <div className="flex items-start gap-4 mb-4">
                                             <span
-                                                className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
-                                                    !hasUserAnswer
+                                                className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${!hasUserAnswer
                                                         ? "bg-gray-400"
                                                         : isCorrect
-                                                          ? "bg-green-500"
-                                                          : "bg-red-500"
-                                                }`}
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                    }`}
                                             >
                                                 {index + 1}
                                             </span>
@@ -364,19 +376,18 @@ export default function ResultsShow({ result }) {
                                             <div className="flex-1 pt-1">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span
-                                                        className={`text-xs font-bold uppercase tracking-widest ${
-                                                            !hasUserAnswer
+                                                        className={`text-xs font-bold uppercase tracking-widest ${!hasUserAnswer
                                                                 ? "text-gray-400"
                                                                 : isCorrect
-                                                                  ? "text-green-600"
-                                                                  : "text-red-600"
-                                                        }`}
+                                                                    ? "text-green-600"
+                                                                    : "text-red-600"
+                                                            }`}
                                                     >
                                                         {!hasUserAnswer
                                                             ? "Bỏ qua"
                                                             : isCorrect
-                                                              ? "Đúng"
-                                                              : "Sai"}
+                                                                ? "Đúng"
+                                                                : "Sai"}
                                                     </span>
                                                 </div>
                                                 <p className="text-lg font-bold text-gray-900 leading-relaxed">
@@ -412,7 +423,7 @@ export default function ResultsShow({ result }) {
                                                                 <span className="opacity-50 text-sm">
                                                                     {String.fromCharCode(
                                                                         65 +
-                                                                            optIndex,
+                                                                        optIndex,
                                                                     )}
                                                                     .
                                                                 </span>
@@ -434,7 +445,7 @@ export default function ResultsShow({ result }) {
                                                                 ) : null}
 
                                                                 {isUserAnswer &&
-                                                                !isCorrectAnswer ? (
+                                                                    !isCorrectAnswer ? (
                                                                     <AlertCircle className="w-5 h-5 text-red-500" />
                                                                 ) : null}
                                                             </div>
@@ -458,30 +469,30 @@ export default function ResultsShow({ result }) {
 
                                             {(question.explanation ||
                                                 question.detailed_explanation) && (
-                                                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
-                                                    <div className="flex items-start gap-2">
-                                                        <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                                                        <div>
-                                                            <p className="text-xs font-black uppercase text-amber-800 tracking-widest mb-1">
-                                                                Giải thích & Ngữ
-                                                                pháp:
-                                                            </p>
-                                                            <p className="text-sm text-amber-900 leading-relaxed">
-                                                                {
-                                                                    question.explanation
-                                                                }
-                                                                {question.detailed_explanation && (
-                                                                    <span className="block mt-2 pt-2 border-t border-amber-200/50">
-                                                                        {
-                                                                            question.detailed_explanation
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                            </p>
+                                                    <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                                                        <div className="flex items-start gap-2">
+                                                            <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                                                            <div>
+                                                                <p className="text-xs font-black uppercase text-amber-800 tracking-widest mb-1">
+                                                                    Giải thích & Ngữ
+                                                                    pháp:
+                                                                </p>
+                                                                <p className="text-sm text-amber-900 leading-relaxed">
+                                                                    {
+                                                                        question.explanation
+                                                                    }
+                                                                    {question.detailed_explanation && (
+                                                                        <span className="block mt-2 pt-2 border-t border-amber-200/50">
+                                                                            {
+                                                                                question.detailed_explanation
+                                                                            }
+                                                                        </span>
+                                                                    )}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
                                         </div>
 
                                         {index < test.questions.length - 1 && (
@@ -492,6 +503,41 @@ export default function ResultsShow({ result }) {
                             })}
                         </div>
                     </div>
+
+                    {/* Next Part Suggestion */}
+                    {is_passed_requirement && (
+                        <div className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-3xl shadow-lg border-2 border-emerald-200 p-8 md:p-12">
+                            <div className="flex items-start gap-6 mb-8">
+                                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shrink-0">
+                                    <ChevronRight className="w-8 h-8 md:w-10 md:h-10 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-emerald-900 font-black text-2xl md:text-3xl mb-2">
+                                        🚀 Phần tiếp theo chờ bạn!
+                                    </p>
+                                    <p className="text-emerald-700 text-base md:text-lg leading-relaxed">
+                                        Bạn đã hoàn thành <span className="font-bold">Phần {test.part}</span> tại trình độ <span className="font-bold">{test.level}</span> với kết quả xuất sắc. Tiếp tục với <span className="font-bold">Phần {test.part + 1}</span> để nâng cao kỹ năng!
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Link
+                                    href={route('path.parts', { level: test.level })}
+                                    className="btn btn-lg bg-emerald-600 hover:bg-emerald-700 text-white border-none rounded-2xl font-black text-base md:text-lg px-8"
+                                >
+                                    <ChevronRight className="w-6 h-6" />
+                                    Làm Phần {test.part + 1}
+                                </Link>
+                                <Link
+                                    href={route('path.levels')}
+                                    className="btn btn-lg btn-outline border-2 border-emerald-300 text-emerald-700 hover:bg-emerald-100 rounded-2xl font-bold text-base md:text-lg"
+                                >
+                                    Xem lộ trình
+                                </Link>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>
