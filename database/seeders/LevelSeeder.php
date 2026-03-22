@@ -19,7 +19,6 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'A1', 
                 'order' => 1, 
-                'pass_threshold' => 60, 
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
@@ -28,7 +27,6 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'A2', 
                 'order' => 2, 
-                'pass_threshold' => 60, 
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
@@ -37,7 +35,6 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'B1', 
                 'order' => 3, 
-                'pass_threshold' => 75, 
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
@@ -46,7 +43,6 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'B2', 
                 'order' => 4, 
-                'pass_threshold' => 75, 
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
@@ -55,7 +51,6 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'C1', 
                 'order' => 5, 
-                'pass_threshold' => 90, 
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
@@ -64,7 +59,6 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'C2', 
                 'order' => 6, 
-                'pass_threshold' => 90, 
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
@@ -77,7 +71,6 @@ class LevelSeeder extends Seeder
                 ['name' => $part['name']],
                 [
                     'order' => $part['order'],
-                    'pass_threshold' => $part['pass_threshold'],
                     'pass_threshold_part1' => $part['pass_threshold_part1'],
                     'pass_threshold_part2' => $part['pass_threshold_part2'],
                     'pass_threshold_part3' => $part['pass_threshold_part3'],

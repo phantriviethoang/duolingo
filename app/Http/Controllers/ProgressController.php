@@ -62,7 +62,34 @@ class ProgressController extends Controller
      */
     private function getLevelProgress($user, $level)
     {
-        $parts = [1, 2, 3];
+        // Dynamically get parts from database (from progress or test_parts)
+        $parts = Progress::where('user_id', $user->id)
+            ->where('level', $level)
+            ->distinct()
+            ->orderBy('part')
+            ->pluck('part')
+            ->map(fn($part) => (int) $part)
+            ->toArray();
+
+        // If no progress yet, fetch available parts from test database
+        if (empty($parts)) {
+            $parts = \App\Models\TestPart::query()
+                ->whereHas('test', function ($query) use ($level) {
+                    $query->where('level', $level);
+                })
+                ->distinct()
+                ->orderBy('part_number')
+                ->pluck('part_number')
+                ->map(fn($part) => (int) $part)
+                ->toArray();
+        }
+
+        // Fallback to empty if still nothing
+        if (empty($parts)) {
+            $parts = [];
+        }
+
+        $levelConfig = \App\Models\Level::where('name', $level)->first();
         $levelProgress = [
             'level' => $level,
             'parts' => [],
@@ -77,12 +104,16 @@ class ProgressController extends Controller
                 ->where('part', $part)
                 ->first();
 
+            // Get threshold from config (dynamic, not hardcoded)
+            $thresholdField = "pass_threshold_part{$part}";
+            $passScore = $levelConfig ? ($levelConfig->$thresholdField ?? 60.0) : 60.0;
+
             $partData = [
                 'part' => $part,
                 'completed' => false,
                 'score' => 0,
                 'attempts' => 0,
-                'pass_score' => [1 => 60, 2 => 75, 3 => 90][$part],
+                'pass_score' => (int) $passScore,
             ];
 
             if ($progress) {

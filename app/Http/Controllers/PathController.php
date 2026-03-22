@@ -42,7 +42,7 @@ class PathController extends Controller
 
             $maxTestPart = max(1, $partCounts->keys()->max() ?? 1, \App\Models\Test::where('level', $level)->max('part') ?? 1);
             $maxQuestionPart = max(1, $questionCounts->keys()->max() ?? 1);
-            $maxPart = max($maxTestPart, $maxQuestionPart, 3); // Ensure at least 3 parts show up
+            $maxPart = max($maxTestPart, $maxQuestionPart); // Dynamic based on actual content
 
             $partsData = [];
             for ($i = 1; $i <= $maxPart; $i++) {
@@ -52,11 +52,7 @@ class PathController extends Controller
 
             $pathData[$level] = array_merge($partsData, [
                 'max_part' => $maxPart,
-                'config' => $levelConfigs[$level] ?? [
-                    'pass_threshold_part1' => 60,
-                    'pass_threshold_part2' => 75,
-                    'pass_threshold_part3' => 90,
-                ],
+                'config' => $levelConfigs[$level],
             ]);
         }
 
@@ -71,35 +67,55 @@ class PathController extends Controller
      */
     public function updateThreshold(Request $request, $level)
     {
-        $request->validate([
-            'part1' => 'required|numeric|min:0|max:100',
-            'part2' => 'required|numeric|min:0|max:100',
-            'part3' => 'required|numeric|min:0|max:100',
-        ], [
-            'part1.required' => 'Điểm Phần 1 là bắt buộc.',
-            'part1.numeric' => 'Điểm Phần 1 phải là số.',
-            'part1.min' => 'Điểm Phần 1 phải từ 0 đến 100.',
-            'part1.max' => 'Điểm Phần 1 phải từ 0 đến 100.',
-            'part2.required' => 'Điểm Phần 2 là bắt buộc.',
-            'part2.numeric' => 'Điểm Phần 2 phải là số.',
-            'part2.min' => 'Điểm Phần 2 phải từ 0 đến 100.',
-            'part2.max' => 'Điểm Phần 2 phải từ 0 đến 100.',
-            'part3.required' => 'Điểm Phần 3 là bắt buộc.',
-            'part3.numeric' => 'Điểm Phần 3 phải là số.',
-            'part3.min' => 'Điểm Phần 3 phải từ 0 đến 100.',
-            'part3.max' => 'Điểm Phần 3 phải từ 0 đến 100.',
-        ]);
+        // Dynamically calculate max parts for this level
+        $maxPart = $this->getMaxPartForLevel($level);
 
-        $config = \App\Models\Level::updateOrCreate(
-            ['name' => $level],
-            [
-                'pass_threshold_part1' => $request->part1,
-                'pass_threshold_part2' => $request->part2,
-                'pass_threshold_part3' => $request->part3,
-            ]
-        );
+        // Build validation rules dynamically
+        $rules = [];
+        $messages = [];
+
+        for ($i = 1; $i <= $maxPart; $i++) {
+            $rules["part{$i}"] = 'required|numeric|min:0|max:100';
+            $messages["part{$i}.required"] = "Điểm Phần {$i} là bắt buộc.";
+            $messages["part{$i}.numeric"] = "Điểm Phần {$i} phải là số.";
+            $messages["part{$i}.min"] = "Điểm Phần {$i} phải từ 0 đến 100.";
+            $messages["part{$i}.max"] = "Điểm Phần {$i} phải từ 0 đến 100.";
+        }
+
+        $validated = $request->validate($rules, $messages);
+
+        // Build update array dynamically
+        $updates = ['name' => $level];
+        for ($i = 1; $i <= $maxPart; $i++) {
+            $updates["pass_threshold_part{$i}"] = $validated["part{$i}"];
+        }
+
+        $config = \App\Models\Level::updateOrCreate(['name' => $level], $updates);
 
         return back()->with('success', "Đã cập nhật ngưỡng điểm cho trình độ $level");
+    }
+
+    /**
+     * Get maximum part number for a level
+     */
+    private function getMaxPartForLevel($level): int
+    {
+        $partCounts = collect();
+        if ($this->usesTestPartsTable()) {
+            $partCounts = TestPart::query()
+                ->whereHas('test', function ($query) use ($level) {
+                    $query->where('level', $level);
+                })
+                ->pluck('part_number')
+                ->max();
+        }
+
+        $questionMax = \App\Models\Question::where('level', $level)
+            ->max('part_number') ?? 0;
+
+        $testMax = \App\Models\Test::where('level', $level)->max('part') ?? 0;
+
+        return max(1, $partCounts ?? 0, $questionMax, $testMax);
     }
 
     /**

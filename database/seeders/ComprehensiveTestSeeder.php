@@ -41,8 +41,6 @@ class ComprehensiveTestSeeder extends Seeder
                 ],
                 [
                     'description' => "Assessment test for $level",
-                    'part' => 1,
-                    'duration' => 10,
                     'total_questions' => $maxQuestionCount,
                     'is_active' => true,
                 ]
