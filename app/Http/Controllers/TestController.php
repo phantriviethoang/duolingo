@@ -130,16 +130,7 @@ class TestController extends Controller
             return false;
         }
 
-        // Lấy pass threshold từ database (bảng levels)
-        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
-
-        $threshold = 60.0; // Default
-        if ($levelConfig) {
-            $thresholdField = "pass_threshold_part{$previousPart}";
-            $threshold = $levelConfig->$thresholdField ?? 60.0;
-        }
-
-        return $previousProgress->percentage >= $threshold;
+        return $previousProgress->is_passed ?? false;
     }
 
     private function resolveAttemptPartNumbers(Test $test, int $targetPartNumber): array
@@ -371,8 +362,10 @@ class TestController extends Controller
         $levelConfig = \App\Models\Level::where('name', $test->level)->first();
         $thresholdField = "pass_threshold_part{$partNumber}";
         $defaultPassThreshold = (float) ($levelConfig?->$thresholdField ?? 60.0);
-        $requestedPassThreshold = (float) request()->query('custom_pass_threshold', $defaultPassThreshold);
-        $customPassThreshold = max(1, min(100, $requestedPassThreshold));
+        $requestedPassThreshold = request()->query('custom_pass_threshold');
+        $customPassThreshold = $requestedPassThreshold === null || $requestedPassThreshold === "" 
+            ? $defaultPassThreshold 
+            : max(1, min(100, (float) $requestedPassThreshold));
 
         $retakeWrong = request()->query('retake_wrong');
         $resultId = request()->query('result_id');
@@ -381,7 +374,7 @@ class TestController extends Controller
 
         $allQuestions = $test->questions()
             ->with('answers')
-            ->orderBy('order')
+            ->orderBy('question_test.order')
             ->take($questionLimit)
             ->get();
 

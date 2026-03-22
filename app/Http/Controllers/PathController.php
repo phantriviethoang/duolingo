@@ -401,11 +401,17 @@ class PathController extends Controller
             ->where('part', $part)
             ->first();
 
+        $lastResult = \App\Models\Result::where('user_id', $user->id)
+            ->whereNotNull('custom_pass_threshold')
+            ->latest('id')
+            ->first();
+
         $percent = $this->resolveProgressPercent($progress);
 
         return [
             'score' => $percent,
             'completed' => $progress->is_passed ?? false,
+            'custom_pass_threshold' => $lastResult?->custom_pass_threshold,
         ];
     }
 
@@ -434,7 +440,7 @@ class PathController extends Controller
             return false;
         }
 
-        return $this->resolveProgressPercent($progress) >= ($thresholds[$previousPart] ?? 60);
+        return $progress->is_passed ?? false;
     }
 
     private function getAvailableParts(string $level): array

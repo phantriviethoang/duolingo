@@ -98,15 +98,15 @@ class ResultController extends Controller
 
         $questionsQuery = $test->questions()
             ->with('answers:id,question_id,is_correct')
-            ->orderBy('order');
+            ->orderBy('question_test.order');
 
         if ($requestedQuestionIds->isNotEmpty()) {
-            $questionsQuery->whereIn('id', $requestedQuestionIds->all());
+            $questionsQuery->whereIn('questions.id', $requestedQuestionIds->all());
         } else {
             $questionsQuery->take($questionLimit);
         }
 
-        $questions = $questionsQuery->get(['id']);
+        $questions = $questionsQuery->get(['questions.id']);
 
         $total = $questions->count();
         $correct = 0;
@@ -185,7 +185,7 @@ class ResultController extends Controller
         $test->load([
             'questions' => function ($query) use ($questionLimit) {
                 $query->with('answers')
-                    ->orderBy('order')
+                    ->orderBy('question_test.order')
                     ->take($questionLimit);
             }
         ]);
@@ -275,17 +275,7 @@ class ResultController extends Controller
             return false;
         }
 
-        // Lấy threshold từ DB
-        $levelConfig = \App\Models\Level::where('name', $test->level)->first();
-        $threshold = 60.0;
-        if ($levelConfig) {
-            $thresholdField = "pass_threshold_part{$previousPart}";
-            $threshold = $levelConfig->$thresholdField ?? \App\Models\UserProgress::PASS_THRESHOLDS[$previousPart] ?? 60.0;
-        } else {
-            $threshold = \App\Models\UserProgress::PASS_THRESHOLDS[$previousPart] ?? 60.0;
-        }
-
-        return $previousProgress->score >= $threshold;
+        return $previousProgress->is_passed ?? false;
     }
 
     private function resolveAttemptPartNumbers(Test $test, int $targetPartNumber): array

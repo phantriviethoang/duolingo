@@ -36,7 +36,7 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
             availableQuestions,
             question_limit: Math.max(1, availableQuestions),
             duration: Math.max(1, defaultDuration),
-            pass_threshold: Math.max(1, Math.min(100, Number(part?.pass_score) || 60)),
+            pass_threshold: part?.progress?.custom_pass_threshold ? Number(part.progress.custom_pass_threshold) : "",
         };
     };
 
@@ -138,6 +138,17 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
     const updatePartConfig = (partKey, field, value) => {
         setPartConfigs((prev) => {
             const current = prev[partKey] || { question_limit: 1, duration: 20, availableQuestions: 1 };
+            
+            if (field === "pass_threshold" && value === "") {
+                return {
+                    ...prev,
+                    [partKey]: {
+                        ...current,
+                        pass_threshold: "",
+                    },
+                };
+            }
+
             const numeric = Number(value);
 
             if (!Number.isFinite(numeric)) {
@@ -366,7 +377,7 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
                                             <div className="flex justify-between items-center mt-2">
                                                 <p className="text-[10px] text-gray-400 font-bold italic uppercase">
                                                     Yêu cầu đạt:{" "}
-                                                    {config.pass_threshold}%
+                                                    {config.pass_threshold !== "" ? `${config.pass_threshold}%` : `${Number(part?.pass_score) || 60}%`}
                                                 </p>
                                                 {!isUnlocked && (
                                                     <p className="text-[9px] text-red-400 font-bold uppercase tracking-tighter">
@@ -462,6 +473,7 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
                                                     min={1}
                                                     max={100}
                                                     value={config.pass_threshold}
+                                                    placeholder={Number(part?.pass_score) || 60}
                                                     disabled={!isUnlocked}
                                                     onChange={(e) =>
                                                         updatePartConfig(
