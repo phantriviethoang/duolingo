@@ -85,11 +85,16 @@ class PathController extends Controller
 
         $validated = $request->validate($rules, $messages);
 
-        // Build update array dynamically
-        $updates = ['name' => $level];
+        // Build update array with new JSON structure
+        $partThresholds = [];
         for ($i = 1; $i <= $maxPart; $i++) {
-            $updates["pass_threshold_part{$i}"] = $validated["part{$i}"];
+            $partThresholds[$i] = (float) $validated["part{$i}"];
         }
+
+        $updates = [
+            'name' => $level,
+            'part_thresholds' => $partThresholds,
+        ];
 
         $config = \App\Models\Level::updateOrCreate(['name' => $level], $updates);
 
@@ -516,10 +521,8 @@ class PathController extends Controller
                     return [$part => 60.0];
                 }
 
-                $field = "pass_threshold_part{$part}";
-                $value = data_get($levelConfig, $field);
-
-                return [$part => (float) ($value ?? $levelConfig->pass_threshold ?? 60.0)];
+                // Use new JSON-based getPartThreshold() method
+                return [$part => $levelConfig->getPartThreshold($part, 60.0)];
             })
             ->toArray();
     }

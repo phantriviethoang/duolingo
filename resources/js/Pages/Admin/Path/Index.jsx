@@ -41,6 +41,7 @@ export default function PathIndex({ pathData, levels }) {
 }
 
 function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
+    const thresholds = data.config?.part_thresholds || { 1: 60, 2: 75, 3: 90 };
     const {
         data: formData,
         setData,
@@ -48,9 +49,9 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
         processing,
         errors,
     } = useForm({
-        part1: data.config.pass_threshold_part1 || 60,
-        part2: data.config.pass_threshold_part2 || 75,
-        part3: data.config.pass_threshold_part3 || 90,
+        part1: thresholds[1] || 60,
+        part2: thresholds[2] || 75,
+        part3: thresholds[3] || 90,
     });
 
     const handleSubmit = (e) => {
@@ -119,7 +120,7 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                     </span>
                                     {!isEditing ? (
                                         <span className="badge badge-blue bg-blue-100 text-blue-700 border-none font-bold py-3">
-                                            Đạt {data.config[`pass_threshold_part${part}`] || ((part-1)*15 + 60)}%
+                                            Đạt {data.config[`pass_threshold_part${part}`] || ((part - 1) * 15 + 60)}%
                                         </span>
                                     ) : (
                                         <div className="flex flex-col items-end gap-1">
@@ -127,7 +128,7 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                                 <input
                                                     type="number"
                                                     className={`input input-bordered input-xs w-16 text-black font-bold ${errors[`part${part}`] ? 'border-red-500' : ''}`}
-                                                    value={formData[`part${part}`] || ((part-1)*15 + 60)}
+                                                    value={formData[`part${part}`] || ((part - 1) * 15 + 60)}
                                                     onChange={e => setData(`part${part}`, e.target.value)}
                                                     min="0"
                                                     max="100"

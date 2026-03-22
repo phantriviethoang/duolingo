@@ -17,9 +17,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('order')->comment('Thứ tự: 1, 2, 3, 4, 5, 6');
             $table->integer('pass_threshold')->default(60)->comment('Điểm đạt chung');
-            $table->float('pass_threshold_part1')->default(60.0);
-            $table->float('pass_threshold_part2')->default(75.0);
-            $table->float('pass_threshold_part3')->default(90.0);
+            $table->json('part_thresholds')->default(json_encode([1 => 60.0, 2 => 75.0, 3 => 90.0]))->comment('Dynamic part thresholds: {1: 60.0, 2: 75.0, 3: 90.0}');
             $table->timestamps();
         });
     }

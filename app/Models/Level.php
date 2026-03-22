@@ -17,17 +17,13 @@ class Level extends Model
         'description',
         'order',
         'pass_threshold',
-        'pass_threshold_part1',
-        'pass_threshold_part2',
-        'pass_threshold_part3',
+        'part_thresholds',
     ];
 
     protected $casts = [
         'order' => 'integer',
         'pass_threshold' => 'integer',
-        'pass_threshold_part1' => 'float',
-        'pass_threshold_part2' => 'float',
-        'pass_threshold_part3' => 'float',
+        'part_thresholds' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -38,5 +34,26 @@ class Level extends Model
     public function scopeByName($query, $name)
     {
         return $query->where('name', $name);
+    }
+
+    /**
+     * Get pass threshold for a specific part
+     * @param int $part Part number (1, 2, 3, ...)
+     * @param float $default Default if not found
+     * @return float
+     */
+    public function getPartThreshold(int $part, float $default = 60.0): float
+    {
+        $thresholds = $this->part_thresholds ?? [1 => 60.0, 2 => 75.0, 3 => 90.0];
+        return (float) ($thresholds[$part] ?? $this->pass_threshold ?? $default);
+    }
+
+    /**
+     * Get all part thresholds
+     * @return array
+     */
+    public function getPartThresholds(): array
+    {
+        return $this->part_thresholds ?? [1 => 60.0, 2 => 75.0, 3 => 90.0];
     }
 }
