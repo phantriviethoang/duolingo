@@ -25,7 +25,7 @@ export default function Home({ featuredCourses = [], stats = {} }) {
                             Lộ trình bài bản, đánh giá chi tiết và kho đề thi phong phú.
                         </p>
                         <div className="mt-10 flex flex-wrap justify-center gap-4">
-                            <Link href="/path/level" className="rounded-full bg-blue-600 px-8 py-3 text-sm font-bold text-white hover:bg-blue-700 shadow-lg transition-transform hover:scale-105">
+                            <Link href="/path" className="rounded-full bg-blue-600 px-8 py-3 text-sm font-bold text-white hover:bg-blue-700 shadow-lg transition-transform hover:scale-105">
                                 Bắt đầu ngay
                             </Link>
                             <Link href="/progress/dashboard" className="rounded-full bg-indigo-600 px-8 py-3 text-sm font-bold text-white hover:bg-indigo-700 shadow-lg transition-transform hover:scale-105">

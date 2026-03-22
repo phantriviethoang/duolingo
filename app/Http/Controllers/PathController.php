@@ -90,11 +90,30 @@ class PathController extends Controller
     }
 
     /**
-     * Display learning path for current level
+     * Display selection for initial targets (goal score: 50, 70, 90)
      */
     public function target()
     {
-        return $this->index();
+        $user = Auth::user();
+
+        return Inertia::render('Path/Target', [
+            'goal_score' => $user->goal_score ?? 50,
+        ]);
+    }
+
+    /**
+     * Update user's goal score
+     */
+    public function saveTarget(Request $request)
+    {
+        $request->validate([
+            'goal_score' => 'required|in:50,70,90',
+        ]);
+
+        $user = Auth::user();
+        $user->update(['goal_score' => (int) $request->goal_score]);
+
+        return redirect()->route('path.levels')->with('success', 'Mục tiêu học tập đã được cập nhật.');
     }
 
     /**
@@ -106,8 +125,10 @@ class PathController extends Controller
         $progressData = [];
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
+        $targetPartCounts = $user->target_part_counts ?? [];
+
         foreach (self::LEVELS as $level) {
-            $parts = \App\Models\Progress::where('user_id', $user->id)
+            $progressParts = \App\Models\Progress::where('user_id', $user->id)
                 ->where('level', $level)
                 ->select('part')
                 ->distinct()
@@ -115,6 +136,16 @@ class PathController extends Controller
                 ->pluck('part')
                 ->map(fn ($part) => (int) $part)
                 ->toArray();
+
+            $targetCount = $targetPartCounts[$level] ?? 0;
+            $targetParts = $targetCount > 0 ? range(1, $targetCount) : [];
+
+            // Combine both target parts and progress parts, prioritize distinct part numbers
+            $parts = collect(array_merge($progressParts, $targetParts))
+                        ->unique()
+                        ->sort()
+                        ->values()
+                        ->toArray();
 
             $levelConfig = $levelConfigs[$level] ?? null;
             $thresholds = $this->buildThresholds($levelConfig, $parts);
@@ -146,11 +177,18 @@ class PathController extends Controller
     }
 
     /**
-     * Update user's current level
+     * Update user's target level (A1, A2, ...)
      */
-    public function saveTarget(Request $request)
+    public function saveLevel(Request $request)
     {
-        return $this->update($request);
+        $request->validate([
+            'target_level' => 'required|in:A1,A2,B1,B2,C1,C2',
+        ]);
+
+        $user = Auth::user();
+        $user->update(['target_level' => $request->target_level]);
+
+        return redirect()->route('path.levels')->with('success', 'Trình độ mục tiêu đã được lưu lại.');
     }
 
     public function update(Request $request)
@@ -184,13 +222,41 @@ class PathController extends Controller
             abort(404);
         }
 
+        // Lưu trình độ hiện tại khi user truy cập vào /path/{level}
+        $user->update(['current_level' => $level]);
+
         $parts = $this->buildPartsData($user, $level);
+
+        $counts = $user->target_part_counts ?? [];
 
         return Inertia::render('Path/Show', [
             'level' => $level,
             'parts' => $parts,
-            'selectedPart' => null,
+            'selectedPart' => null, // Luôn hiển thị giao diện chọn part
+            'targetPartCount' => $counts[$level] ?? null, // Số lượng phần theo phân vùng level
         ]);
+    }
+
+    /**
+     * Update user's target part count
+     */
+    public function savePartCount(Request $request)
+    {
+        $request->validate([
+            'count' => 'required|integer|min:1|max:50',
+            'level' => 'required|in:A1,A2,B1,B2,C1,C2',
+        ]);
+
+        $user = Auth::user();
+        $counts = $user->target_part_counts ?? [];
+        $counts[$request->level] = (int) $request->count;
+
+        $user->update([
+            'target_part_count' => (int) $request->count, // Keep for backward compat
+            'target_part_counts' => $counts
+        ]);
+
+        return back()->with('success', 'Đã lưu số lượng phần thi mong muốn.');
     }
 
     /**
@@ -205,6 +271,12 @@ class PathController extends Controller
         if (! in_array($level, self::LEVELS, true) || ! in_array($part, $parts, true)) {
             abort(404);
         }
+
+        // Lưu lại phần (part) hiện tại khi user chọn
+        $user->update([
+            'current_level' => $level,
+            'current_part' => $part
+        ]);
 
         $parts = $this->buildPartsData($user, $level);
 

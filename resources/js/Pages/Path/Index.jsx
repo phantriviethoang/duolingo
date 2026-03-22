@@ -1,10 +1,35 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { CheckCircle, Lock, Play } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle, Lock, Play, Target, Save, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-export default function PathIndex({ levels, progressData }) {
+export default function PathIndex({ levels, progressData, auth }) {
+    const { flash } = usePage().props;
+    const [showSuccess, setShowSuccess] = useState(false);
     const [selectedLevel, setSelectedLevel] = useState('all');
+
+    const { put, processing } = useForm({
+        target_level: auth?.user?.target_level || ''
+    });
+
+    useEffect(() => {
+        if (flash?.success) {
+            setShowSuccess(true);
+            const timer = setTimeout(() => setShowSuccess(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
+
+    const handleSaveLevel = (e, level) => {
+        e.preventDefault();
+        e.stopPropagation();
+        put(route('path.saveLevel', { target_level: level }), {
+            preserveScroll: true,
+        });
+    };
+
+    const goalScore = auth?.user?.goal_score || 50;
+    const currentTargetLevel = auth?.user?.target_level;
 
     const getPartNumbers = (level) => {
         const parts = progressData[level] || {};
@@ -40,6 +65,16 @@ export default function PathIndex({ levels, progressData }) {
             <Head title="Lộ trình học tập" />
 
             <div className="max-w-full mx-auto px-4 py-8">
+                {/* Success Toast */}
+                {showSuccess && (
+                    <div className="fixed top-20 right-8 z-50 animate-bounce">
+                        <div className="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold border-2 border-emerald-400">
+                            <Check className="w-6 h-6" />
+                            <span>{flash.success}</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="mb-10">
                     <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">Lộ trình học tập</h1>
                     <p className="text-gray-500 font-medium text-lg">Theo dõi tiến trình chinh phục các cấp độ CEFR của bạn</p>
@@ -51,12 +86,18 @@ export default function PathIndex({ levels, progressData }) {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-blue-50 rounded-2xl">
-                                    <CheckCircle className="w-6 h-6 text-blue-600" />
+                                    <Target className="w-6 h-6 text-blue-600" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Tất cả trình độ đều khả dụng</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Mục tiêu hiện tại: {goalScore}%</p>
                                     <h2 className="text-2xl font-black text-gray-900">Chọn level bạn muốn học</h2>
                                 </div>
+                                <Link
+                                    href={route('path.target')}
+                                    className="px-4 py-2 bg-gray-100 font-bold rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all text-sm"
+                                >
+                                    Sửa mục tiêu
+                                </Link>
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-3">
@@ -90,16 +131,30 @@ export default function PathIndex({ levels, progressData }) {
                         const progress = getLevelProgress(level);
                         const partNumbers = getPartNumbers(level);
 
+                        const isSelected = auth?.user?.target_level === level;
+
                         return (
-                            <div key={level} className="card bg-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 rounded-3xl overflow-hidden group border-transparent">
+                            <div key={level} className={`card bg-white shadow-lg hover:shadow-xl transition-all duration-300 border-4 rounded-3xl overflow-hidden group ${isSelected ? 'border-blue-500 ring-4 ring-blue-500/10 shadow-blue-500/10' : 'border-transparent'}`}>
                                 <div className="card-body p-8">
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl bg-gray-100 text-gray-400">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 text-gray-400'}`}>
                                                 {level}
                                             </div>
-                                            <h3 className="text-xl font-black text-gray-900">Trình độ {level}</h3>
+                                            <div>
+                                                <h3 className="text-xl font-black text-gray-900">Trình độ {level}</h3>
+                                                {isSelected && <span className="text-[10px] bg-blue-100 text-blue-700 font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Hiện tại</span>}
+                                            </div>
                                         </div>
+
+                                        <button
+                                            onClick={(e) => handleSaveLevel(e, level)}
+                                            disabled={processing}
+                                            className={`p-3 rounded-2xl transition-all duration-300 shadow-sm active:scale-90 relative z-10 ${isSelected ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-lg'}`}
+                                            title={isSelected ? "Trình độ hiện tại" : "Đặt làm trình độ mục tiêu"}
+                                        >
+                                            {isSelected ? <Check className="w-6 h-6" /> : <Save className={`w-6 h-6 ${processing ? 'animate-pulse' : ''}`} />}
+                                        </button>
                                     </div>
 
                                     <div className="space-y-6">

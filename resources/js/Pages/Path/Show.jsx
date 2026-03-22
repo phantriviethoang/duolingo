@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
 import {
     CheckCircle,
     Lock,
@@ -7,10 +7,11 @@ import {
     FileQuestion,
     Clock,
     ArrowLeft,
+    Save,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function PathShow({ level, parts, selectedPart = null }) {
+export default function PathShow({ level, parts, selectedPart = null, targetPartCount = null, auth }) {
     const partEntries = useMemo(
         () =>
             Object.entries(parts || {}).sort(
@@ -46,7 +47,28 @@ export default function PathShow({ level, parts, selectedPart = null }) {
         }, {}),
     );
 
-    const [selectedPartCount, setSelectedPartCount] = useState("");
+    const [selectedPartCount, setSelectedPartCount] = useState(targetPartCount || "");
+    const { data, setData, put, processing } = useForm({
+        count: targetPartCount || "",
+        level: level,
+    });
+
+    // Cập nhật selectedPartCount và form data khi targetPartCount từ server thay đổi (ví dụ sau khi lưu)
+    useEffect(() => {
+        if (targetPartCount) {
+            setSelectedPartCount(targetPartCount);
+            setData('count', targetPartCount);
+        }
+    }, [targetPartCount]);
+
+    const handleSavePartCount = () => {
+        put(route('path.savePartCount'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Đã lưu thành công
+            }
+        });
+    };
 
     useEffect(() => {
         setPartConfigs((prevConfigs) =>
@@ -171,12 +193,14 @@ export default function PathShow({ level, parts, selectedPart = null }) {
     const handleSelectedPartCountChange = (value) => {
         if (value === "") {
             setSelectedPartCount("");
+            setData('count', "");
             return;
         }
         const count = Math.floor(Number(value) || 1);
         const normalized = Math.max(1, Math.min(count, 50));
 
         setSelectedPartCount(normalized);
+        setData('count', normalized);
     };
 
     return (
@@ -207,19 +231,29 @@ export default function PathShow({ level, parts, selectedPart = null }) {
                                     <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
                                         Chọn số phần muốn thi
                                     </p>
-                                    <input
-                                        type="text"
-                                        placeholder="Nhập số phần muốn thi..."
-                                        value={selectedPartCount}
-                                        onChange={(e) =>
-                                            handleSelectedPartCountChange(
-                                                e.target.value,
-                                            )
-                                        }
-                                        className="input input-bordered w-full max-w-44 text-black placeholder-black font-bold"
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Nhập số phần muốn thi..."
+                                            value={selectedPartCount}
+                                            onChange={(e) =>
+                                                handleSelectedPartCountChange(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="input input-bordered w-full max-w-44 text-black placeholder-black font-bold"
+                                        />
+                                        <button
+                                            onClick={handleSavePartCount}
+                                            disabled={processing}
+                                            className={`btn btn-square ${selectedPartCount == targetPartCount ? 'btn-ghost text-emerald-500' : 'btn-primary'}`}
+                                            title="Lưu số lượng phần muốn thi"
+                                        >
+                                            <Save className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                     <p className="text-[11px] text-gray-400 mt-2">
-                                        Nhập số phần muốn thi (ví dụ: 1 hoặc 5). Hệ thống sẽ hiển thị đúng từng đó phần.
+                                        Nhập số phần muốn thi (ví dụ: 1 hoặc 5). Hệ thống sẽ hiển thị đúng từng đó phần và ghi nhớ lựa chọn của bạn.
                                     </p>
                                 </div>
                             </div>

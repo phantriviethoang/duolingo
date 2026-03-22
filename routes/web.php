@@ -51,6 +51,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/level', [PathController::class, 'levels'])
             ->name('path.levels');
 
+        Route::put('/level', [PathController::class, 'saveLevel'])
+            ->name('path.saveLevel');
+
+        Route::put('/part-count', [PathController::class, 'savePartCount'])
+            ->name('path.savePartCount');
+
         // /path/A1 -> hiển thị 3 phần (part 1, part 2, part 3)
         Route::get('/{level}', [PathController::class, 'parts'])
             ->whereIn('level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
