@@ -17,52 +17,52 @@ class LevelSeeder extends Seeder
     {
         $parts = [
             [
-                'name' => 'A1', 
-                'order' => 1, 
+                'name' => 'A1',
+                'order' => 1,
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
-                'description' => 'Beginner - Bước đầu tiên'
+                'description' => 'Beginner - Bước đầu tiên',
             ],
             [
-                'name' => 'A2', 
-                'order' => 2, 
+                'name' => 'A2',
+                'order' => 2,
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
-                'description' => 'Elementary - Nền tảng cơ bản'
+                'description' => 'Elementary - Nền tảng cơ bản',
             ],
             [
-                'name' => 'B1', 
-                'order' => 3, 
+                'name' => 'B1',
+                'order' => 3,
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
-                'description' => 'Intermediate - Tự tin giao tiếp'
+                'description' => 'Intermediate - Tự tin giao tiếp',
             ],
             [
-                'name' => 'B2', 
-                'order' => 4, 
+                'name' => 'B2',
+                'order' => 4,
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
-                'description' => 'Upper Intermediate - Giao tiếp thành thạo'
+                'description' => 'Upper Intermediate - Giao tiếp thành thạo',
             ],
             [
-                'name' => 'C1', 
-                'order' => 5, 
+                'name' => 'C1',
+                'order' => 5,
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
-                'description' => 'Advanced - Nâng cao kỹ năng'
+                'description' => 'Advanced - Nâng cao kỹ năng',
             ],
             [
-                'name' => 'C2', 
-                'order' => 6, 
+                'name' => 'C2',
+                'order' => 6,
                 'pass_threshold_part1' => 60,
                 'pass_threshold_part2' => 75,
                 'pass_threshold_part3' => 90,
-                'description' => 'Proficient - Gần như người bản xứ'
+                'description' => 'Proficient - Gần như người bản xứ',
             ],
         ];
 

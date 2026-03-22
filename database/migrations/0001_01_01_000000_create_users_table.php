@@ -20,9 +20,9 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->string('role')->default('student'); // Vai trò: student, teacher, admin
-            $table->foreignId('target_part_id')->nullable()->constrained('levels'); // Mục tiêu Part
-            $table->boolean('is_high_quality')->default(false); // Chế độ cao cấp
+            $table->string('role')->default('student');
+            $table->integer('goal_score')->default(50)->comment('Target score: 50, 70, 90');
+            $table->integer('current_part')->nullable();
             $table->timestamps();
         });
 

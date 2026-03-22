@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('test_id')->constrained()->cascadeOnDelete();
+            $table->string('level')->nullable()->comment('CEFR level: A1, A2, etc.');
+            $table->integer('part_number')->nullable();
             $table->text('question_text');
             $table->string('question_type')->default('multiple_choice');
             $table->integer('order');

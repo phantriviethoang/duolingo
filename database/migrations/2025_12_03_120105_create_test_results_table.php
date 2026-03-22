@@ -20,6 +20,8 @@ return new class extends Migration
             $table->integer('total')->default(0);
             $table->json('answers')->nullable();
             $table->integer('time_spent')->nullable()->comment('Time spent in seconds');
+            $table->unsignedInteger('part_number')->nullable();
+            $table->float('custom_pass_threshold')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });

@@ -129,8 +129,8 @@ export default function ResultsShow({ result }) {
                             )}
                             <div
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${is_passed_requirement
-                                        ? "bg-green-50 border-green-200 text-green-700 shadow-sm shadow-green-100"
-                                        : "bg-red-50 border-red-200 text-red-700 shadow-sm shadow-red-100"
+                                    ? "bg-green-50 border-green-200 text-green-700 shadow-sm shadow-green-100"
+                                    : "bg-red-50 border-red-200 text-red-700 shadow-sm shadow-red-100"
                                     }`}
                             >
                                 {is_passed_requirement ? (
@@ -364,10 +364,10 @@ export default function ResultsShow({ result }) {
                                         <div className="flex items-start gap-4 mb-4">
                                             <span
                                                 className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${!hasUserAnswer
-                                                        ? "bg-gray-400"
-                                                        : isCorrect
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
+                                                    ? "bg-gray-400"
+                                                    : isCorrect
+                                                        ? "bg-green-500"
+                                                        : "bg-red-500"
                                                     }`}
                                             >
                                                 {index + 1}
@@ -377,10 +377,10 @@ export default function ResultsShow({ result }) {
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span
                                                         className={`text-xs font-bold uppercase tracking-widest ${!hasUserAnswer
-                                                                ? "text-gray-400"
-                                                                : isCorrect
-                                                                    ? "text-green-600"
-                                                                    : "text-red-600"
+                                                            ? "text-gray-400"
+                                                            : isCorrect
+                                                                ? "text-green-600"
+                                                                : "text-red-600"
                                                             }`}
                                                     >
                                                         {!hasUserAnswer
@@ -520,7 +520,7 @@ export default function ResultsShow({ result }) {
                                     </p>
                                 </div>
                             </div>
-                            
+
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Link
                                     href={route('path.parts', { level: test.level })}
