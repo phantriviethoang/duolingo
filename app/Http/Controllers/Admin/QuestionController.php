@@ -107,7 +107,6 @@ class QuestionController extends Controller
             'level' => $data['level'],
             'part_number' => $data['part_number'],
             'question_text' => $data['question_text'],
-            'question_type' => 'multiple_choice',
             'order' => $questionCount + 1,
             'explanation' => $data['explanation'] ?? null,
             'translation' => $data['translation'] ?? null,

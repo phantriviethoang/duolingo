@@ -156,10 +156,8 @@ class PathController extends Controller
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
         foreach (self::LEVELS as $level) {
-            // Get available parts from database (test_parts or tests table)
             $progressParts = $this->getAvailableParts($level);
 
-            // Parts are determined by actual progress and available tests
             $parts = collect($progressParts)
                 ->unique()
                 ->sort()

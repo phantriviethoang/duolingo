@@ -61,7 +61,6 @@ class TestFactory extends Factory
                 $questionData = $this->generatePracticeQuestion($i);
                 $question = $test->questions()->create([
                     'question_text' => $questionData['question_text'] ?? $questionData['question'] ?? '',
-                    'question_type' => $questionData['question_type'] ?? 'multiple_choice',
                     'order' => $i,
                     'translation' => $questionData['translation'] ?? null,
                     'explanation' => $questionData['explanation'] ?? null,

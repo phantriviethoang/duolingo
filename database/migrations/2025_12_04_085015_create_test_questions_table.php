@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('level')->nullable()->comment('CEFR level: A1, A2, etc.');
             $table->integer('part_number')->nullable();
             $table->text('question_text');
-            $table->string('question_type')->default('multiple_choice');
             $table->integer('order');
             $table->text('translation')->nullable();
             $table->text('explanation')->nullable();

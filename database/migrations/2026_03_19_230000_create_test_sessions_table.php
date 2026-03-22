@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('test_id')->constrained()->cascadeOnDelete();
-            $table->string('level', 10);
-            $table->unsignedInteger('part')->nullable();
             $table->json('answers')->nullable();
             $table->json('flagged')->nullable();
             $table->unsignedInteger('current_question')->default(0);

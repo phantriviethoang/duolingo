@@ -305,7 +305,6 @@ export default function Take({
                 flagged: flaggedRef.current,
                 current_question: currentQuestionRef.current,
                 time_left: Math.max(0, Math.floor(timeLeftRef.current)),
-                part_number: Number(quiz?.part) || 1,
             };
 
             const xsrfToken = getXsrfTokenFromCookie();
@@ -335,7 +334,6 @@ export default function Take({
                     String(payload.current_question ?? 0),
                 );
                 formData.append("time_left", String(payload.time_left ?? 0));
-                formData.append("part_number", String(payload.part_number ?? 1));
 
                 if (navigator.sendBeacon) {
                     navigator.sendBeacon(syncRoute, formData);

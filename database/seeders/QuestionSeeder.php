@@ -29,7 +29,6 @@ class QuestionSeeder extends Seeder
                         'level' => $level,
                         'part_number' => $part,
                         'question_text' => "Ngân hàng câu hỏi $level - Phần $part - Câu $i: Lựa chọn đáp án đúng nhất...",
-                        'question_type' => 'multiple_choice',
                         'order' => $i,
                         'explanation' => "Giải thích mẫu cho câu hỏi $i phần $part trình độ $level.",
                         'translation' => "Bản dịch cho câu hỏi $i phần $part trình độ $level.",

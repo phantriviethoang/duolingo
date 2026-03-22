@@ -143,7 +143,6 @@ trait HasQuestionBank
             'options' => $options,
             'correct_option_id' => $selected['correct'],
             'question_text' => $selected['question'],
-            'question_type' => 'multiple_choice',
             'answers' => $answers,
             'explanation' => $selected['explanation'] ?? null,
             'translation' => $selected['translation'] ?? null,

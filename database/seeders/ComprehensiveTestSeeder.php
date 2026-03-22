@@ -59,7 +59,6 @@ class ComprehensiveTestSeeder extends Seeder
                     'level' => $level,
                     'part_number' => ceil($qIdx / ($maxQuestionCount / 3)),
                     'question_text' => $item['question_text'] ?? $item['question'],
-                    'question_type' => 'multiple_choice',
                     'order' => $qIdx,
                     'translation' => $item['translation'] ?? null,
                     'explanation' => $item['explanation'] ?? null,

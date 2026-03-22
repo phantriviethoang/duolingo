@@ -20,7 +20,6 @@ class TestSessionController extends Controller
             'flagged' => ['nullable', 'array'],
             'current_question' => ['required', 'integer', 'min:0'],
             'time_left' => ['required', 'integer', 'min:0'],
-            'part_number' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $session = TestSession::query()
@@ -38,8 +37,6 @@ class TestSessionController extends Controller
             ]);
         }
 
-        $session->level = $test->level;
-        $session->part = (int) ($validated['part_number'] ?? ($test->part ?: 1));
         $session->answers = $validated['answers'] ?? [];
         $session->flagged = $validated['flagged'] ?? [];
         $session->current_question = (int) $validated['current_question'];
