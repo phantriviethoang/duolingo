@@ -86,14 +86,14 @@ class PathController extends Controller
         $validated = $request->validate($rules, $messages);
 
         // Build update array with new JSON structure
-        $partThresholds = [];
+        $partScores = [];
         for ($i = 1; $i <= $maxPart; $i++) {
-            $partThresholds[$i] = (float) $validated["part{$i}"];
+            $partScores[$i] = (float) $validated["part{$i}"];
         }
 
         $updates = [
             'name' => $level,
-            'part_thresholds' => $partThresholds,
+            'part_scores' => $partScores,
         ];
 
         $config = \App\Models\Level::updateOrCreate(['name' => $level], $updates);

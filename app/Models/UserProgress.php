@@ -129,16 +129,16 @@ class UserProgress extends Model
         if ($this->isLocked()) {
             $prevPartNum = $this->part - 1;
 
-            // Lấy threshold của part trước đó từ DB
+            // Lấy điểm cần đạt của part trước đó từ DB
             $levelConfig = \App\Models\Level::where('name', $this->level)->first();
-            $threshold = 60.0;
+            $score = 60.0;
             if ($levelConfig) {
-                $threshold = $levelConfig->getPartThreshold($prevPartNum, self::PASS_THRESHOLDS[$prevPartNum] ?? 60.0);
+                $score = $levelConfig->getPartThreshold($prevPartNum, self::PASS_THRESHOLDS[$prevPartNum] ?? 60.0);
             } else {
-                $threshold = self::PASS_THRESHOLDS[$prevPartNum] ?? 60.0;
+                $score = self::PASS_THRESHOLDS[$prevPartNum] ?? 60.0;
             }
 
-            return "Bạn cần đạt ít nhất {$threshold}% ở Phần {$prevPartNum} để mở Phần {$this->part}";
+            return "Bạn cần đạt ít nhất {$score}% ở Phần {$prevPartNum} để mở Phần {$this->part}";
         }
 
         return null;

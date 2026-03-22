@@ -19,37 +19,37 @@ class LevelSeeder extends Seeder
             [
                 'name' => 'A1',
                 'order' => 1,
-                'part_thresholds' => [1 => 60, 2 => 75, 3 => 90],
+                'part_scores' => [1 => 60, 2 => 75, 3 => 90],
                 'description' => 'Beginner - Bước đầu tiên',
             ],
             [
                 'name' => 'A2',
                 'order' => 2,
-                'part_thresholds' => [1 => 60, 2 => 75, 3 => 90],
+                'part_scores' => [1 => 60, 2 => 75, 3 => 90],
                 'description' => 'Elementary - Nền tảng cơ bản',
             ],
             [
                 'name' => 'B1',
                 'order' => 3,
-                'part_thresholds' => [1 => 60, 2 => 75, 3 => 90],
+                'part_scores' => [1 => 60, 2 => 75, 3 => 90],
                 'description' => 'Intermediate - Tự tin giao tiếp',
             ],
             [
                 'name' => 'B2',
                 'order' => 4,
-                'part_thresholds' => [1 => 60, 2 => 75, 3 => 90],
+                'part_scores' => [1 => 60, 2 => 75, 3 => 90],
                 'description' => 'Upper Intermediate - Giao tiếp thành thạo',
             ],
             [
                 'name' => 'C1',
                 'order' => 5,
-                'part_thresholds' => [1 => 60, 2 => 75, 3 => 90],
+                'part_scores' => [1 => 60, 2 => 75, 3 => 90],
                 'description' => 'Advanced - Nâng cao kỹ năng',
             ],
             [
                 'name' => 'C2',
                 'order' => 6,
-                'part_thresholds' => [1 => 60, 2 => 75, 3 => 90],
+                'part_scores' => [1 => 60, 2 => 75, 3 => 90],
                 'description' => 'Proficient - Gần như người bản xứ',
             ],
         ];
@@ -59,7 +59,7 @@ class LevelSeeder extends Seeder
                 ['name' => $part['name']],
                 [
                     'order' => $part['order'],
-                    'part_thresholds' => $part['part_thresholds'],
+                    'part_scores' => $part['part_scores'],
                     'description' => $part['description'],
                 ]
             );

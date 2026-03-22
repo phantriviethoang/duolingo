@@ -17,13 +17,13 @@ class Level extends Model
         'description',
         'order',
         'pass_threshold',
-        'part_thresholds',
+        'part_scores',
     ];
 
     protected $casts = [
         'order' => 'integer',
         'pass_threshold' => 'integer',
-        'part_thresholds' => 'array',
+        'part_scores' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -44,16 +44,16 @@ class Level extends Model
      */
     public function getPartThreshold(int $part, float $default = 60.0): float
     {
-        $thresholds = $this->part_thresholds ?? [1 => 60.0, 2 => 75.0, 3 => 90.0];
-        return (float) ($thresholds[$part] ?? $this->pass_threshold ?? $default);
+        $scores = $this->part_scores ?? [1 => 60.0, 2 => 75.0, 3 => 90.0];
+        return (float) ($scores[$part] ?? $this->pass_threshold ?? $default);
     }
 
     /**
      * Get all part thresholds
      * @return array
      */
-    public function getPartThresholds(): array
+    public function getPartScores(): array
     {
-        return $this->part_thresholds ?? [1 => 60.0, 2 => 75.0, 3 => 90.0];
+        return $this->part_scores ?? [1 => 60.0, 2 => 75.0, 3 => 90.0];
     }
 }

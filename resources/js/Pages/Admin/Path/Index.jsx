@@ -41,7 +41,7 @@ export default function PathIndex({ pathData, levels }) {
 }
 
 function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
-    const thresholds = data.config?.part_thresholds || { 1: 60, 2: 75, 3: 90 };
+    const scores = data.config?.part_scores || { 1: 60, 2: 75, 3: 90 };
     const {
         data: formData,
         setData,
@@ -49,9 +49,9 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
         processing,
         errors,
     } = useForm({
-        part1: thresholds[1] || 60,
-        part2: thresholds[2] || 75,
-        part3: thresholds[3] || 90,
+        part1: scores[1] || 60,
+        part2: scores[2] || 75,
+        part3: scores[3] || 90,
     });
 
     const handleSubmit = (e) => {
