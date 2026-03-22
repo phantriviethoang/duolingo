@@ -35,16 +35,29 @@ class PathController extends Controller
                     ->pluck('total', 'part_number');
             }
 
-            $pathData[$level] = [
-                'part1' => (int) ($partCounts[1] ?? Test::where('level', $level)->where('part', 1)->count()),
-                'part2' => (int) ($partCounts[2] ?? Test::where('level', $level)->where('part', 2)->count()),
-                'part3' => (int) ($partCounts[3] ?? Test::where('level', $level)->where('part', 3)->count()),
+            $questionCounts = \App\Models\Question::where('level', $level)
+                ->selectRaw('part_number, COUNT(*) as total')
+                ->groupBy('part_number')
+                ->pluck('total', 'part_number');
+
+            $maxTestPart = max(1, $partCounts->keys()->max() ?? 1, \App\Models\Test::where('level', $level)->max('part') ?? 1);
+            $maxQuestionPart = max(1, $questionCounts->keys()->max() ?? 1);
+            $maxPart = max($maxTestPart, $maxQuestionPart, 3); // Ensure at least 3 parts show up
+
+            $partsData = [];
+            for ($i = 1; $i <= $maxPart; $i++) {
+                $partsData["part{$i}"] = (int) ($partCounts[$i] ?? Test::where('level', $level)->where('part', $i)->count());
+                $partsData["q_part{$i}"] = (int) ($questionCounts[$i] ?? 0);
+            }
+
+            $pathData[$level] = array_merge($partsData, [
+                'max_part' => $maxPart,
                 'config' => $levelConfigs[$level] ?? [
                     'pass_threshold_part1' => 60,
                     'pass_threshold_part2' => 75,
                     'pass_threshold_part3' => 90,
                 ],
-            ];
+            ]);
         }
 
         return Inertia::render('Admin/Path/Index', [

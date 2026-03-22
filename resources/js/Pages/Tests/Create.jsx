@@ -330,9 +330,20 @@ export default function Create() {
                                     <div className="space-y-8">
                                         {activeParts.map((part) => {
                                             const questionsInPart = availableQuestions.filter(q => q.part_number === part.part_number);
+                                            if (questionsInPart.length === 0) {
+                                                return (
+                                                    <div key={part.part_number} className="space-y-4">
+                                                        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                                                            <h3 className="font-bold text-gray-700">Part {part.part_number} <span className="text-gray-400 font-normal ml-2">(0 khả dụng)</span></h3>
+                                                        </div>
+                                                        <div className="p-4 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-center">
+                                                            <p className="text-sm text-gray-400">Không có câu hỏi nào cho Part {part.part_number} trong ngân hàng.</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+
                                             const selectedCount = questionsInPart.filter(q => data.question_ids.includes(q.id)).length;
-                                            
-                                            if (questionsInPart.length === 0) return null;
 
                                             return (
                                                 <div key={part.part_number} className="space-y-4">

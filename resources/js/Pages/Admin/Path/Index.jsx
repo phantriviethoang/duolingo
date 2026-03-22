@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from "@inertiajs/react";
-import { BookOpen, Settings2, Save } from "lucide-react";
+import { BookOpen, Settings2, Save, Database } from "lucide-react";
 import AdminLayout from "../Layout";
 import { useState } from "react";
 
@@ -105,7 +105,7 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
 
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        {[1, 2, 3].map((part) => (
+                        {Array.from({ length: Math.max(3, data.max_part || 3) }, (_, i) => i + 1).map((part) => (
                             <div
                                 key={part}
                                 className={`rounded-2xl border p-5 transition-all ${isEditing
@@ -119,7 +119,7 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                     </span>
                                     {!isEditing ? (
                                         <span className="badge badge-blue bg-blue-100 text-blue-700 border-none font-bold py-3">
-                                            Đạt {data.config[`pass_threshold_part${part}`]}%
+                                            Đạt {data.config[`pass_threshold_part${part}`] || ((part-1)*15 + 60)}%
                                         </span>
                                     ) : (
                                         <div className="flex flex-col items-end gap-1">
@@ -127,7 +127,7 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                                 <input
                                                     type="number"
                                                     className={`input input-bordered input-xs w-16 text-black font-bold ${errors[`part${part}`] ? 'border-red-500' : ''}`}
-                                                    value={formData[`part${part}`]}
+                                                    value={formData[`part${part}`] || ((part-1)*15 + 60)}
                                                     onChange={e => setData(`part${part}`, e.target.value)}
                                                     min="0"
                                                     max="100"
@@ -141,23 +141,39 @@ function LevelCard({ level, data, isEditing, onEdit, onCancel }) {
                                     )}
                                 </div>
 
-                                <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 font-medium">
-                                    <BookOpen className="h-4 w-4 text-blue-500" />
-                                    <span>
-                                        {data[`part${part}`]} bộ đề luyện tập
-                                    </span>
+                                <div className="mb-4 flex items-center justify-between gap-4 text-sm text-gray-600 font-medium pt-2 border-t border-gray-100">
+                                    <div className="flex items-center gap-2">
+                                        <BookOpen className="h-4 w-4 text-blue-500" />
+                                        <span>
+                                            {data[`part${part}`]} bộ đề
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Database className="h-4 w-4 text-indigo-500" />
+                                        <span>
+                                            {data[`q_part${part}`]} câu hỏi
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {!isEditing && (
-                                    <Link
-                                        href={route("admin.tests", {
-                                            level,
-                                            part,
-                                        })}
-                                        className="btn btn-sm btn-primary w-full rounded-xl shadow-sm border-none bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        Quản lý bộ đề
-                                    </Link>
+                                    <div className="flex flex-col gap-2">
+                                        <Link
+                                            href={route("admin.tests", {
+                                                level,
+                                                part,
+                                            })}
+                                            className="btn btn-sm w-full rounded-xl shadow-sm border-none bg-blue-50 hover:bg-blue-100 text-blue-700"
+                                        >
+                                            Quản lý bộ đề
+                                        </Link>
+                                        <Link
+                                            href={`/admin/questions?level=${level}&part_number=${part}`}
+                                            className="btn btn-sm w-full rounded-xl shadow-sm border-none bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium"
+                                        >
+                                            Quản lý ngân hàng câu
+                                        </Link>
+                                    </div>
                                 )}
                             </div>
                         ))}
