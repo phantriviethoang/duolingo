@@ -6,8 +6,8 @@ export default function AdminDashboard({ stats = [], recentResults = [] }) {
     const defaultStats = [
         { label: "Tổng số người dùng", value: "0", icon: Users, color: "blue" },
         { label: "Tổng đề thi", value: "0", icon: FileText, color: "amber" },
+        { label: "Tổng câu hỏi", value: "0", icon: FileText, color: "indigo" },
         { label: "Tổng bài làm", value: "0", icon: CheckCircle, color: "green" },
-        { label: "Đề thi đang mở", value: "0", icon: PlayCircle, color: "indigo" },
     ];
 
     const displayStats = stats.length ? stats.map((s, i) => ({

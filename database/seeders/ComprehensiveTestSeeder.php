@@ -58,7 +58,8 @@ class ComprehensiveTestSeeder extends Seeder
                 $item = $this->getRandomQuestion();
 
                 $question = Question::create([
-                    'test_id' => $test->id,
+                    'level' => $level,
+                    'part_number' => ceil($qIdx / ($maxQuestionCount / 3)),
                     'question_text' => $item['question_text'] ?? $item['question'],
                     'question_type' => 'multiple_choice',
                     'order' => $qIdx,
@@ -66,6 +67,8 @@ class ComprehensiveTestSeeder extends Seeder
                     'explanation' => $item['explanation'] ?? null,
                     'detailed_explanation' => $item['detailed_explanation'] ?? null,
                 ]);
+
+                $question->tests()->attach($test->id, ['order' => $qIdx]);
 
                 foreach (($item['answers'] ?? []) as $answer) {
                     Answer::create([

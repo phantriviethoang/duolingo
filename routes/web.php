@@ -121,6 +121,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::put('/tests/{test}', [TestController::class, 'update'])->name('tests.update');
     Route::delete('/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
 
+    // Questions API
+    Route::get('/api/questions', [App\Http\Controllers\Admin\QuestionController::class, 'apiIndex'])->name('admin.api.questions');
+
+    // Questions CRUD
+    Route::get('/questions', [App\Http\Controllers\Admin\QuestionController::class, 'index'])->name('admin.questions.index');
+    Route::get('/questions/create', [App\Http\Controllers\Admin\QuestionController::class, 'create'])->name('admin.questions.create');
+    Route::post('/questions', [App\Http\Controllers\Admin\QuestionController::class, 'store'])->name('admin.questions.store');
+    Route::get('/questions/{question}/edit', [App\Http\Controllers\Admin\QuestionController::class, 'edit'])->name('admin.questions.edit');
+    Route::put('/questions/{question}', [App\Http\Controllers\Admin\QuestionController::class, 'update'])->name('admin.questions.update');
+    Route::delete('/questions/{question}', [App\Http\Controllers\Admin\QuestionController::class, 'destroy'])->name('admin.questions.destroy');
+
     Route::get('/results', [AdminResultManageController::class, 'index'])->name('admin.results');
     Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('admin.analytics');
 });

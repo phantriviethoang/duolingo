@@ -25,7 +25,7 @@ class Test extends Model
      */
     public function questions()
     {
-        return $this->hasMany(Question::class);
+        return $this->belongsToMany(Question::class)->withPivot('order')->withTimestamps();
     }
 
     public function results()

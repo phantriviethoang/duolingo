@@ -180,7 +180,6 @@ class TestController extends Controller
     {
         $data = $request->validated();
 
-        $questions = $data['questions'] ?? [];
         $parts = collect($data['parts'] ?? [])
             ->map(fn (array $part) => [
                 'part_number' => (int) $part['part_number'],
@@ -198,28 +197,17 @@ class TestController extends Controller
         $data['part'] = (int) ($primaryPart['part_number'] ?? 1);
         $data['duration'] = (int) ($primaryPart['duration'] ?? 900);
 
-        $data['total_questions'] = count($questions);
-
         $test = Test::create($data);
 
         $test->parts()->createMany($parts->all());
 
-        foreach ($questions as $index => $q) {
-            $question = $test->questions()->create([
-                'question_text' => $q['question'],
-                'question_type' => 'multiple_choice',
-                'order' => $index + 1,
-                'explanation' => $q['explanation'] ?? null,
-                'translation' => $q['translation'] ?? null,
-                'detailed_explanation' => $q['detailed_explanation'] ?? null,
-            ]);
-
-            foreach (($q['options'] ?? []) as $option) {
-                $question->answers()->create([
-                    'answer_text' => $option['text'] ?? '',
-                    'is_correct' => (bool) ($option['is_correct'] ?? false),
-                ]);
+        if (isset($data['question_ids']) && is_array($data['question_ids'])) {
+            $syncData = [];
+            foreach ($data['question_ids'] as $index => $qId) {
+                $syncData[$qId] = ['order' => $index + 1];
             }
+            $test->questions()->sync($syncData);
+            $test->update(['total_questions' => count($data['question_ids'])]);
         }
 
         return redirect()->route('admin.tests')
@@ -231,7 +219,7 @@ class TestController extends Controller
      */
     public function edit(Test $test)
     {
-        $test->load('questions.answers', 'parts');
+        $test->load('parts', 'questions');
 
         return Inertia::render('Tests/Edit', [
             'test' => [
@@ -256,30 +244,8 @@ class TestController extends Controller
                     ->toArray(),
                 'audio_path' => $test->audio_path,
                 'image_path' => $test->image_path,
-                'questions' => $test->questions
-                    ->sortBy('order')
-                    ->map(function ($question) {
-                        return [
-                            'id' => $question->id,
-                            'question' => $question->question_text ?? '',
-                            'explanation' => $question->explanation,
-                            'translation' => $question->translation,
-                            'detailed_explanation' => $question->detailed_explanation,
-                            'options' => $question->answers
-                                ->map(function ($answer, $index) {
-                                    return [
-                                        'id' => $answer->id ?? $index,
-                                        'text' => $answer->answer_text,
-                                        'is_correct' => (bool) $answer->is_correct,
-                                    ];
-                                })
-                                ->values()
-                                ->toArray(),
-                        ];
-                    })
-                    ->values()
-                    ->toArray(),
                 'is_active' => $test->is_active,
+                'question_ids' => $test->questions->sortBy('pivot.order')->pluck('id')->toArray(),
             ],
         ]);
     }
@@ -291,7 +257,6 @@ class TestController extends Controller
     {
         $data = $request->validated();
 
-        $questions = $data['questions'] ?? [];
         $parts = collect($data['parts'] ?? [])
             ->map(fn (array $part) => [
                 'part_number' => (int) $part['part_number'],
@@ -309,32 +274,19 @@ class TestController extends Controller
         $data['part'] = (int) ($primaryPart['part_number'] ?? 1);
         $data['duration'] = (int) ($primaryPart['duration'] ?? 900);
 
-        $data['total_questions'] = count($questions);
-
         // update
         $test->update($data);
 
         $test->parts()->delete();
         $test->parts()->createMany($parts->all());
 
-        $test->questions()->delete();
-
-        foreach ($questions as $index => $q) {
-            $question = $test->questions()->create([
-                'question_text' => $q['question'],
-                'question_type' => 'multiple_choice',
-                'order' => $index + 1,
-                'explanation' => $q['explanation'] ?? null,
-                'translation' => $q['translation'] ?? null,
-                'detailed_explanation' => $q['detailed_explanation'] ?? null,
-            ]);
-
-            foreach (($q['options'] ?? []) as $option) {
-                $question->answers()->create([
-                    'answer_text' => $option['text'] ?? '',
-                    'is_correct' => (bool) ($option['is_correct'] ?? false),
-                ]);
+        if (array_key_exists('question_ids', $data) && is_array($data['question_ids'])) {
+            $syncData = [];
+            foreach ($data['question_ids'] as $index => $qId) {
+                $syncData[$qId] = ['order' => $index + 1];
             }
+            $test->questions()->sync($syncData);
+            $test->update(['total_questions' => count($data['question_ids'])]);
         }
 
         return redirect()->route('admin.tests')

@@ -15,8 +15,8 @@ class DashboardController extends Controller
         $stats = [
             ['label' => 'Tổng số người dùng', 'value' => User::count()],
             ['label' => 'Tổng đề thi', 'value' => Test::count()],
+            ['label' => 'Tổng câu hỏi', 'value' => \App\Models\Question::count()],
             ['label' => 'Tổng bài làm', 'value' => Result::count()],
-            ['label' => 'Đề thi đang mở', 'value' => Test::where('is_active', true)->count()],
         ];
 
         $recentResults = Result::query()

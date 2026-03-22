@@ -29,14 +29,8 @@ class UpdateTestRequest extends FormRequest
             'parts.*.part_number' => ['required', 'integer', 'min:1'],
             'parts.*.question_count' => ['required', 'integer', 'min:1'],
             'parts.*.duration' => ['required', 'integer', 'min:1'],
-            'questions' => ['required', 'array', 'min:1'],
-            'questions.*.question' => ['required', 'string'],
-            'questions.*.options' => ['required', 'array', 'min:2'],
-            'questions.*.options.*.text' => ['required', 'string'],
-            'questions.*.options.*.is_correct' => ['required', 'boolean'],
-            'questions.*.explanation' => ['nullable', 'string'],
-            'questions.*.translation' => ['nullable', 'string'],
-            'questions.*.detailed_explanation' => ['nullable', 'string'],
+            'question_ids' => ['nullable', 'array'],
+            'question_ids.*' => ['integer', 'exists:questions,id'],
             'is_active' => ['boolean'],
         ];
     }
@@ -59,11 +53,7 @@ class UpdateTestRequest extends FormRequest
             'parts.*.duration.required' => 'Thời gian là bắt buộc.',
             'parts.*.duration.integer' => 'Thời gian phải là số nguyên.',
             'parts.*.duration.min' => 'Thời gian phải lớn hơn 0.',
-            'questions.required' => 'Đề thi phải có ít nhất 1 câu hỏi.',
-            'questions.*.question.required' => 'Nội dung câu hỏi không được để trống.',
-            'questions.*.options.required' => 'Mỗi câu hỏi phải có đáp án.',
-            'questions.*.options.min' => 'Mỗi câu hỏi phải có ít nhất 2 đáp án.',
-            'questions.*.options.*.text.required' => 'Nội dung đáp án không được để trống.',
+            'question_ids.array' => 'Định dạng câu hỏi không hợp lệ.',
         ];
     }
 
@@ -80,19 +70,6 @@ class UpdateTestRequest extends FormRequest
                 $validator->errors()->add('parts', 'Số phần không được trùng nhau.');
             }
 
-            foreach ((array) $this->input('questions', []) as $index => $question) {
-                $options = (array) ($question['options'] ?? []);
-                $correctCount = collect($options)->filter(function ($option) {
-                    return filter_var($option['is_correct'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                })->count();
-
-                if ($correctCount !== 1) {
-                    $validator->errors()->add(
-                        "questions.{$index}.options",
-                        'Mỗi câu hỏi phải có đúng 1 đáp án đúng.'
-                    );
-                }
-            }
         });
     }
 }

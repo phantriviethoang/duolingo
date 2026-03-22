@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from "@inertiajs/react";
-import { ArrowLeft, Plus, Trash2, Save, FileText, Layout, Info, CheckCircle2, Languages, HelpCircle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileText, Layout, Info, CheckCircle2, Languages, HelpCircle, Database, CheckSquare, Search } from "lucide-react";
+import { useState, useEffect } from "react";
 import AdminLayout from "../Admin/Layout";
 
 export default function Create() {
@@ -15,24 +16,59 @@ export default function Create() {
                 enabled: true,
             },
         ],
-        questions: [
-            {
-                question: "",
-                options: [
-                    { text: "", is_correct: true },
-                    { text: "", is_correct: false },
-                    { text: "", is_correct: false },
-                    { text: "", is_correct: false },
-                ],
-                explanation: "",
-                translation: "",
-                detailed_explanation: "",
-            },
-        ],
         is_active: true,
+        question_ids: [],
     });
 
+    const [availableQuestions, setAvailableQuestions] = useState([]);
+    const [loadingQuestions, setLoadingQuestions] = useState(false);
+
     const activeParts = data.parts.filter((part) => part.enabled);
+
+    useEffect(() => {
+        const fetchQuestions = async () => {
+            if (activeParts.length === 0 || !data.level) return;
+            setLoadingQuestions(true);
+            try {
+                const partNumbers = activeParts.map(p => p.part_number).join(',');
+                const response = await fetch(`/admin/api/questions?level=${data.level}&part_number=${partNumbers}`);
+                const result = await response.json();
+                setAvailableQuestions(result || []);
+            } catch (error) {
+                console.error("Error fetching questions:", error);
+            } finally {
+                setLoadingQuestions(false);
+            }
+        };
+
+        const timer = setTimeout(() => {
+            fetchQuestions();
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [data.level, data.parts]);
+
+    const handleToggleQuestion = (id) => {
+        const nextIds = data.question_ids.includes(id)
+            ? data.question_ids.filter(qId => qId !== id)
+            : [...data.question_ids, id];
+        setData("question_ids", nextIds);
+    };
+
+    const handleSelectAll = (partNumber) => {
+        const questionsInPart = availableQuestions.filter(q => q.part_number === partNumber).map(q => q.id);
+        const allSelected = questionsInPart.every(id => data.question_ids.includes(id));
+        
+        let nextIds = [...data.question_ids];
+        if (allSelected) {
+            nextIds = nextIds.filter(id => !questionsInPart.includes(id));
+        } else {
+            questionsInPart.forEach(id => {
+                if (!nextIds.includes(id)) nextIds.push(id);
+            });
+        }
+        setData("question_ids", nextIds);
+    };
 
     const updatePart = (index, field, value) => {
         const nextParts = [...data.parts];
@@ -71,51 +107,6 @@ export default function Create() {
         setData("parts", nextParts);
     };
 
-    const addQuestion = () => {
-        setData("questions", [
-            ...data.questions,
-            {
-                question: "",
-                options: [
-                    { text: "", is_correct: true },
-                    { text: "", is_correct: false },
-                    { text: "", is_correct: false },
-                    { text: "", is_correct: false },
-                ],
-                explanation: "",
-                translation: "",
-                detailed_explanation: "",
-            },
-        ]);
-    };
-
-    const removeQuestion = (index) => {
-        if (data.questions.length > 1) {
-            const newQuestions = data.questions.filter((_, i) => i !== index);
-            setData("questions", newQuestions);
-        }
-    };
-
-    const updateQuestion = (index, field, value) => {
-        const newQuestions = [...data.questions];
-        newQuestions[index] = { ...newQuestions[index], [field]: value };
-        setData("questions", newQuestions);
-    };
-
-    const updateOption = (questionIndex, optionIndex, value) => {
-        const newQuestions = [...data.questions];
-        newQuestions[questionIndex].options[optionIndex].text = value;
-        setData("questions", newQuestions);
-    };
-
-    const setCorrectAnswer = (questionIndex, optionIndex) => {
-        const newQuestions = [...data.questions];
-        newQuestions[questionIndex].options.forEach((opt, idx) => {
-            opt.is_correct = idx === optionIndex;
-        });
-        setData("questions", newQuestions);
-    };
-
     const submit = (e) => {
         e.preventDefault();
         transform((payload) => ({
@@ -127,6 +118,7 @@ export default function Create() {
                     question_count: Number(part.question_count),
                     duration: Number(part.duration),
                 })),
+            question_ids: payload.question_ids,
         })).post(route("tests.store"));
     };
 
@@ -309,144 +301,77 @@ export default function Create() {
                         </div>
                     </div>
 
-                    {/* Cột phải: Danh sách câu hỏi */}
+                    {/* Cột phải: Chọn câu hỏi từ Ngân hàng */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                                <span className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-black">
-                                    {data.questions.length}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-full">
+                            <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                                <h2 className="text-lg font-black text-gray-900 flex items-center gap-2 uppercase tracking-tight">
+                                    <Database className="w-5 h-5 text-indigo-500" />
+                                    Ngân Hàng Câu Hỏi ({data.level})
+                                </h2>
+                                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl">
+                                    Đã chọn {data.question_ids.length} câu
                                 </span>
-                                Danh sách câu hỏi
-                            </h2>
-                            <button
-                                type="button"
-                                onClick={addQuestion}
-                                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Thêm câu
-                            </button>
-                        </div>
-
-                        {errors.questions && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold">
-                                {errors.questions}
                             </div>
-                        )}
 
-                        <div className="space-y-8">
-                            {data.questions.map((question, qIndex) => (
-                                <div key={qIndex} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group">
-                                    <div className="px-8 py-4 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-                                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Câu hỏi #{qIndex + 1}</span>
-                                        {data.questions.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeQuestion(qIndex)}
-                                                className="p-2 text-gray-300 hover:text-red-500 transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
+                            <div className="p-8 flex-1">
+                                {loadingQuestions ? (
+                                    <div className="flex justify-center items-center py-10">
+                                        <span className="loading loading-spinner text-indigo-500"></span>
                                     </div>
-                                    <div className="p-8 space-y-8">
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                    <FileText className="w-3 h-3" /> Nội dung câu hỏi
-                                                </label>
-                                                <textarea
-                                                    className={`w-full px-4 py-3 rounded-2xl border-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium min-h-[100px] ${errors[`questions.${qIndex}.question`] ? 'border-red-500' : ''}`}
-                                                    value={question.question}
-                                                    onChange={(e) => updateQuestion(qIndex, "question", e.target.value)}
-                                                    placeholder="Nhập nội dung câu hỏi..."
-                                                />
-                                                {errors[`questions.${qIndex}.question`] && <p className="text-[10px] text-red-500 font-bold">{errors[`questions.${qIndex}.question`]}</p>}
-                                            </div>
+                                ) : availableQuestions.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <p className="text-gray-500 font-medium">Chưa có câu hỏi nào khả dụng cho cấu hình (Level {data.level}, Parts {activeParts.map(p => p.part_number).join(', ')}).</p>
+                                        <Link href="/admin/questions/create" className="text-blue-600 font-bold hover:underline mt-2 inline-block">
+                                            Tạo câu hỏi mới &rarr;
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-8">
+                                        {activeParts.map((part) => {
+                                            const questionsInPart = availableQuestions.filter(q => q.part_number === part.part_number);
+                                            const selectedCount = questionsInPart.filter(q => data.question_ids.includes(q.id)).length;
+                                            
+                                            if (questionsInPart.length === 0) return null;
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {question.options.map((option, oIndex) => (
-                                                    <div key={oIndex} className="space-y-1">
-                                                        <div className={`relative p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${option.is_correct ? 'border-green-100 bg-green-50/30 ring-2 ring-green-500/20' : errors[`questions.${qIndex}.options.${oIndex}.text`] ? 'border-red-100 bg-red-50/30' : 'border-gray-50 bg-gray-50/30'}`}>
-                                                            <input
-                                                                type="radio"
-                                                                name={`correct-${qIndex}`}
-                                                                checked={option.is_correct}
-                                                                onChange={() => setCorrectAnswer(qIndex, oIndex)}
-                                                                className="radio radio-success radio-sm"
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-gray-700"
-                                                                value={option.text}
-                                                                onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                                                                placeholder={`Đáp án ${String.fromCharCode(65 + oIndex)}`}
-                                                            />
-                                                            {option.is_correct && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                                                        </div>
-                                                        {errors[`questions.${qIndex}.options.${oIndex}.text`] && (
-                                                            <p className="text-[9px] text-red-500 font-bold ml-2">{errors[`questions.${qIndex}.options.${oIndex}.text`]}</p>
-                                                        )}
+                                            return (
+                                                <div key={part.part_number} className="space-y-4">
+                                                    <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                                                        <h3 className="font-bold text-gray-700">Part {part.part_number} <span className="text-gray-400 font-normal ml-2">({selectedCount} / {questionsInPart.length} khả dụng)</span></h3>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSelectAll(part.part_number)}
+                                                            className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                        >
+                                                            <CheckSquare className="w-4 h-4" /> Chọn tất cả part {part.part_number}
+                                                        </button>
                                                     </div>
-                                                ))}
-                                            </div>
-                                            {errors[`questions.${qIndex}.options`] && (
-                                                <p className="text-[10px] text-red-500 font-bold">
-                                                    {errors[`questions.${qIndex}.options`]}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-4 pt-6 border-t border-gray-50">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                        <Languages className="w-3 h-3" /> Dịch câu (Vietnamese)
-                                                    </label>
-                                                    <textarea
-                                                        className="w-full px-4 py-2 rounded-xl border-gray-50 bg-gray-50/30 focus:border-blue-500 focus:ring-0 transition-all text-xs font-medium"
-                                                        value={question.translation}
-                                                        onChange={(e) => updateQuestion(qIndex, "translation", e.target.value)}
-                                                        rows="2"
-                                                    />
+                                                    
+                                                    <div className="grid gap-3">
+                                                        {questionsInPart.map(q => (
+                                                            <label key={q.id} className={`flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${data.question_ids.includes(q.id) ? 'border-indigo-500 bg-indigo-50/20 shadow-sm' : 'border-gray-50 bg-gray-50/50 hover:border-gray-200'}`}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="checkbox checkbox-primary mt-1"
+                                                                    checked={data.question_ids.includes(q.id)}
+                                                                    onChange={() => handleToggleQuestion(q.id)}
+                                                                />
+                                                                <div className="flex-1 space-y-1">
+                                                                    <p className="text-sm font-semibold text-gray-800 line-clamp-2">{q.question_text}</p>
+                                                                    <div className="flex gap-2 text-[10px] font-bold text-gray-400 uppercase">
+                                                                        <span>ID: {q.id}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                        <HelpCircle className="w-3 h-3" /> Giải thích ngắn
-                                                    </label>
-                                                    <textarea
-                                                        className="w-full px-4 py-2 rounded-xl border-gray-50 bg-gray-50/30 focus:border-blue-500 focus:ring-0 transition-all text-xs font-medium"
-                                                        value={question.explanation}
-                                                        onChange={(e) => updateQuestion(qIndex, "explanation", e.target.value)}
-                                                        rows="2"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                    <Info className="w-3 h-3" /> Giải thích chi tiết / Ngữ pháp
-                                                </label>
-                                                <textarea
-                                                    className="w-full px-4 py-2 rounded-xl border-gray-50 bg-gray-50/30 focus:border-blue-500 focus:ring-0 transition-all text-xs font-medium"
-                                                    value={question.detailed_explanation}
-                                                    onChange={(e) => updateQuestion(qIndex, "detailed_explanation", e.target.value)}
-                                                    rows="3"
-                                                />
-                                            </div>
-                                        </div>
+                                            );
+                                        })}
                                     </div>
-                                </div>
-                            ))}
+                                )}
+                            </div>
                         </div>
-
-                        <button
-                            type="button"
-                            onClick={addQuestion}
-                            className="w-full py-6 border-2 border-dashed border-gray-200 rounded-3xl text-gray-400 font-bold hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-2"
-                        >
-                            <Plus className="w-8 h-8" />
-                            <span>Thêm câu hỏi tiếp theo</span>
-                        </button>
                     </div>
                 </form>
             </div>

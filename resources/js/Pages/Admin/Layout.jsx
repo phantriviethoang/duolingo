@@ -7,6 +7,7 @@ const navItems = [
     { label: "Quản lý đề thi", href: "/admin/tests", icon: FileText },
     { label: "Quản lý lộ trình", href: "/admin/path", icon: Compass },
     { label: "Quản lý người dùng", href: "/admin/users", icon: Users },
+    { label: "Ngân hàng câu hỏi", href: "/admin/questions", icon: FileText },
 ];
 
 export default function AdminLayout({ children, current }) {

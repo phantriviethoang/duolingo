@@ -11,9 +11,9 @@ class Question extends Model
 
     protected $guarded = [];
 
-    public function test()
+    public function tests()
     {
-        return $this->belongsTo(Test::class);
+        return $this->belongsToMany(Test::class)->withPivot('order')->withTimestamps();
     }
 
     public function answers()
