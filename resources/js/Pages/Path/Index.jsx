@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CheckCircle, Lock, Play, Target, Save, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export default function PathIndex({ levels, progressData, auth }) {
+export default function PathIndex({ levels, progressData, auth, partCountPreferences = {} }) {
     const { flash } = usePage().props;
     const [showSuccess, setShowSuccess] = useState(false);
     const [selectedLevel, setSelectedLevel] = useState('all');
@@ -43,15 +43,28 @@ export default function PathIndex({ levels, progressData, auth }) {
             .sort((a, b) => a - b);
     };
 
+    const getDisplayPartNumbers = (level) => {
+        const allParts = getPartNumbers(level);
+        const preferenceCount = partCountPreferences?.[level];
+
+        // Only show parts if user has explicitly set a preference for this level
+        if (preferenceCount && preferenceCount > 0) {
+            return allParts.slice(0, preferenceCount);
+        }
+
+        // User hasn't chosen yet - return empty
+        return [];
+    };
+
     const handleLevelChange = (level) => {
         setSelectedLevel(level);
     };
 
     const getLevelProgress = (level) => {
         const parts = progressData[level] || {};
-        const partNumbers = getPartNumbers(level);
-        const totalParts = partNumbers.length || 1;
-        const completedCount = partNumbers
+        const displayPartNumbers = getDisplayPartNumbers(level);
+        const totalParts = displayPartNumbers.length || 1;
+        const completedCount = displayPartNumbers
             .filter(num => parts[`part${num}`]?.completed).length;
         return Math.round((completedCount / totalParts) * 100);
     };
@@ -129,7 +142,7 @@ export default function PathIndex({ levels, progressData, auth }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredLevels.map(level => {
                         const progress = getLevelProgress(level);
-                        const partNumbers = getPartNumbers(level);
+                        const partNumbers = getDisplayPartNumbers(level);
 
                         const isSelected = auth?.user?.target_level === level;
 
@@ -172,46 +185,93 @@ export default function PathIndex({ levels, progressData, auth }) {
                                         </div>
 
                                         <div className="space-y-3">
-                                            {partNumbers.map(part => {
-                                                const partData = progressData[level]?.[`part${part}`];
-                                                const completed = partData?.completed;
-                                                const unlocked = partData?.unlocked;
 
-                                                return (
-                                                    <Link
-                                                        key={part}
-                                                        href={route('path.tests', { level, part })}
-                                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md ${completed
-                                                            ? 'bg-green-50/50 border-green-100 hover:bg-green-100/50'
-                                                            : unlocked
-                                                                ? 'bg-blue-50/30 border-blue-100 hover:bg-blue-100/40'
-                                                                : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
-                                                            }`}
-                                                    >
-                                                        <span className={`text-sm font-bold ${completed ? 'text-green-700' : unlocked ? 'text-blue-700' : 'text-gray-500'}`}>Phần {part}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            {completed ? (
-                                                                <>
-                                                                    <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">Hoàn thành</span>
-                                                                    <CheckCircle className="w-4 h-4 text-green-500" />
-                                                                </>
-                                                            ) : unlocked ? (
-                                                                <>
-                                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">Đang học</span>
-                                                                    <Play className="w-4 h-4 text-blue-500 fill-blue-500" />
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Đang khóa</span>
+                                            {/* {partCountPreferences?.[level] && getDisplayPartNumbers(level).length > 0 && (
+                                                <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg mb-3">
+                                                    <div className="mb-2">📋 Các phần được hiển thị:</div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        {getDisplayPartNumbers(level).map(part => (
+                                                            <span
+                                                                key={part}
+                                                                className="bg-blue-100 text-blue-700 font-black px-2 py-1 rounded text-xs"
+                                                            >
+                                                                Phần {part}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+ */}
+                                            {/* Parts List - Show based on displayPartNumbers */}
+                                            {getDisplayPartNumbers(level).length > 0 ? (
+                                                <div className="space-y-3">
+                                                    {getDisplayPartNumbers(level).map(part => {
+                                                        const partData = progressData[level]?.[`part${part}`];
+                                                        const completed = partData?.completed;
+                                                        const unlocked = partData?.unlocked;
+                                                        const isClickable = unlocked || completed;
+
+                                                        return isClickable ? (
+                                                            <Link
+                                                                key={part}
+                                                                href={route('path.tests', { level, part })}
+                                                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md ${completed
+                                                                    ? 'bg-green-50/50 border-green-100 hover:bg-green-100/50'
+                                                                    : unlocked
+                                                                        ? 'bg-blue-50/30 border-blue-100 hover:bg-blue-100/40'
+                                                                        : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
+                                                                    }`}
+                                                            >
+                                                                <span className={`text-sm font-bold ${completed ? 'text-green-700' : unlocked ? 'text-blue-700' : 'text-gray-500'}`}>
+                                                                    Phần {part}
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    {completed ? (
+                                                                        <>
+                                                                            <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">
+                                                                                Hoàn thành
+                                                                            </span>
+                                                                            <CheckCircle className="w-4 h-4 text-green-500" />
+                                                                        </>
+                                                                    ) : unlocked ? (
+                                                                        <>
+                                                                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">
+                                                                                Đang học
+                                                                            </span>
+                                                                            <Play className="w-4 h-4 text-blue-500 fill-blue-500" />
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">
+                                                                                Đang khóa
+                                                                            </span>
+                                                                            <Lock className="w-4 h-4 text-gray-300" />
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </Link>
+                                                        ) : (
+                                                            <div
+                                                                key={part}
+                                                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-not-allowed opacity-60 ${completed
+                                                                    ? 'bg-green-50/50 border-green-100'
+                                                                    : 'bg-gray-50 border-gray-100'
+                                                                    }`}
+                                                            >
+                                                                <span className={`text-sm font-bold ${completed ? 'text-green-700' : 'text-gray-500'}`}>
+                                                                    Phần {part}
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">
+                                                                        Đang khóa
+                                                                    </span>
                                                                     <Lock className="w-4 h-4 text-gray-300" />
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </Link>
-                                                );
-                                            })}
-
-                                            {partNumbers.length === 0 && (
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
                                                 <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm text-gray-500 font-semibold">
                                                     Chưa có phần nào cho trình độ này.
                                                 </div>

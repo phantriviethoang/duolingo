@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function PathShow({ level, parts, selectedPart = null, targetPartCount = null, auth }) {
+export default function PathShow({ level, parts, selectedPart = null, auth, partCountPreferences = {} }) {
     const partEntries = useMemo(
         () =>
             Object.entries(parts || {}).sort(
@@ -47,20 +47,15 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
         }, {}),
     );
 
-    const [selectedPartCount, setSelectedPartCount] = useState(targetPartCount || "");
+    const [selectedPartCount, setSelectedPartCount] = useState(
+        partCountPreferences?.[level] ? String(partCountPreferences[level]) : ""
+    );
     const { data, setData, put, processing } = useForm({
-        count: targetPartCount || "",
+        count: "",
         level: level,
     });
 
-    // Cập nhật selectedPartCount và form data khi targetPartCount từ server thay đổi (ví dụ sau khi lưu)
-    useEffect(() => {
-        if (targetPartCount) {
-            setSelectedPartCount(targetPartCount);
-            setData('count', targetPartCount);
-        }
-    }, [targetPartCount]);
-
+    // Parts are determined dynamically based on available tests and user progress
     const handleSavePartCount = () => {
         put(route('path.savePartCount'), {
             preserveScroll: true,
@@ -256,8 +251,8 @@ export default function PathShow({ level, parts, selectedPart = null, targetPart
                                         />
                                         <button
                                             onClick={handleSavePartCount}
-                                            disabled={processing}
-                                            className={`btn btn-square ${selectedPartCount == targetPartCount ? 'btn-ghost text-emerald-500' : 'btn-primary'}`}
+                                            disabled={processing || selectedPartCount === String(partCountPreferences?.[level] || "")}
+                                            className="btn btn-square btn-primary"
                                             title="Lưu số lượng phần muốn thi"
                                         >
                                             <Save className="w-5 h-5" />

@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('role')->default('student');
             $table->integer('goal_score')->default(50)->comment('Target score: 50, 70, 90');
             $table->integer('current_part')->nullable();
+            $table->json('part_count_preferences')->nullable()->comment('Per-level part count preferences');
             $table->timestamps();
         });
 

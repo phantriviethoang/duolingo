@@ -12,6 +12,7 @@ use Inertia\Inertia;
 class PathController extends Controller
 {
     private const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
     private const FALLBACK_PARTS = [1];
 
     /**
@@ -154,27 +155,16 @@ class PathController extends Controller
         $progressData = [];
         $levelConfigs = \App\Models\Level::all()->keyBy('name');
 
-        $targetPartCounts = $user->target_part_counts ?? [];
-
         foreach (self::LEVELS as $level) {
-            $progressParts = \App\Models\Progress::where('user_id', $user->id)
-                ->where('level', $level)
-                ->select('part')
-                ->distinct()
-                ->orderBy('part')
-                ->pluck('part')
-                ->map(fn ($part) => (int) $part)
+            // Get available parts from database (test_parts or tests table)
+            $progressParts = $this->getAvailableParts($level);
+
+            // Parts are determined by actual progress and available tests
+            $parts = collect($progressParts)
+                ->unique()
+                ->sort()
+                ->values()
                 ->toArray();
-
-            $targetCount = $targetPartCounts[$level] ?? 0;
-            $targetParts = $targetCount > 0 ? range(1, $targetCount) : [];
-
-            // Combine both target parts and progress parts, prioritize distinct part numbers
-            $parts = collect(array_merge($progressParts, $targetParts))
-                        ->unique()
-                        ->sort()
-                        ->values()
-                        ->toArray();
 
             $levelConfig = $levelConfigs[$level] ?? null;
             $thresholds = $this->buildThresholds($levelConfig, $parts);
@@ -182,7 +172,7 @@ class PathController extends Controller
             $progressData[$level] = collect($parts)
                 ->mapWithKeys(function (int $part) use ($user, $level, $parts, $thresholds) {
                     return [
-                        'part' . $part => array_merge(
+                        'part'.$part => array_merge(
                             $this->getPartProgress($user, $level, $part),
                             ['unlocked' => $this->isPartUnlocked($user, $level, $part, $parts, $thresholds)]
                         ),
@@ -194,6 +184,7 @@ class PathController extends Controller
         return Inertia::render('Path/Index', [
             'levels' => self::LEVELS,
             'progressData' => $progressData,
+            'partCountPreferences' => $user->part_count_preferences ?? [],
         ]);
     }
 
@@ -256,13 +247,11 @@ class PathController extends Controller
 
         $parts = $this->buildPartsData($user, $level);
 
-        $counts = $user->target_part_counts ?? [];
-
         return Inertia::render('Path/Show', [
             'level' => $level,
             'parts' => $parts,
             'selectedPart' => null, // Luôn hiển thị giao diện chọn part
-            'targetPartCount' => $counts[$level] ?? null, // Số lượng phần theo phân vùng level
+            'partCountPreferences' => $user->part_count_preferences ?? [],
         ]);
     }
 
@@ -277,15 +266,11 @@ class PathController extends Controller
         ]);
 
         $user = Auth::user();
-        $counts = $user->target_part_counts ?? [];
-        $counts[$request->level] = (int) $request->count;
+        $prefs = $user->part_count_preferences ?? [];
+        $prefs[$request->level] = (int) $request->count;
+        $user->update(['part_count_preferences' => $prefs]);
 
-        $user->update([
-            'target_part_count' => (int) $request->count, // Keep for backward compat
-            'target_part_counts' => $counts
-        ]);
-
-        return back()->with('success', 'Đã lưu số lượng phần thi mong muốn.');
+        return back()->with('success', 'Cài đặt phần thi đã được cập nhật.');
     }
 
     /**
@@ -304,7 +289,7 @@ class PathController extends Controller
         // Lưu lại phần (part) hiện tại khi user chọn
         $user->update([
             'current_level' => $level,
-            'current_part' => $part
+            'current_part' => $part,
         ]);
 
         $parts = $this->buildPartsData($user, $level);
@@ -313,6 +298,7 @@ class PathController extends Controller
             'level' => $level,
             'parts' => $parts,
             'selectedPart' => $part,
+            'partCountPreferences' => $user->part_count_preferences ?? [],
         ]);
     }
 
@@ -326,7 +312,7 @@ class PathController extends Controller
             ->mapWithKeys(function (int $part) use ($user, $level, $parts, $thresholds) {
                 return [
                     $part => [
-                        'name' => 'Part ' . $part,
+                        'name' => 'Part '.$part,
                         'pass_score' => $thresholds[$part] ?? 60.0,
                         'tests' => $this->mapTestsForPart($level, $part),
                         'first_test_id' => $this->resolveFirstTestId($level, $part),
@@ -547,6 +533,7 @@ class PathController extends Controller
         }
 
         $raw = $progress->percentage ?? $progress->score ?? 0;
+
         return (float) max(0, min(100, $raw));
     }
 }
