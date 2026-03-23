@@ -104,6 +104,7 @@ trait HasQuestionBank
     public function getRandomQuestion(): array
     {
         $bank = $this->getQuestionBank();
+
         return $this->formatQuestionData($bank[array_rand($bank)]);
     }
 
@@ -114,6 +115,7 @@ trait HasQuestionBank
     {
         $bank = $this->getQuestionBank();
         $idx = $index % count($bank);
+
         return $this->formatQuestionData($bank[$idx]);
     }
 

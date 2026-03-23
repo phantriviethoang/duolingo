@@ -17,7 +17,6 @@ class TestSessionController extends Controller
 
         $validated = $request->validate([
             'answers' => ['nullable', 'array'],
-            'flagged' => ['nullable', 'array'],
             'current_question' => ['required', 'integer', 'min:0'],
             'time_left' => ['required', 'integer', 'min:0'],
         ]);
@@ -38,7 +37,6 @@ class TestSessionController extends Controller
         }
 
         $session->answers = $validated['answers'] ?? [];
-        $session->flagged = $validated['flagged'] ?? [];
         $session->current_question = (int) $validated['current_question'];
         $session->time_left = (int) $validated['time_left'];
         $session->last_synced_at = now();

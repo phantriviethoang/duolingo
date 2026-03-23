@@ -13,7 +13,6 @@ class TestSession extends Model
 
     protected $casts = [
         'answers' => 'array',
-        'flagged' => 'array',
         'current_question' => 'integer',
         'time_left' => 'integer',
         'last_synced_at' => 'datetime',

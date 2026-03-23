@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             LevelSeeder::class,
             ComprehensiveTestSeeder::class,
             QuestionSeeder::class,
+            SampleDataSeeder::class,
         ]);
     }
 }

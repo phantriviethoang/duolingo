@@ -22,7 +22,7 @@ return new class extends Migration
 
             // Add index for fast query: get correct answer (composite index)
             $table->index(['question_id', 'is_correct'])->comment('Speed up: get correct answer per question');
-            
+
             // Note: DB constraint for single correct answer per question is enforced via
             // application-level validation in QuestionController (see store/update methods)
             // This is more reliable than DB constraints which have SQLite limitations

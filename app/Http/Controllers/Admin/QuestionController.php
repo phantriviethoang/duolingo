@@ -105,7 +105,7 @@ class QuestionController extends Controller
         $correctCount = collect($data['answers'])
             ->filter(fn ($ans) => $ans['is_correct'] ?? false)
             ->count();
-        
+
         if ($correctCount !== 1) {
             return back()->withErrors(['answers' => 'Phải có đúng 1 đáp án đúng.'])->withInput();
         }
@@ -186,7 +186,7 @@ class QuestionController extends Controller
         $correctCount = collect($data['answers'])
             ->filter(fn ($ans) => $ans['is_correct'] ?? false)
             ->count();
-        
+
         if ($correctCount !== 1) {
             return back()->withErrors(['answers' => 'Phải có đúng 1 đáp án đúng.'])->withInput();
         }

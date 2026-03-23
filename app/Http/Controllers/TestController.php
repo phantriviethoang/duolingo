@@ -363,8 +363,8 @@ class TestController extends Controller
         $thresholdField = "pass_threshold_part{$partNumber}";
         $defaultPassThreshold = (float) ($levelConfig?->$thresholdField ?? 60.0);
         $requestedPassThreshold = request()->query('custom_pass_threshold');
-        $customPassThreshold = $requestedPassThreshold === null || $requestedPassThreshold === "" 
-            ? $defaultPassThreshold 
+        $customPassThreshold = $requestedPassThreshold === null || $requestedPassThreshold === ""
+            ? $defaultPassThreshold
             : max(1, min(100, (float) $requestedPassThreshold));
 
         $retakeWrong = request()->query('retake_wrong');
@@ -498,7 +498,6 @@ class TestController extends Controller
             'testSession' => $activeSession ? [
                 'id' => $activeSession->id,
                 'answers' => $activeSession->answers ?? [],
-                'flagged' => $activeSession->flagged ?? [],
                 'current_question' => (int) $activeSession->current_question,
                 'time_left' => (int) $activeSession->time_left,
                 'last_synced_at' => optional($activeSession->last_synced_at)->toISOString(),

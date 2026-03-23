@@ -52,7 +52,6 @@ export default function Take({
 
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState({});
-    const [flaggedQuestions, setFlaggedQuestions] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const [isHydrated, setIsHydrated] = useState(false);
@@ -61,7 +60,6 @@ export default function Take({
     const autoSubmittedRef = useRef(false);
     const syncInFlightRef = useRef(false);
     const answersRef = useRef({});
-    const flaggedRef = useRef({});
     const currentQuestionRef = useRef(0);
     const timeLeftRef = useRef(0);
     const isHydratedRef = useRef(false);
@@ -90,10 +88,6 @@ export default function Take({
     useEffect(() => {
         answersRef.current = selectedAnswers;
     }, [selectedAnswers]);
-
-    useEffect(() => {
-        flaggedRef.current = flaggedQuestions;
-    }, [flaggedQuestions]);
 
     useEffect(() => {
         currentQuestionRef.current = currentQuestion;
@@ -173,7 +167,6 @@ export default function Take({
     const buildSnapshot = (payload = {}) => {
         return {
             answers: toObject(payload.answers),
-            flagged: toObject(payload.flagged),
             current_question: Math.max(
                 0,
                 Number(payload.current_question || 0),
@@ -202,7 +195,6 @@ export default function Take({
             const remoteSnapshot = testSession
                 ? buildSnapshot({
                     answers: testSession.answers,
-                    flagged: testSession.flagged,
                     current_question: testSession.current_question,
                     time_left: testSession.time_left,
                     saved_at: testSession.last_synced_at
@@ -224,7 +216,6 @@ export default function Take({
                 );
 
                 setSelectedAnswers(toObject(sourceSnapshot.answers));
-                setFlaggedQuestions(toObject(sourceSnapshot.flagged));
                 setCurrentQuestion(Math.max(0, boundedCurrentQuestion));
                 setTimeLeft(
                     computeRemainingTime(
@@ -234,14 +225,12 @@ export default function Take({
                 );
             } else {
                 setSelectedAnswers({});
-                setFlaggedQuestions({});
                 setCurrentQuestion(0);
                 setTimeLeft(quizDurationSeconds);
 
                 saveSnapshotToLocal(
                     buildSnapshot({
                         answers: {},
-                        flagged: {},
                         current_question: 0,
                         time_left: quizDurationSeconds,
                         saved_at: Date.now(),
@@ -251,7 +240,6 @@ export default function Take({
         } catch (error) {
             console.error("Error loading session snapshot:", error);
             setSelectedAnswers({});
-            setFlaggedQuestions({});
             setCurrentQuestion(0);
             setTimeLeft(quizDurationSeconds);
         }
@@ -271,7 +259,6 @@ export default function Take({
         saveSnapshotToLocal(
             buildSnapshot({
                 answers: selectedAnswers,
-                flagged: flaggedQuestions,
                 current_question: currentQuestion,
                 time_left: timeLeft,
                 saved_at: Date.now(),
@@ -279,7 +266,6 @@ export default function Take({
         );
     }, [
         selectedAnswers,
-        flaggedQuestions,
         currentQuestion,
         timeLeft,
         quiz?.id,
@@ -302,7 +288,6 @@ export default function Take({
             const payload = {
                 _token: getCsrfToken(),
                 answers: answersRef.current,
-                flagged: flaggedRef.current,
                 current_question: currentQuestionRef.current,
                 time_left: Math.max(0, Math.floor(timeLeftRef.current)),
             };
@@ -324,10 +309,6 @@ export default function Take({
                 formData.append(
                     "answers",
                     JSON.stringify(payload.answers || {}),
-                );
-                formData.append(
-                    "flagged",
-                    JSON.stringify(payload.flagged || {}),
                 );
                 formData.append(
                     "current_question",

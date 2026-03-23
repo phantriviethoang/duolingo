@@ -6,6 +6,7 @@ use App\Models\Test;
 use App\Models\Question;
 use App\Models\Answer;
 use App\Traits\HasQuestionBank;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 /**
@@ -13,68 +14,110 @@ use Illuminate\Database\Seeder;
  *
  * Tạo dữ liệu test hoàn chỉnh cho hệ thống:
  * - 6 levels: A1, A2, B1, B2, C1, C2
- * - Mỗi level có 3 part
- * - 1 test per part
- * - Số câu và thời gian theo cấu hình chuẩn của từng part
+ * - Mỗi level có 3 parts
+ * - 2-3 tests per part (dễ, trung bình, khó)
+ * - Sử dụng câu hỏi thực từ HasQuestionBank
  */
 class ComprehensiveTestSeeder extends Seeder
 {
-    use HasQuestionBank;
+    use HasQuestionBank, WithoutModelEvents;
 
     public function run(): void
     {
         $levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        $testDifficulties = ['Easy', 'Medium', 'Hard'];
 
-        foreach ($levels as $level) {
-            $partsForLevel = [
-                ['part_number' => 1, 'question_count' => 10, 'duration' => 10],
-                ['part_number' => 2, 'question_count' => 15, 'duration' => 15],
-                ['part_number' => 3, 'question_count' => 20, 'duration' => 20],
-            ];
+        $partConfigs = [
+            1 => ['question_count' => 10, 'duration' => 10],
+            2 => ['question_count' => 15, 'duration' => 15],
+            3 => ['question_count' => 20, 'duration' => 20],
+        ];
 
-            $maxQuestionCount = collect($partsForLevel)->max('question_count');
+        foreach ($levels as $levelIndex => $level) {
+            foreach ([1, 2, 3] as $part) {
+                $config = $partConfigs[$part];
 
-            $test = Test::updateOrCreate(
-                [
-                    'level' => $level,
-                    'title' => "$level - Comprehensive Test",
-                ],
-                [
-                    'description' => "Assessment test for $level",
-                    'total_questions' => $maxQuestionCount,
-                    'is_active' => true,
-                ]
-            );
+                // Tạo 3 tests cho mỗi part (Easy, Medium, Hard)
+                foreach ($testDifficulties as $diffIndex => $difficulty) {
+                    $testNum = $part + ($diffIndex * 3);
 
-            $test->parts()->delete();
-            $test->parts()->createMany($partsForLevel);
+                    $test = Test::updateOrCreate(
+                        [
+                            'level' => $level,
+                            'part' => $part,
+                            'title' => "$level - Part $part - $difficulty Test",
+                        ],
+                        [
+                            'description' => "Assessment test for $level Part $part ($difficulty difficulty)",
+                            'total_questions' => $config['question_count'],
+                            'duration' => $config['duration'],
+                            'is_active' => true,
+                            'attempts' => 0,
+                        ]
+                    );
 
-            // Reset question bank cho test này để luôn đảm bảo đủ và đúng số lượng.
-            $test->questions()->delete();
+                    // Xóa các part và question cũ
+                    $test->parts()->delete();
+                    $test->questions()->detach();
 
-            for ($qIdx = 1; $qIdx <= $maxQuestionCount; $qIdx++) {
-                $item = $this->getRandomQuestion();
-
-                $question = Question::create([
-                    'level' => $level,
-                    'part_number' => ceil($qIdx / ($maxQuestionCount / 3)),
-                    'question_text' => $item['question_text'] ?? $item['question'],
-                    'order' => $qIdx,
-                    'translation' => $item['translation'] ?? null,
-                    'explanation' => $item['explanation'] ?? null,
-                    'detailed_explanation' => $item['detailed_explanation'] ?? null,
-                ]);
-
-                $question->tests()->attach($test->id, ['order' => $qIdx]);
-
-                foreach (($item['answers'] ?? []) as $answer) {
-                    Answer::create([
-                        'question_id' => $question->id,
-                        'answer_text' => $answer['answer_text'] ?? '',
-                        'is_correct' => (bool) ($answer['is_correct'] ?? false),
+                    // Tạo test_part
+                    $test->parts()->create([
+                        'part_number' => $part,
+                        'question_count' => $config['question_count'],
+                        'duration' => $config['duration'],
+                        'is_active' => true,
                     ]);
+
+                    // Tạo các câu hỏi từ question bank
+                    $questionBank = $this->getQuestionBank();
+                    $bankCount = count($questionBank);
+
+                    for ($qIdx = 0; $qIdx < $config['question_count']; $qIdx++) {
+                        // Chọn câu hỏi từ bank (loop qua các câu)
+                        $bankQuestion = $questionBank[$qIdx % $bankCount];
+
+                        // Tạo hoặc lấy câu hỏi
+                        $question = Question::updateOrCreate(
+                            [
+                                'level' => $level,
+                                'part_number' => $part,
+                                'question_text' => $bankQuestion['question'],
+                                'order' => $qIdx + 1,
+                            ],
+                            [
+                                'translation' => $bankQuestion['translation'] ?? null,
+                                'explanation' => $bankQuestion['explanation'] ?? null,
+                                'detailed_explanation' => $bankQuestion['detailed_explanation'] ?? null,
+                            ]
+                        );
+
+                        // Tạo các đáp án nếu chưa tồn tại
+                        if ($question->answers()->count() === 0) {
+                            foreach ($bankQuestion['options'] as $optionIndex => $optionText) {
+                                Answer::create([
+                                    'question_id' => $question->id,
+                                    'answer_text' => $optionText,
+                                    'is_correct' => $optionIndex === $bankQuestion['correct'],
+                                ]);
+                            }
+                        }
+
+                        // Gắn câu hỏi vào test (tránh duplicate)
+                        if (!$test->questions()->where('question_id', $question->id)->exists()) {
+                            $test->questions()->attach($question->id, [
+                                'order' => $qIdx + 1,
+                            ]);
+                        }
+                    }
+
+                    echo "✓ Created Test: $level - Part $part - $difficulty ({$config['question_count']} questions)\n";
                 }
             }
         }
+
+        echo "\n✓ Comprehensive test seeding completed!\n";
+        echo "   Total Tests: " . Test::count() . "\n";
+        echo "   Total Questions: " . Question::count() . "\n";
+        echo "   Total Answers: " . Answer::count() . "\n";
     }
 }

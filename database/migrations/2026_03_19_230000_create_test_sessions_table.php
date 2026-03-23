@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('test_id')->constrained()->cascadeOnDelete();
             $table->json('answers')->nullable();
-            $table->json('flagged')->nullable();
             $table->unsignedInteger('current_question')->default(0);
             $table->unsignedInteger('time_left')->default(0);
             $table->enum('status', ['in_progress', 'submitted'])->default('in_progress');
