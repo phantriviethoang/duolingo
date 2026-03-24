@@ -29,7 +29,7 @@ class TestController extends Controller
         }
 
         $tests = $query->orderByDesc('created_at')
-            ->get(['id', 'title', 'description', 'duration', 'total_questions', 'created_at'])
+            ->get(['id', 'title', 'description', 'duration', 'total_questions', 'level', 'part', 'created_at'])
             ->map(function (Test $test) {
                 return [
                     'id' => $test->id,
@@ -37,6 +37,8 @@ class TestController extends Controller
                     'description' => $test->description,
                     'duration' => $test->configuredDuration(),
                     'total_questions' => $test->total_questions,
+                    'level' => $test->level,
+                    'part' => $test->part,
                     'created_at' => optional($test->created_at)->format('d/m/Y'),
                 ];
             })
