@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from "@inertiajs/react";
 import { ArrowLeft, Plus, Trash2, Save, FileText, Layout, Info, CheckCircle2, Languages, HelpCircle, Database, CheckSquare, Search } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import AdminLayout from "../Admin/Layout";
 
 export default function Create() {
@@ -11,7 +11,6 @@ export default function Create() {
         parts: [
             {
                 part_number: 1,
-                question_count: 10,
                 duration: 15,
                 enabled: true,
             },
@@ -23,14 +22,19 @@ export default function Create() {
     const [availableQuestions, setAvailableQuestions] = useState([]);
     const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-    const activeParts = data.parts.filter((part) => part.enabled);
+    const activeParts = useMemo(() => 
+        data.parts
+            .map((part, idx) => ({ ...part, originalIndex: idx }))
+            .filter((part) => part.enabled),
+        [data.parts]
+    );
 
     useEffect(() => {
         const fetchQuestions = async () => {
             if (activeParts.length === 0 || !data.level) return;
             setLoadingQuestions(true);
             try {
-                const partNumbers = activeParts.map(p => p.part_number).join(',');
+                const partNumbers = activeParts.map((p) => p.originalIndex + 1).join(',');
                 const response = await fetch(`/admin/api/questions?level=${data.level}&part_number=${partNumbers}`);
                 const result = await response.json();
                 setAvailableQuestions(result || []);
@@ -72,7 +76,7 @@ export default function Create() {
 
     const updatePart = (index, field, value) => {
         const nextParts = [...data.parts];
-        const numericFields = ["part_number", "question_count", "duration"];
+        const numericFields = ["duration"];
         nextParts[index] = {
             ...nextParts[index],
             [field]: numericFields.includes(field) ? Number(value) : value,
@@ -81,12 +85,10 @@ export default function Create() {
     };
 
     const addPart = () => {
-        const highest = data.parts.reduce((max, part) => Math.max(max, Number(part.part_number) || 0), 0);
         setData("parts", [
             ...data.parts,
             {
-                part_number: highest + 1,
-                question_count: 10,
+                part_number: data.parts.length + 1,
                 duration: 15,
                 enabled: true,
             },
@@ -114,9 +116,9 @@ export default function Create() {
                 ...data,
                 parts: data.parts
                     .filter((part) => part.enabled)
-                    .map((part) => ({
-                        part_number: Number(part.part_number),
-                        question_count: Number(part.question_count),
+                    .map((part, index) => ({
+                        part_number: index + 1,
+
                         duration: Number(part.duration),
                     })),
                 question_ids: data.question_ids,
@@ -241,34 +243,22 @@ export default function Create() {
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <input
-                                                        type="number"
-                                                        min={1}
-                                                        value={part.part_number}
-                                                        onChange={(e) => updatePart(index, 'part_number', e.target.value)}
-                                                        className="px-3 py-2 rounded-xl border-gray-200 text-sm font-bold"
-                                                        placeholder="Part"
-                                                        disabled={!part.enabled}
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        min={1}
-                                                        value={part.question_count}
-                                                        onChange={(e) => updatePart(index, 'question_count', e.target.value)}
-                                                        className="px-3 py-2 rounded-xl border-gray-200 text-sm font-bold"
-                                                        placeholder="Số câu"
-                                                        disabled={!part.enabled}
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        min={1}
-                                                        value={part.duration}
-                                                        onChange={(e) => updatePart(index, 'duration', e.target.value)}
-                                                        className="px-3 py-2 rounded-xl border-gray-200 text-sm font-bold"
-                                                        placeholder="Phút"
-                                                        disabled={!part.enabled}
-                                                    />
+                                                <div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Thời gian (1-120 phút)</label>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={120}
+                                                            value={part.duration}
+                                                            onChange={(e) => updatePart(index, 'duration', e.target.value)}
+                                                            className={`w-full px-3 py-2 rounded-xl border-1 text-sm font-bold ${errors[`parts.${index}.duration`] || part.duration > 120 ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+                                                            placeholder="15"
+                                                            disabled={!part.enabled}
+                                                        />
+                                                        {errors[`parts.${index}.duration`] && <p className="text-[10px] text-red-600 font-bold mt-1">{errors[`parts.${index}.duration`][0]}</p>}
+                                                        {!errors[`parts.${index}.duration`] && part.duration > 120 && <p className="text-[10px] text-red-600 font-bold mt-1">Không được vượt quá 120 phút (2 giờ)</p>}
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -323,7 +313,7 @@ export default function Create() {
                                     </div>
                                 ) : availableQuestions.length === 0 ? (
                                     <div className="text-center py-10">
-                                        <p className="text-gray-500 font-medium">Chưa có câu hỏi nào khả dụng cho cấu hình (Level {data.level}, Parts {activeParts.map(p => p.part_number).join(', ')}).</p>
+                                        <p className="text-gray-500 font-medium">Chưa có câu hỏi nào khả dụng cho cấu hình (Level {data.level}, Parts {activeParts.map(p => p.originalIndex + 1).join(', ')}).</p>
                                         <Link href="/admin/questions/create" className="text-blue-600 font-bold hover:underline mt-2 inline-block">
                                             Tạo câu hỏi mới &rarr;
                                         </Link>
@@ -331,15 +321,16 @@ export default function Create() {
                                 ) : (
                                     <div className="space-y-8">
                                         {activeParts.map((part) => {
-                                            const questionsInPart = availableQuestions.filter(q => q.part_number === part.part_number);
+                                            const partNumberForFilter = part.originalIndex + 1;
+                                            const questionsInPart = availableQuestions.filter(q => q.part_number === partNumberForFilter);
                                             if (questionsInPart.length === 0) {
                                                 return (
-                                                    <div key={part.part_number} className="space-y-4">
+                                                    <div key={part.originalIndex} className="space-y-4">
                                                         <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                                                            <h3 className="font-bold text-gray-700">Part {part.part_number} <span className="text-gray-400 font-normal ml-2">(0 khả dụng)</span></h3>
+                                                            <h3 className="font-bold text-gray-700">Part {partNumberForFilter} <span className="text-gray-400 font-normal ml-2">(0 khả dụng)</span></h3>
                                                         </div>
                                                         <div className="p-4 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-center">
-                                                            <p className="text-sm text-gray-400">Không có câu hỏi nào cho Part {part.part_number} trong ngân hàng.</p>
+                                                            <p className="text-sm text-gray-400">Không có câu hỏi nào cho Part {partNumberForFilter} trong ngân hàng.</p>
                                                         </div>
                                                     </div>
                                                 );
@@ -348,15 +339,15 @@ export default function Create() {
                                             const selectedCount = questionsInPart.filter(q => data.question_ids.includes(q.id)).length;
 
                                             return (
-                                                <div key={part.part_number} className="space-y-4">
+                                                <div key={part.originalIndex} className="space-y-4">
                                                     <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                                                        <h3 className="font-bold text-gray-700">Part {part.part_number} <span className="text-gray-400 font-normal ml-2">({selectedCount} / {questionsInPart.length} khả dụng)</span></h3>
+                                                        <h3 className="font-bold text-gray-700">Part {partNumberForFilter} <span className="text-gray-400 font-normal ml-2">({selectedCount} / {questionsInPart.length} khả dụng)</span></h3>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleSelectAll(part.part_number)}
+                                                            onClick={() => handleSelectAll(partNumberForFilter)}
                                                             className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                                         >
-                                                            <CheckSquare className="w-4 h-4" /> Chọn tất cả part {part.part_number}
+                                                            <CheckSquare className="w-4 h-4" /> Chọn tất cả part {partNumberForFilter}
                                                         </button>
                                                     </div>
 

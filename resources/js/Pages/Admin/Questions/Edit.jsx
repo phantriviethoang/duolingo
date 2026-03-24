@@ -7,7 +7,6 @@ export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
     const { data, setData, put, errors, processing } = useForm({
         test_id: question.test_id || '',
         level: question.level || '',
-        part_number: question.part_number || '',
         question_text: question.question_text || '',
         explanation: question.explanation || '',
         translation: question.translation || '',
@@ -56,9 +55,9 @@ export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Test Set, Level, Part Number */}
+                    {/* Test Set, Level */}
                     <div className="bg-white rounded-[1.5rem] border-2 border-gray-50 shadow-sm p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-3">Test Set (Bộ đề)</label>
                                 <select
@@ -92,17 +91,6 @@ export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
                                     ))}
                                 </select>
                                 {errors.level && <div className="text-red-600 text-sm mt-2 font-medium">{errors.level}</div>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-3">Part Number (Phần)</label>
-                                <input
-                                    type="number"
-                                    value={data.part_number}
-                                    onChange={(e) => setData('part_number', e.target.value)}
-                                    placeholder="1"
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-blue-500 focus:outline-none transition-colors"
-                                />
-                                {errors.part_number && <div className="text-red-600 text-sm mt-2 font-medium">{errors.part_number}</div>}
                             </div>
                         </div>
                     </div>
