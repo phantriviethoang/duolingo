@@ -11,10 +11,11 @@ export default function Edit({ test }) {
         parts: Array.isArray(test.parts) && test.parts.length > 0
             ? test.parts.map((part) => ({
                 part_number: Number(part.part_number) || 1,
+                originalPartNumber: Number(part.part_number) || 1,
                 duration: Number(part.duration) || 1,
                 enabled: part.is_active !== false,
             }))
-            : [{ part_number: 1, duration: 15, enabled: true }],
+            : [{ part_number: 1, originalPartNumber: 1, duration: 15, enabled: true }],
         is_active: test.is_active ?? true,
         question_ids: test.question_ids || [],
     });
@@ -22,7 +23,7 @@ export default function Edit({ test }) {
     const [availableQuestions, setAvailableQuestions] = useState([]);
     const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-    const activeParts = useMemo(() => 
+    const activeParts = useMemo(() =>
         data.parts
             .map((part, idx) => ({ ...part, originalIndex: idx }))
             .filter((part) => part.enabled),
@@ -34,7 +35,7 @@ export default function Edit({ test }) {
             if (activeParts.length === 0 || !data.level) return;
             setLoadingQuestions(true);
             try {
-                const partNumbers = activeParts.map(p => p.originalIndex + 1).join(',');
+                const partNumbers = activeParts.map(p => p.originalPartNumber).join(',');
                 const response = await fetch(`/admin/api/questions?level=${data.level}&part_number=${partNumbers}`);
                 const result = await response.json();
                 setAvailableQuestions(result || []);
@@ -86,10 +87,12 @@ export default function Edit({ test }) {
     };
 
     const addPart = () => {
+        const newPartNumber = data.parts.length + 1;
         setData("parts", [
             ...data.parts,
             {
-                part_number: data.parts.length + 1,
+                part_number: newPartNumber,
+                originalPartNumber: newPartNumber,
                 duration: 15,
                 enabled: true,
             },
@@ -98,7 +101,19 @@ export default function Edit({ test }) {
 
     const removePart = (index) => {
         if (data.parts.length <= 1) return;
+
+        // Remove questions associated with this part
+        const removedPart = data.parts[index];
+        const questionsInRemovedPart = availableQuestions
+            .filter(q => q.part_number === removedPart.originalPartNumber)
+            .map(q => q.id);
+
+        const newQuestionIds = data.question_ids.filter(
+            id => !questionsInRemovedPart.includes(id)
+        );
+
         setData("parts", data.parts.filter((_, i) => i !== index));
+        setData("question_ids", newQuestionIds);
     };
 
     const togglePart = (index) => {
