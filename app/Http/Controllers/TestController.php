@@ -185,6 +185,7 @@ class TestController extends Controller
 
         unset($data['questions']);
         unset($data['parts']);
+        unset($data['question_ids']);
 
         $primaryPart = $parts->first();
         $data['part'] = (int) ($primaryPart['part_number'] ?? 1);
@@ -260,8 +261,12 @@ class TestController extends Controller
             ->sortBy('part_number')
             ->values();
 
+        // Extract question_ids before unsetting
+        $questionIds = $data['question_ids'] ?? [];
+
         unset($data['questions']);
         unset($data['parts']);
+        unset($data['question_ids']);
 
         $primaryPart = $parts->first();
         $data['part'] = (int) ($primaryPart['part_number'] ?? 1);
@@ -273,13 +278,13 @@ class TestController extends Controller
         $test->parts()->delete();
         $test->parts()->createMany($parts->all());
 
-        if (array_key_exists('question_ids', $data) && is_array($data['question_ids'])) {
+        if (is_array($questionIds) && count($questionIds) > 0) {
             $syncData = [];
-            foreach ($data['question_ids'] as $index => $qId) {
+            foreach ($questionIds as $index => $qId) {
                 $syncData[$qId] = ['order' => $index + 1];
             }
             $test->questions()->sync($syncData);
-            $test->update(['total_questions' => count($data['question_ids'])]);
+            $test->update(['total_questions' => count($questionIds)]);
         }
 
         return redirect()->route('admin.tests')

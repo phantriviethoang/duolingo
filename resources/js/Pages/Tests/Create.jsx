@@ -58,7 +58,7 @@ export default function Create() {
     const handleSelectAll = (partNumber) => {
         const questionsInPart = availableQuestions.filter(q => q.part_number === partNumber).map(q => q.id);
         const allSelected = questionsInPart.every(id => data.question_ids.includes(id));
-        
+
         let nextIds = [...data.question_ids];
         if (allSelected) {
             nextIds = nextIds.filter(id => !questionsInPart.includes(id));
@@ -109,17 +109,19 @@ export default function Create() {
 
     const submit = (e) => {
         e.preventDefault();
-        transform((payload) => ({
-            ...payload,
-            parts: payload.parts
-                .filter((part) => part.enabled)
-                .map((part) => ({
-                    part_number: Number(part.part_number),
-                    question_count: Number(part.question_count),
-                    duration: Number(part.duration),
-                })),
-            question_ids: payload.question_ids,
-        })).post(route("tests.store"));
+        post(route("tests.store"), {
+            transform: (data) => ({
+                ...data,
+                parts: data.parts
+                    .filter((part) => part.enabled)
+                    .map((part) => ({
+                        part_number: Number(part.part_number),
+                        question_count: Number(part.question_count),
+                        duration: Number(part.duration),
+                    })),
+                question_ids: data.question_ids,
+            })
+        });
     };
 
     return (
@@ -357,7 +359,7 @@ export default function Create() {
                                                             <CheckSquare className="w-4 h-4" /> Chọn tất cả part {part.part_number}
                                                         </button>
                                                     </div>
-                                                    
+
                                                     <div className="grid gap-3">
                                                         {questionsInPart.map(q => (
                                                             <label key={q.id} className={`flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${data.question_ids.includes(q.id) ? 'border-indigo-500 bg-indigo-50/20 shadow-sm' : 'border-gray-50 bg-gray-50/50 hover:border-gray-200'}`}>

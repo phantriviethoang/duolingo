@@ -110,17 +110,19 @@ export default function Edit({ test }) {
 
     const submit = (e) => {
         e.preventDefault();
-        transform((payload) => ({
-            ...payload,
-            parts: payload.parts
-                .filter((part) => part.enabled)
-                .map((part) => ({
-                    part_number: Number(part.part_number),
-                    question_count: Number(part.question_count),
-                    duration: Number(part.duration),
-                })),
-            question_ids: payload.question_ids,
-        })).put(route("tests.update", test.id));
+        put(route("tests.update", test.id), {
+            transform: (data) => ({
+                ...data,
+                parts: data.parts
+                    .filter((part) => part.enabled)
+                    .map((part) => ({
+                        part_number: Number(part.part_number),
+                        question_count: Number(part.question_count),
+                        duration: Number(part.duration),
+                    })),
+                question_ids: data.question_ids,
+            })
+        });
     };
 
     return (

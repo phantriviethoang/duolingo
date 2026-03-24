@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import AdminLayout from '../Layout';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2, PlusCircle } from 'lucide-react';
 
 export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
     const { data, setData, put, errors, processing } = useForm({
@@ -39,6 +39,10 @@ export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
         const newAnswers = [...data.answers];
         newAnswers.splice(index, 1);
         setData('answers', newAnswers);
+        // Auto-submit after deleting answer
+        setTimeout(() => {
+            put(route('admin.questions.update', question.id));
+        }, 100);
     };
 
     return (
@@ -157,7 +161,7 @@ export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
                                 onClick={addAnswer}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm"
                             >
-                                <Plus className="w-4 h-4" />
+                                <PlusCircle className="w-4 h-4" />
                                 Add Answer
                             </button>
                         </div>
@@ -201,20 +205,22 @@ export default function Edit({ auth, question = {}, tests = [], levels = [] }) {
                     </div>
 
                     {/* Submit Buttons */}
-                    <div className="flex items-center justify-end gap-4">
+                    <div className="flex items-center justify-between gap-4">
                         <Link
                             href={route('admin.questions.index')}
                             className="px-6 py-3 rounded-lg border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </Link>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="px-6 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
-                        >
-                            Update Question
-                        </button>
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="px-6 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            >
+                                Update Question
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
